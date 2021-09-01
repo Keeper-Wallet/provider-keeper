@@ -1,0 +1,28 @@
+{
+  "name": "@waves/provider-keeper",
+  "version": "0.0.1",
+  "main": "dist/provider-keeper.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "watch": "webpack --watch",
+    "build": "webpack"
+  },
+  "dependencies": {
+    "@waves/signer": "0.0.3",
+    "@waves/ts-types": "^0.3.0",
+    "@waves/waveskeeper-types": "file:../waveskeeper-types"
+  },
+  "devDependencies": {
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.4",
+    "webpack": "^4.41.4",
+    "webpack-cli": "^3.3.10"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": "^10.24.1"
+  }
+}
