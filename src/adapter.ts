@@ -324,7 +324,7 @@ class InvokeScriptAdapter implements WavesKeeper.TScriptInvocationTxData {
     }
 }
 
-function toKeeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData {
+export function keeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData {
     switch (tx.type){
         case TRANSACTION_TYPE.TRANSFER:
             return new TransferAdapter(tx);

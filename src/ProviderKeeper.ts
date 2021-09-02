@@ -1,7 +1,9 @@
-import {AuthEvents, ConnectOptions, Handler, Provider, TypedData, UserData, SignerTx, SignedTx} from '@waves/signer';
-import { EventEmitter } from 'typed-ts-events';
+import {AuthEvents, ConnectOptions, Handler, Provider, SignedTx, SignerTx, TypedData, UserData} from '@waves/signer';
+import {EventEmitter} from 'typed-ts-events';
+import {keeperTxFactory} from "./adapter";
 import TWavesKeeperApi = WavesKeeper.TWavesKeeperApi;
 import IAuthData = WavesKeeper.IAuthData;
+import TTypedData = WavesKeeper.TTypedData;
 
 
 export class ProviderKeeper implements Provider {
@@ -60,21 +62,39 @@ export class ProviderKeeper implements Provider {
 
     public logout(): Promise<void> {
         this.user = null;
+        // TODO connect to extension via Port and close his connection
         return Promise.resolve();
     }
 
     public signMessage(data: string | number): Promise<string> {
-        // TODO
-        return Promise.resolve() as any
+        return this._api.signCustomData({
+            version: 1,
+            binary: data as string
+        }).then(data => {
+            return Promise.resolve(
+                data.signature
+            );
+        });
     }
 
     public signTypedData(data: Array<TypedData>): Promise<string> {
-        // TODO
-        return Promise.resolve() as any;
+        return this._api.signCustomData({
+            version: 2,
+            data: data as TTypedData[]
+        }).then(data => {
+            return Promise.resolve(
+                data.signature
+            );
+        });
     }
 
     public sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>> {
-        // TODO
-        return Promise.resolve() as any;
+        return this._api.signTransactionPackage(
+            toSign.map(tx => keeperTxFactory(tx)) as any
+        ).then(data => {
+            return Promise.resolve(
+                data.map(tx => JSON.parse(tx)) as any
+            );
+        });
     }
 }
