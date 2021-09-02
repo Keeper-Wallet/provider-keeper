@@ -11,7 +11,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@waves/signer": "0.0.3",
+    "@waves/signer": "^1.0.2",
     "@waves/ts-types": "^0.3.0",
     "@waves/waveskeeper-types": "file:../waveskeeper-types"
   },
