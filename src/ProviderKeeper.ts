@@ -103,7 +103,15 @@ export class ProviderKeeper implements Provider {
         });
     }
 
+    public sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
     public sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>> {
+        if (toSign.length == 1) {
+            return this._api.signTransaction(
+                keeperTxFactory(toSign[0])
+            ).then(data => {
+                return Promise.resolve([JSON.parse(data)])
+            }) as Promise<SignedTx<T>>
+        }
         return this._api.signTransactionPackage(
             toSign.map(tx => keeperTxFactory(tx)) as TSignTransactionPackageData
         ).then(data => {
