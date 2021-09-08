@@ -40,7 +40,7 @@ class IssueAdapter implements WavesKeeper.TIssueTxData {
             quantity,
             precision: decimals,
             reissuable,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(script ? {script} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.IIssueTx;
@@ -65,10 +65,10 @@ class TransferAdapter implements WavesKeeper.TTransferTxData {
     ) {
         this.type = type;
         this.data = {
-            amount: {tokens: amount, assetId: _assetId} as WavesKeeper.TMoney,
+            amount: {amount: amount, assetId: _assetId} as WavesKeeper.TMoney,
             recipient,
             ...(attachment ? {attachment} : {}),
-            ...(fee ? {fee: {tokens: fee, assetId: _feeAssetId} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: _feeAssetId} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ITransferTx;
     }
@@ -93,7 +93,7 @@ class ReissueAdapter implements WavesKeeper.TReissueTxData {
             assetId,
             quantity,
             reissuable,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.IReissueTx;
     }
@@ -116,7 +116,7 @@ class BurnAdapter implements WavesKeeper.TBurnTxData {
         this.data = {
             assetId,
             amount,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.IBurnTx;
     }
@@ -139,7 +139,7 @@ class LeaseAdapter implements WavesKeeper.TLeaseTxData {
         this.data = {
             recipient,
             amount,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ILeaseTx;
     }
@@ -160,7 +160,7 @@ class CancelLeaseAdapter implements WavesKeeper.TLeaseCancelTxData {
         this.type = type;
         this.data = {
             leaseId,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ILeaseCancelTx;
     }
@@ -181,7 +181,7 @@ class AliasAdapter implements WavesKeeper.TCreateAliasTxData {
         this.type = type;
         this.data = {
             alias,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ICreateAliasTx;
     }
@@ -206,7 +206,7 @@ class MassTransferAdapter implements WavesKeeper.TMassTransferTxData {
             totalAmount: {amount:0, assetId: _assetId} as WavesKeeper.TMoney,
             transfers: transfers as Array<WavesKeeper.ITransfer>,
             ...(attachment ? {attachment} : {}),
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.IMassTransferTx;
     }
@@ -227,7 +227,7 @@ class DataAdapter implements WavesKeeper.TDataTxData {
         this.type = type;
         this.data = {
             data: data as Array<WavesKeeper.TData>,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.IDataTx;
     }
@@ -248,7 +248,7 @@ class SetScriptAdapter implements WavesKeeper.TSetScriptTxData {
         this.type = type;
         this.data = {
             script,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ISetScriptTx;
     }
@@ -269,8 +269,8 @@ class SponsorshipAdapter implements WavesKeeper.TSponsoredFeeTxData {
     ) {
         this.type = type;
         this.data = {
-            minSponsoredAssetFee: {tokens: minSponsoredAssetFee, assetId} as WavesKeeper.TMoney,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            minSponsoredAssetFee: {amount: minSponsoredAssetFee, assetId} as WavesKeeper.TMoney,
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ISponsoredFeeTx;
     }
@@ -293,7 +293,7 @@ class SetAssetScriptAdapter implements WavesKeeper.TSetAssetScriptTxData {
         this.data = {
             assetId,
             script,
-            ...(fee ? {fee: {tokens: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: 'WAVES'} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.ISetAssetScriptTx
     }
@@ -319,7 +319,7 @@ class InvokeScriptAdapter implements WavesKeeper.TScriptInvocationTxData {
             dApp,
             ...(call ? {call: call as WavesKeeper.ICall} : {}),
             ...(payment ? {payment: payment as Array<WavesKeeper.TMoney>}: {}),
-            ...(fee ? {fee: {tokens: fee, assetId: _feeAssetId} as WavesKeeper.TMoney} : {}),
+            ...(fee ? {fee: {amount: fee, assetId: _feeAssetId} as WavesKeeper.TMoney} : {}),
             ...(senderPublicKey ? {senderPublicKey}: {}),
         } as WavesKeeper.IScriptInvocationTx
     }
