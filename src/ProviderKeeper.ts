@@ -8,6 +8,7 @@ import {
     TypedData,
     UserData,
 } from '@waves/signer';
+import {json} from '@waves/marshall';
 import {EventEmitter} from 'typed-ts-events';
 import {keeperTxFactory} from "./adapter";
 import TWavesKeeperApi = WavesKeeper.TWavesKeeperApi;
@@ -109,14 +110,14 @@ export class ProviderKeeper implements Provider {
             return this._api.signTransaction(
                 keeperTxFactory(toSign[0])
             ).then(data => {
-                return Promise.resolve([JSON.parse(data)])
+                return Promise.resolve([json.parseTx(data)])
             }) as Promise<SignedTx<T>>
         }
         return this._api.signTransactionPackage(
             toSign.map(tx => keeperTxFactory(tx)) as TSignTransactionPackageData
         ).then(data => {
             return Promise.resolve(
-                data.map(tx => JSON.parse(tx))
+                data.map(tx => json.parseTx(tx))
             );
         }) as Promise<SignedTx<T>>;
     }
