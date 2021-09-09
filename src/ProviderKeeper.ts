@@ -19,8 +19,8 @@ import TSignTransactionPackageData = WavesKeeper.TSignTransactionPackageData;
 export class ProviderKeeper implements Provider {
 
     public user: UserData | null = null;
-    private readonly _api: TWavesKeeperApi = window.WavesKeeper;
     private readonly _authData: IAuthData;
+    private _api!: TWavesKeeperApi;
     private _options: ConnectOptions = {
         NETWORK_BYTE: 'W'.charCodeAt(0),
         NODE_URL: 'https://nodes.wavesnodes.com',
@@ -60,21 +60,25 @@ export class ProviderKeeper implements Provider {
 
     public connect(options: ConnectOptions): Promise<void> {
         this._options = options;
-        return this._api.publicState().then(state => {
-            let {code: keeperCode, server: keeperURL} = state.network;
-            let {NETWORK_BYTE: signerByte, NODE_URL: signerURL} = this._options;
 
-            if (keeperCode.charCodeAt(0) !== signerByte) {
-                throw new Error(`Network byte mismatch: Signer(${signerByte}), Keeper(${keeperCode.charCodeAt(0)})`);
-            } else if (keeperURL.replace(/\/$/, "") !== signerURL.replace(/\/$/, "")) {
-                throw new Error(`Node URL mismatch: Signer(${signerURL}) Keeper(${keeperURL})`);
+        const poll = resolve => {
+            if(!!window.WavesKeeper) {
+                window.WavesKeeper.initialPromise.then((api) => {
+                    resolve(this._api = api)
+                });
             }
-        })
+            else setTimeout(_ => poll(resolve), 100);
+        }
+
+        return new Promise(poll);
     }
 
     public login(): Promise<UserData> {
         return this._api.auth(this._authData)
-            .then(userData => this.user = userData);
+            .then(userData => {
+                this.user = userData
+                return userData
+            });
     }
 
     public logout(): Promise<void> {
@@ -86,22 +90,14 @@ export class ProviderKeeper implements Provider {
         return this._api.signCustomData({
             version: 1,
             binary: data as string
-        }).then(data => {
-            return Promise.resolve(
-                data.signature
-            );
-        });
+        }).then(data => data.signature);
     }
 
     public signTypedData(data: Array<TypedData>): Promise<string> {
         return this._api.signCustomData({
             version: 2,
             data: data as TTypedData[]
-        }).then(data => {
-            return Promise.resolve(
-                data.signature
-            );
-        });
+        }).then(data => data.signature);
     }
 
     public sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
@@ -109,16 +105,10 @@ export class ProviderKeeper implements Provider {
         if (toSign.length == 1) {
             return this._api.signTransaction(
                 keeperTxFactory(toSign[0])
-            ).then(data => {
-                return Promise.resolve([json.parseTx(data)])
-            }) as Promise<SignedTx<T>>
+            ).then(data => [json.parseTx(data)]) as Promise<SignedTx<T>>
         }
         return this._api.signTransactionPackage(
             toSign.map(tx => keeperTxFactory(tx)) as TSignTransactionPackageData
-        ).then(data => {
-            return Promise.resolve(
-                data.map(tx => json.parseTx(tx))
-            );
-        }) as Promise<SignedTx<T>>;
+        ).then(data => data.map(tx => json.parseTx(tx))) as Promise<SignedTx<T>>;
     }
 }
