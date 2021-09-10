@@ -6,7 +6,7 @@
 <a id="overview"></a>
 ## Overview
 
-ProviderKeeper implements a Signature Provider for [Signer](https://github.com/wavesplatform/signer) protocol library. ProviderKeeper creates user account from SEED.
+ProviderKeeper implements a Signature Provider for [Signer](https://github.com/wavesplatform/signer) protocol library.
 
 <a id="getting-started"></a>
 ## Getting Started
