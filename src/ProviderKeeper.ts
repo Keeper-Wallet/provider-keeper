@@ -1,5 +1,6 @@
 import { AuthEvents, ConnectOptions, Handler, Provider, SignedTx, SignerTx, TypedData, UserData } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
+import { stringToBytes, base64Encode } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
 
 export class ProviderKeeper implements Provider {
@@ -66,7 +67,7 @@ export class ProviderKeeper implements Provider {
         return this._api
             .signCustomData({
                 version: 1,
-                binary: data as string,
+                binary: 'base64:' + base64Encode(stringToBytes(String(data))),
             })
             .then((data) => data.signature);
     }
