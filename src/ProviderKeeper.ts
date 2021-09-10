@@ -11,23 +11,19 @@ import {
 import {json} from '@waves/marshall';
 import {EventEmitter} from 'typed-ts-events';
 import {keeperTxFactory} from "./adapter";
-import TWavesKeeperApi = WavesKeeper.TWavesKeeperApi;
-import IAuthData = WavesKeeper.IAuthData;
-import TTypedData = WavesKeeper.TTypedData;
-import TSignTransactionPackageData = WavesKeeper.TSignTransactionPackageData;
 
 export class ProviderKeeper implements Provider {
 
     public user: UserData | null = null;
-    private readonly _authData: IAuthData;
-    private _api!: TWavesKeeperApi;
+    private readonly _authData: WavesKeeper.IAuthData;
+    private _api!: WavesKeeper.TWavesKeeperApi;
     private _options: ConnectOptions = {
         NETWORK_BYTE: 'W'.charCodeAt(0),
         NODE_URL: 'https://nodes.wavesnodes.com',
     };
     private readonly emitter: EventEmitter<AuthEvents> = new EventEmitter<AuthEvents>();
 
-    constructor(authData: IAuthData) {
+    constructor(authData: WavesKeeper.IAuthData) {
         this._authData = authData;
     }
 
@@ -63,9 +59,11 @@ export class ProviderKeeper implements Provider {
 
         const poll = resolve => {
             if(!!window.WavesKeeper) {
-                window.WavesKeeper.initialPromise.then((api) => {
-                    resolve(this._api = api)
-                });
+                resolve(
+                    window.WavesKeeper.initialPromise.then((api) => {
+                        this._api = api
+                    })
+                );
             }
             else setTimeout(_ => poll(resolve), 100);
         }
@@ -96,7 +94,7 @@ export class ProviderKeeper implements Provider {
     public signTypedData(data: Array<TypedData>): Promise<string> {
         return this._api.signCustomData({
             version: 2,
-            data: data as TTypedData[]
+            data: data as WavesKeeper.TTypedData[]
         }).then(data => data.signature);
     }
 
@@ -108,7 +106,7 @@ export class ProviderKeeper implements Provider {
             ).then(data => [json.parseTx(data)]) as Promise<SignedTx<T>>
         }
         return this._api.signTransactionPackage(
-            toSign.map(tx => keeperTxFactory(tx)) as TSignTransactionPackageData
+            toSign.map(tx => keeperTxFactory(tx)) as WavesKeeper.TSignTransactionPackageData
         ).then(data => data.map(tx => json.parseTx(tx))) as Promise<SignedTx<T>>;
     }
 }
