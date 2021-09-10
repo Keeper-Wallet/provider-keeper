@@ -8,9 +8,8 @@ import {
     TypedData,
     UserData,
 } from '@waves/signer';
-import {json} from '@waves/marshall';
 import {EventEmitter} from 'typed-ts-events';
-import {keeperTxFactory} from "./adapter";
+import {keeperTxFactory, signerTxFactory } from "./adapter";
 
 export class ProviderKeeper implements Provider {
 
@@ -103,10 +102,10 @@ export class ProviderKeeper implements Provider {
         if (toSign.length == 1) {
             return this._api.signTransaction(
                 keeperTxFactory(toSign[0])
-            ).then(data => [json.parseTx(data)]) as Promise<SignedTx<T>>
+            ).then(data => [signerTxFactory(data)]) as Promise<SignedTx<T>>
         }
         return this._api.signTransactionPackage(
             toSign.map(tx => keeperTxFactory(tx)) as WavesKeeper.TSignTransactionPackageData
-        ).then(data => data.map(tx => json.parseTx(tx))) as Promise<SignedTx<T>>;
+        ).then(data => data.map(tx => signerTxFactory(tx))) as Promise<SignedTx<T>>;
     }
 }
