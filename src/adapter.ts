@@ -26,10 +26,9 @@ function moneyFactory(amount: number | string, assetId: string | null = 'WAVES')
 }
 
 function defaultsFactory(tx: SignerTx): WavesKeeper.ITransactionBase {
-    const { fee, senderPublicKey } = tx;
+    const { fee } = tx;
     return {
         ...(fee ? { fee: moneyFactory(fee) } : {}),
-        ...(senderPublicKey ? { senderPublicKey } : {}),
     };
 }
 
