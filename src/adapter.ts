@@ -1,4 +1,5 @@
 import {
+    SignedTx,
     SignerAliasTx,
     SignerBurnTx,
     SignerCancelLeaseTx,
@@ -13,271 +14,188 @@ import {
     SignerSponsorshipTx,
     SignerTransferTx,
     SignerTx,
-    SignedTx,
 } from '@waves/signer';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
 import { json } from '@waves/marshall';
 
-class IssueAdapter implements WavesKeeper.TIssueTxData {
-    type;
-    data;
-
-    constructor({
-        type,
-        name,
-        description,
-        quantity,
-        decimals,
-        reissuable,
-        script,
-        fee,
-        senderPublicKey,
-    }: SignerIssueTx) {
-        this.type = type;
-        this.data = {
-            name,
-            description,
-            quantity,
-            precision: decimals,
-            reissuable,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(script ? { script } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.IIssueTx;
-    }
-}
-
-class TransferAdapter implements WavesKeeper.TTransferTxData {
-    type;
-    data;
-
-    constructor({
-        type,
+function moneyFactory(amount: number | string, assetId: string | null = 'WAVES'): WavesKeeper.IMoneyAmount {
+    return {
         amount,
-        assetId: _assetId = 'WAVES',
-        fee,
-        feeAssetId: _feeAssetId = 'WAVES',
+        assetId: assetId ?? 'WAVES',
+    };
+}
+
+function defaultsFactory(tx: SignerTx): WavesKeeper.ITransactionBase {
+    const { fee, senderPublicKey } = tx;
+    return {
+        ...(fee ? { fee: moneyFactory(fee) } : {}),
+        ...(senderPublicKey ? { senderPublicKey } : {}),
+    };
+}
+
+function issueAdapter(tx: SignerIssueTx): WavesKeeper.TIssueTxData {
+    const { name, description, quantity, decimals, reissuable, script } = tx;
+    const data: WavesKeeper.IIssueTx = {
+        ...defaultsFactory(tx),
+        name,
+        description: description ?? '',
+        quantity,
+        precision: decimals,
+        reissuable: reissuable ?? false,
+        ...(script ? { script } : {}),
+    };
+    return { type: TRANSACTION_TYPE.ISSUE, data };
+}
+
+function transferAdapter(tx: SignerTransferTx): WavesKeeper.TTransferTxData {
+    const { amount, assetId, fee, feeAssetId, recipient, attachment } = tx;
+    const data: WavesKeeper.ITransferTx = {
+        ...defaultsFactory(tx),
+        amount: moneyFactory(amount, assetId),
         recipient,
-        attachment,
-        senderPublicKey,
-    }: SignerTransferTx) {
-        this.type = type;
-        this.data = {
-            amount: { amount: amount, assetId: _assetId } as WavesKeeper.TMoney,
-            recipient,
-            ...(attachment ? { attachment } : {}),
-            ...(fee ? { fee: { amount: fee, assetId: _feeAssetId } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ITransferTx;
-    }
+        ...(attachment ? { attachment } : {}),
+        ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
+    };
+    return { type: TRANSACTION_TYPE.TRANSFER, data };
 }
 
-class ReissueAdapter implements WavesKeeper.TReissueTxData {
-    type;
-    data;
-
-    constructor({ type, assetId, quantity, reissuable, fee, senderPublicKey }: SignerReissueTx) {
-        this.type = type;
-        this.data = {
-            assetId,
-            quantity,
-            reissuable,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.IReissueTx;
-    }
+function reissueAdapter(tx: SignerReissueTx): WavesKeeper.TReissueTxData {
+    const { assetId, quantity, reissuable } = tx;
+    const data: WavesKeeper.IReissueTx = {
+        ...defaultsFactory(tx),
+        assetId,
+        quantity,
+        reissuable,
+    };
+    return { type: TRANSACTION_TYPE.REISSUE, data };
 }
 
-class BurnAdapter implements WavesKeeper.TBurnTxData {
-    type;
-    data;
-
-    constructor({ type, assetId, amount, fee, senderPublicKey }: SignerBurnTx) {
-        this.type = type;
-        this.data = {
-            assetId,
-            amount,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.IBurnTx;
-    }
+function burnAdapter(tx: SignerBurnTx): WavesKeeper.TBurnTxData {
+    const { assetId, amount } = tx;
+    const data: WavesKeeper.IBurnTx = {
+        ...defaultsFactory(tx),
+        assetId,
+        amount,
+    };
+    return { type: TRANSACTION_TYPE.BURN, data };
 }
 
-class LeaseAdapter implements WavesKeeper.TLeaseTxData {
-    type;
-    data;
-
-    constructor({ type, recipient, amount, fee, senderPublicKey }: SignerLeaseTx) {
-        this.type = type;
-        this.data = {
-            recipient,
-            amount,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ILeaseTx;
-    }
+function leaseAdapter(tx: SignerLeaseTx): WavesKeeper.TLeaseTxData {
+    const { recipient, amount } = tx;
+    const data: WavesKeeper.ILeaseTx = {
+        ...defaultsFactory(tx),
+        recipient,
+        amount,
+    };
+    return { type: TRANSACTION_TYPE.LEASE, data };
 }
 
-class CancelLeaseAdapter implements WavesKeeper.TLeaseCancelTxData {
-    type;
-    data;
-
-    constructor({ type, leaseId, fee, senderPublicKey }: SignerCancelLeaseTx) {
-        this.type = type;
-        this.data = {
-            leaseId,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ILeaseCancelTx;
-    }
+function leaseCancelAdapter(tx: SignerCancelLeaseTx): WavesKeeper.TLeaseCancelTxData {
+    const { leaseId } = tx;
+    const data: WavesKeeper.ILeaseCancelTx = {
+        ...defaultsFactory(tx),
+        leaseId,
+    };
+    return { type: TRANSACTION_TYPE.CANCEL_LEASE, data };
 }
 
-class AliasAdapter implements WavesKeeper.TCreateAliasTxData {
-    type;
-    data;
-
-    constructor({ type, alias, fee, senderPublicKey }: SignerAliasTx) {
-        this.type = type;
-        this.data = {
-            alias,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ICreateAliasTx;
-    }
+function aliasAdapter(tx: SignerAliasTx): WavesKeeper.TCreateAliasTxData {
+    const { alias } = tx;
+    const data: WavesKeeper.ICreateAliasTx = {
+        ...defaultsFactory(tx),
+        alias,
+    };
+    return { type: TRANSACTION_TYPE.ALIAS, data };
 }
 
-class MassTransferAdapter implements WavesKeeper.TMassTransferTxData {
-    type;
-    data;
-
-    constructor({
-        type,
-        assetId: _assetId = 'WAVES',
-        transfers,
-        attachment,
-        fee,
-        senderPublicKey,
-    }: SignerMassTransferTx) {
-        this.type = type;
-        this.data = {
-            totalAmount: { amount: 0, assetId: _assetId } as WavesKeeper.TMoney,
-            transfers: transfers as Array<WavesKeeper.ITransfer>,
-            ...(attachment ? { attachment } : {}),
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.IMassTransferTx;
-    }
+function massTransferAdapter(tx: SignerMassTransferTx): WavesKeeper.TMassTransferTxData {
+    const { assetId, transfers, attachment } = tx;
+    const data: WavesKeeper.IMassTransferTx = {
+        ...defaultsFactory(tx),
+        totalAmount: moneyFactory(0, assetId),
+        transfers: transfers as Array<WavesKeeper.ITransfer>,
+        ...(attachment ? { attachment } : {}),
+    };
+    return { type: TRANSACTION_TYPE.MASS_TRANSFER, data };
 }
 
-class DataAdapter implements WavesKeeper.TDataTxData {
-    type;
-    data;
-
-    constructor({ type, data, fee, senderPublicKey }: SignerDataTx) {
-        this.type = type;
-        this.data = {
-            data: data as Array<WavesKeeper.TData>,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.IDataTx;
-    }
+function dataAdapter(tx: SignerDataTx): WavesKeeper.TDataTxData {
+    const { data } = tx;
+    const dataTx: WavesKeeper.IDataTx = {
+        ...defaultsFactory(tx),
+        data: data as Array<WavesKeeper.TData>,
+    };
+    return { type: TRANSACTION_TYPE.DATA, data: dataTx };
 }
 
-class SetScriptAdapter implements WavesKeeper.TSetScriptTxData {
-    type;
-    data;
-
-    constructor({ type, script, fee, senderPublicKey }: SignerSetScriptTx) {
-        this.type = type;
-        this.data = {
-            script,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ISetScriptTx;
-    }
+function setScriptAdapter(tx: SignerSetScriptTx): WavesKeeper.TSetScriptTxData {
+    const { script } = tx;
+    const data: WavesKeeper.ISetScriptTx = {
+        ...defaultsFactory(tx),
+        script,
+    };
+    return { type: TRANSACTION_TYPE.SET_SCRIPT, data };
 }
 
-class SponsorshipAdapter implements WavesKeeper.TSponsoredFeeTxData {
-    type;
-    data;
-
-    constructor({ type, assetId, minSponsoredAssetFee, fee, senderPublicKey }: SignerSponsorshipTx) {
-        this.type = type;
-        this.data = {
-            minSponsoredAssetFee: { amount: minSponsoredAssetFee, assetId } as WavesKeeper.TMoney,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ISponsoredFeeTx;
-    }
+function sponsorshipAdapter(tx: SignerSponsorshipTx): WavesKeeper.TSponsoredFeeTxData {
+    const { assetId, minSponsoredAssetFee } = tx;
+    const data: WavesKeeper.ISponsoredFeeTx = {
+        ...defaultsFactory(tx),
+        minSponsoredAssetFee: moneyFactory(minSponsoredAssetFee, assetId),
+    };
+    return { type: TRANSACTION_TYPE.SPONSORSHIP, data };
 }
 
-class SetAssetScriptAdapter implements WavesKeeper.TSetAssetScriptTxData {
-    type;
-    data;
-
-    constructor({ type, assetId, script, fee, senderPublicKey }: SignerSetAssetScriptTx) {
-        this.type = type;
-        this.data = {
-            assetId,
-            script,
-            ...(fee ? { fee: { amount: fee, assetId: 'WAVES' } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.ISetAssetScriptTx;
-    }
+function setAssetScriptAdapter(tx: SignerSetAssetScriptTx): WavesKeeper.TSetAssetScriptTxData {
+    const { assetId, script } = tx;
+    const data: WavesKeeper.ISetAssetScriptTx = {
+        ...defaultsFactory(tx),
+        assetId,
+        script,
+    };
+    return { type: TRANSACTION_TYPE.SET_ASSET_SCRIPT, data };
 }
 
-class InvokeScriptAdapter implements WavesKeeper.TScriptInvocationTxData {
-    type;
-    data;
-
-    constructor({
-        type,
+function invokeScriptAdapter(tx: SignerInvokeTx): WavesKeeper.TScriptInvocationTxData {
+    const { dApp, fee, feeAssetId, payment, call } = tx;
+    const data: WavesKeeper.IScriptInvocationTx = {
+        ...defaultsFactory(tx),
         dApp,
-        fee,
-        feeAssetId: _feeAssetId = 'WAVES',
-        payment,
-        call,
-        senderPublicKey,
-    }: SignerInvokeTx) {
-        this.type = type;
-        this.data = {
-            dApp,
-            ...(call ? { call: call as WavesKeeper.ICall } : {}),
-            ...(payment ? { payment: payment as Array<WavesKeeper.TMoney> } : {}),
-            ...(fee ? { fee: { amount: fee, assetId: _feeAssetId } as WavesKeeper.TMoney } : {}),
-            ...(senderPublicKey ? { senderPublicKey } : {}),
-        } as WavesKeeper.IScriptInvocationTx;
-    }
+        ...(call ? { call: call as WavesKeeper.ICall } : {}),
+        ...(payment ? { payment: payment as Array<WavesKeeper.TMoney> } : {}),
+        ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
+    };
+    return { type: TRANSACTION_TYPE.INVOKE_SCRIPT, data };
 }
 
 export function keeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData {
     switch (tx.type) {
-        case TRANSACTION_TYPE.TRANSFER:
-            return new TransferAdapter(tx);
         case TRANSACTION_TYPE.ISSUE:
-            return new IssueAdapter(tx);
+            return issueAdapter(tx);
+        case TRANSACTION_TYPE.TRANSFER:
+            return transferAdapter(tx);
         case TRANSACTION_TYPE.REISSUE:
-            return new ReissueAdapter(tx);
+            return reissueAdapter(tx);
         case TRANSACTION_TYPE.BURN:
-            return new BurnAdapter(tx);
+            return burnAdapter(tx);
         case TRANSACTION_TYPE.LEASE:
-            return new LeaseAdapter(tx);
+            return leaseAdapter(tx);
         case TRANSACTION_TYPE.CANCEL_LEASE:
-            return new CancelLeaseAdapter(tx);
+            return leaseCancelAdapter(tx);
         case TRANSACTION_TYPE.ALIAS:
-            return new AliasAdapter(tx);
+            return aliasAdapter(tx);
         case TRANSACTION_TYPE.MASS_TRANSFER:
-            return new MassTransferAdapter(tx);
+            return massTransferAdapter(tx);
         case TRANSACTION_TYPE.DATA:
-            return new DataAdapter(tx);
+            return dataAdapter(tx);
         case TRANSACTION_TYPE.SET_SCRIPT:
-            return new SetScriptAdapter(tx);
+            return setScriptAdapter(tx);
         case TRANSACTION_TYPE.SPONSORSHIP:
-            return new SponsorshipAdapter(tx);
+            return sponsorshipAdapter(tx);
         case TRANSACTION_TYPE.SET_ASSET_SCRIPT:
-            return new SetAssetScriptAdapter(tx);
+            return setAssetScriptAdapter(tx);
         case TRANSACTION_TYPE.INVOKE_SCRIPT:
-            return new InvokeScriptAdapter(tx);
+            return invokeScriptAdapter(tx);
         default:
             throw new Error('Unsupported transaction type');
     }
