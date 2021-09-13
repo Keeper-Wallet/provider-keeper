@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": false,
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": true,
+    "jsx": "react",
+    "jsxFactory": "h",
+    "noImplicitAny": false,
+    "types": ["./node_modules/@waves/waveskeeper-types"],
+    "lib": [
+      "dom",
+      "es5",
+      "es2015.promise",
+      "scripthost"
+    ]
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../waves-js"
+  ]
+}
