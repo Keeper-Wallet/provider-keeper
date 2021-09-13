@@ -4,10 +4,9 @@
     "target": "es5",
     "sourceMap": false,
     "declaration": true,
+    "declarationDir": "dist/types",
     "outDir": "./dist",
     "strict": true,
-    "jsx": "react",
-    "jsxFactory": "h",
     "noImplicitAny": false,
     "types": ["./node_modules/@waves/waveskeeper-types"],
     "lib": [
