@@ -1,4 +1,4 @@
-import { keeperTxFactory, signerTxFactory } from '../src/adapter';
+import { keeperTxFactory } from '../src/adapter';
 import {
     SignerAliasTx,
     SignerBurnTx,
@@ -13,7 +13,6 @@ import {
     SignerSetScriptTx,
     SignerSponsorshipTx,
     SignerTransferTx,
-    SignerTx,
 } from '@waves/signer';
 import { expect } from 'chai';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
@@ -26,35 +25,44 @@ const script = 'base64:BQbtKNoM';
 const attachment = 'base64:BQbtKNoM';
 const amount = 123456790;
 const longMax = '9223372036854775807';
-const longMin = '-9223372036854775808';
 const dApp = '3My2kBJaGfeM2koiZroaYdd3y8rAgfV2EAx';
 
-const testFee = (tx: SignerTx) => {
-    const { fee, ...other } = tx;
-
+function testFee(tx: SignerIssueTx);
+function testFee(tx: SignerTransferTx);
+function testFee(tx: SignerReissueTx);
+function testFee(tx: SignerBurnTx);
+function testFee(tx: SignerLeaseTx);
+function testFee(tx: SignerCancelLeaseTx);
+function testFee(tx: SignerAliasTx);
+function testFee(tx: SignerMassTransferTx);
+function testFee(tx: SignerDataTx);
+function testFee(tx: SignerSetScriptTx);
+function testFee(tx: SignerSponsorshipTx);
+function testFee(tx: SignerSetAssetScriptTx);
+function testFee(tx: SignerInvokeTx);
+function testFee(tx) {
     it('fee is empty', () => {
-        const txNonFee = { ...other };
-        expect(keeperTxFactory(txNonFee).data.fee).to.be.equal(undefined);
+        expect(keeperTxFactory(tx).data.fee).to.be.undefined;
     });
 
     it('fee is money-like', () => {
-        const txWavesFee = { fee: amount, ...other };
+        tx.fee = amount; // now tx with fee in WAVES
 
-        expect(keeperTxFactory(txWavesFee).data.fee).to.be.deep.equal({
-            amount: txWavesFee.fee,
+        expect(keeperTxFactory(tx).data.fee).to.be.deep.equal({
+            amount: tx.fee,
             assetId: 'WAVES',
         });
 
         if (tx.type === TRANSACTION_TYPE.TRANSFER || tx.type === TRANSACTION_TYPE.INVOKE_SCRIPT) {
-            const txAssetFee = { fee: amount, feeAssetId: assetId, ...other };
+            tx.feeAssetId = assetId; // tx with fee in asset
 
-            expect(keeperTxFactory(txAssetFee).data.fee).to.be.deep.equal({
-                amount: txAssetFee.fee,
-                assetId: txAssetFee.feeAssetId,
+            expect(keeperTxFactory(tx).data.fee).to.be.deep.equal({
+                amount: tx.fee,
+                assetId: tx.feeAssetId,
             });
         }
     });
-};
+}
 
 describe('Adapter', () => {
     describe('converting tx from Signer to Keeper', () => {
@@ -69,7 +77,7 @@ describe('Adapter', () => {
                 script: script,
             };
 
-            it('is correct', function () {
+            it('is correct', () => {
                 expect(keeperTxFactory(txIssue)).to.be.deep.equal({
                     type: txIssue.type,
                     data: {
@@ -83,11 +91,23 @@ describe('Adapter', () => {
                 });
             });
 
+            it('optional fields is correct', () => {
+                delete txIssue.description; // description is undefined
+                expect(keeperTxFactory(txIssue).data.description).to.be.equal('');
+                delete txIssue.reissuable; // reissuable is undefined
+                expect(keeperTxFactory(txIssue).data.reissuable).to.be.equal(false);
+            });
+
             testFee(txIssue);
         });
 
         describe('transfer', () => {
-            const txTransfer: SignerTransferTx = { type: TRANSACTION_TYPE.TRANSFER, recipient, amount: amount };
+            const txTransfer: SignerTransferTx = {
+                type: TRANSACTION_TYPE.TRANSFER,
+                recipient,
+                amount: amount, // amount in WAVES
+                attachment: attachment,
+            };
 
             it('is correct', () => {
                 expect(keeperTxFactory(txTransfer)).to.be.deep.equal({
@@ -95,8 +115,19 @@ describe('Adapter', () => {
                     data: {
                         recipient: txTransfer.recipient,
                         amount: { amount: txTransfer.amount, assetId: 'WAVES' },
+                        attachment: txTransfer.attachment,
                     },
                 });
+            });
+
+            it('amount in asset', () => {
+                txTransfer.assetId = assetId;
+                expect(keeperTxFactory(txTransfer).data.amount.assetId).to.be.equal(txTransfer.assetId);
+            });
+
+            it('attachment is undefined', () => {
+                delete txTransfer.attachment;
+                expect(keeperTxFactory(txTransfer).data.attachment).to.be.undefined;
             });
 
             testFee(txTransfer);
@@ -224,6 +255,11 @@ describe('Adapter', () => {
                         attachment: attachment,
                     },
                 });
+            });
+
+            it('attachment is undefined', () => {
+                delete txMassTransfer.attachment;
+                expect(keeperTxFactory(txMassTransfer).data.attachment).to.be.undefined;
             });
 
             testFee(txMassTransfer);
