@@ -23,10 +23,12 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - Version of this product [e.g. "0.0.1"]
- - OS: [e.g. "Windows 10/ macOS Big Sur / Ubuntu Bionic Beaver / iOS 15"]
- - Browser version [e.g. "Google Chrome Version 93.0.4577.63 (Official Build) (x86_64)"]
+**Environment**
+Please complete the following information.
+ - Version of Signer: [e.g. "1.0.2" ]
+ - Version of ProviderKeeper: [e.g. "1.0.0"]
+ - OS: [e.g. "Windows 10 / macOS Big Sur / Ubuntu Bionic Beaver / iOS 15"]
+ - Browser version: [e.g. "Google Chrome Version 93.0.4577.63 (Official Build) (x86_64)"]
 
 **Additional context**
 Add any other context about the problem here.
