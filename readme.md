@@ -36,8 +36,8 @@ Add library initialization to your app.
    const authData = {
        data: 'server generated string',
    }
-   const provider = new ProviderKeeper(authData);
-   signer.setProvider(provider);
+   const keeper = new ProviderKeeper(authData);
+   signer.setProvider(keeper);
    ```
 
 * For Mainnet:
@@ -50,8 +50,8 @@ Add library initialization to your app.
    const authData = {
        data: 'server generated string',
    }
-   const provider = new ProviderKeeper(authData);
-   signer.setProvider(provider);
+   const keeper = new ProviderKeeper(authData);
+   signer.setProvider(keeper);
    ```
 
 ### 3. Basic example
