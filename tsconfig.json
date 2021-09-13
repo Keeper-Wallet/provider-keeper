@@ -8,7 +8,7 @@
     "outDir": "./dist",
     "strict": true,
     "noImplicitAny": false,
-    "types": ["./node_modules/@waves/waveskeeper-types"],
+    "types": ["./node_modules/@waves/waveskeeper-types", "mocha"],
     "lib": [
       "dom",
       "es5",
