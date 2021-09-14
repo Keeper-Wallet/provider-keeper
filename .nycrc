@@ -1,0 +1,16 @@
+{
+  "cache": false,
+  "check-coverage": false,
+  "extension": [
+    ".ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "reporter": [
+    "html",
+    "text"
+  ],
+  "all": true,
+  "instrument": true
+}

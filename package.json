@@ -27,7 +27,8 @@
   "scripts": {
     "watch": "webpack --watch",
     "build": "webpack",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'"
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'",
+    "coverage": "nyc npm run test"
   },
   "dependencies": {
     "@waves/marshall": "^0.14.0",
@@ -45,6 +46,7 @@
     "@waves/waveskeeper-types": "^0.2.0",
     "chai": "^4.3.4",
     "mocha": "^9.1.1",
+    "nyc": "^15.1.0",
     "ts-loader": "^6.2.1",
     "ts-node": "^10.2.1",
     "typescript": "^3.7.4",
