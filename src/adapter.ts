@@ -186,6 +186,7 @@ export function keeperTxFactory(tx: SignerSetScriptTx): WavesKeeper.TSetScriptTx
 export function keeperTxFactory(tx: SignerSponsorshipTx): WavesKeeper.TSponsoredFeeTxData;
 export function keeperTxFactory(tx: SignerSetAssetScriptTx): WavesKeeper.TSetAssetScriptTxData;
 export function keeperTxFactory(tx: SignerInvokeTx): WavesKeeper.TScriptInvocationTxData;
+export function keeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData;
 export function keeperTxFactory(tx) {
     switch (tx.type) {
         case TRANSACTION_TYPE.ISSUE:
