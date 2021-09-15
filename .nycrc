@@ -8,7 +8,6 @@
     "src/**/*.ts"
   ],
   "reporter": [
-    "html",
     "text"
   ],
   "all": true,
