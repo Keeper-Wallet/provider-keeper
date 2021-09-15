@@ -27,7 +27,8 @@
   "scripts": {
     "watch": "webpack --watch",
     "build": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run build"
   },
   "dependencies": {
     "@waves/marshall": "^0.14.0",
