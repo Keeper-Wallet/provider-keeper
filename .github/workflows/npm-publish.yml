@@ -26,6 +26,14 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            - name: Build package
+              run: npm run build
+
+            - name: Publish to NPM
+              run: npm publish --access public
+              env:
+                NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+
     report:
         needs: publish
         runs-on: ubuntu-latest
@@ -48,7 +56,7 @@ jobs:
                   echo ::set-output name=LIST::$(
                   git log --reverse --pretty=format:"%s" ^"$PREV_TAG" "$CURRENT_TAG"
                   | grep -oE "^KEEP\-[0-9]+"
-                  | jq -Rsc '{issues:split("\n")|del(..|select(. == "")),releaseVersion:"${CURRENT_TAG:1}",component:"provider"}' )
+                  | jq -Rsc '{issues:[split("\n")|unique|.[]|select(length > 0)],releaseVersion:"${CURRENT_TAG:1}",component:"provider"}' )
               env:
                   PREV_TAG: ${{ steps.prevTag.outputs.VALUE }}
                   CURRENT_TAG: ${{ steps.currentTag.outputs.VALUE }}
