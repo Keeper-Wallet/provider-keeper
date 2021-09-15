@@ -26,6 +26,11 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            - name: Publish to NPM
+            - run: npm publish --access public
+              env:
+                NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+
     report:
         needs: publish
         runs-on: ubuntu-latest
