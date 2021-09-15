@@ -1,10 +1,9 @@
 const { resolve } = require('path');
 
-
 module.exports = [
     {
         entry: './src/index.ts',
-        mode: "production",
+        mode: 'production',
         module: {
             rules: [
                 {
@@ -23,6 +22,6 @@ module.exports = [
             library: 'providerKeeper',
             filename: 'provider-keeper.js',
             path: resolve(__dirname, 'dist'),
-        }
-    }
+        },
+    },
 ];

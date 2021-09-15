@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "outDir": "./dist",
+    "types": [
+      "../../node_modules/@waves/waveskeeper-types",
+      "node",
+      "mocha",
+      "chai"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "extends": "../../tsconfig.json",
+  "include": [
+    "src"
+  ]
+}

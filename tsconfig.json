@@ -1,27 +1,31 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es5",
-    "sourceMap": false,
-    "declaration": true,
-    "declarationDir": "dist/types",
-    "outDir": "./dist",
-    "strict": true,
-    "noImplicitAny": false,
-    "types": ["./node_modules/@waves/waveskeeper-types", "node", "mocha", "chai"],
     "lib": [
       "dom",
       "es5",
       "es2015.promise",
       "scripthost"
-    ]
+    ],
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "baseUrl": ".",
+    "paths": {
+      "@waves/provider-keeper": [
+        "./packages/components/src"
+      ],
+      "@waves/provider-keeper/*": [
+        "./packages/components/src/*"
+      ]
+    },
+    "sourceMap": false,
+    "strict": true,
+    "target": "es5"
   },
   "include": [
     "src"
   ],
   "exclude": [
-    "node_modules",
+    "../../node_modules",
     "dist",
-    "../waves-js"
   ]
 }
