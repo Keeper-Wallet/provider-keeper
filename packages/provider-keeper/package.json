@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.ts'",
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.spec.ts'",
     "coverage": "nyc npm run test",
     "prepublish": "npm run build"
   },
@@ -43,6 +43,7 @@
     "@types/chai": "^4.2.21",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.1",
+    "@types/selenium-webdriver": "^4.0.15",
     "@waves/signer": "^1.0.3",
     "@waves/waveskeeper-types": "^0.2.0",
     "chai": "^4.3.4",
