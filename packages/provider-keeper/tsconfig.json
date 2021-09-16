@@ -12,7 +12,8 @@
   },
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "tests"
   ],
   "extends": "../../tsconfig.json",
   "include": [

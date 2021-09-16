@@ -3,13 +3,19 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "test": "npm run test -workspace=packages/provider-keeper",
-    "coverage": "npm run coverage -workspace=packages/provider-keeper",
-    "build": "npm run build -workspace=packages/provider-keeper",
-    "start": "npm run start -workspace=packages/provider-keeper-ui"
+    "provider:test": "npm run test -workspace=packages/provider-keeper",
+    "provider:coverage": "npm run coverage -workspace=packages/provider-keeper",
+    "provider:build": "npm run build -workspace=packages/provider-keeper",
+    "ui:build": "npm run build -workspace=packages/provider-keeper-ui",
+    "ui:start": "npm run start -workspace=packages/provider-keeper-ui"
   },
   "workspaces": [
     "packages/provider-keeper",
     "packages/provider-keeper-ui"
-  ]
+  ],
+  "engineStrict": true,
+  "engines": {
+    "node": "^14.17.6",
+    "npm": "^7.23.0"
+  }
 }

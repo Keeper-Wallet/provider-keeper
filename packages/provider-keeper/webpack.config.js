@@ -7,14 +7,21 @@ module.exports = [
         module: {
             rules: [
                 {
-                    test: /\.tsx?$/,
-                    use: 'ts-loader',
+                    test: /\.ts$/,
+                    use: [
+                        {
+                            loader: 'ts-loader',
+                            options: {
+                                configFile: 'tsconfig.prod.json',
+                            },
+                        },
+                    ],
                     exclude: /node_modules/,
                 },
             ],
         },
         resolve: {
-            extensions: ['.tsx', '.ts', '.js'],
+            extensions: ['.ts', '.js'],
         },
         output: {
             libraryTarget: 'umd',
