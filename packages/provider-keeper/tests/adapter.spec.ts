@@ -261,8 +261,8 @@ describe('Adapter', () => {
                 });
             });
 
-            it('attachment is undefined', () => {
-                delete txMassTransfer.attachment;
+            it('attachment is null', () => {
+                txMassTransfer.attachment = null;
                 expect(keeperTxFactory(txMassTransfer).data.attachment).to.be.undefined;
             });
 

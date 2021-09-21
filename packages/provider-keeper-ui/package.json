@@ -7,8 +7,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@waves/signer": "^1.0.3",
     "@waves/marshall": "^0.14.0",
+    "@waves/signer": "^1.0.3",
     "babel-core": "^6.26.3"
   },
   "devDependencies": {

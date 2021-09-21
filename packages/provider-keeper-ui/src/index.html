@@ -8,30 +8,21 @@
 <body>
 
 <main>
-    <button class="js-login">Sign in with WavesKeeper</button><br>
-    <div class="explorer-link"></div><br><br>
-    <button class="js-issue">3 Issue</button>
-    <button class="js" data-type="issue" data-tx="issueScript">with script</button><br>
-    <button class="js" data-type="transfer">4 Transfer</button><br>
-    <button class="js" data-type="reissue">5 Reissue</button><br>
-    <button class="js" data-type="burn">6 Burn</button><br>
-    <button class="js" data-type="lease">8 Lease</button><br>
-    <button class="js" data-type="cancelLease">9 LeaseCancel</button><br>
-    <button class="js" data-type="alias">10 CreateAlias</button><br>
-    <button class="js" data-type="massTransfer">11 MassTransfer</button><br>
-    <button class="js" data-type="data">12 Data</button>
-    <button class="js" data-type="data" data-tx="dataRemove">remove</button><br>
-    <button class="js" data-type="setScript">13 SetScript</button><br>
-    <button class="js" data-type="sponsorship">14 SetSponsorship</button><br>
-    <button class="js" data-type="setAssetScript">15 SetAssetScript</button><br>
-    <button class="js" data-type="invoke" data-tx="invokeDefault">16 InvokeScript: callDefault</button>
-    <button class="js" data-type="invoke" data-tx="invokeNull">callWithNull</button>
-    <button class="js" data-type="invoke" data-tx="callWithNoArgsButSinglePayment">callWithNoArgsButSinglePayment</button>
-    <button class="js" data-type="invoke" data-tx="callWithNoArgsButManyPayments">callWithNoArgsButManyPayments</button>
-    <button class="js" data-type="invoke" data-tx="callWithNativeArgsAndNoPayments">callWithNativeArgsAndNoPayments</button>
-    <button class="js" data-type="invoke" data-tx="callWithListArgsAndNoPayments">callWithListArgsAndNoPayments</button>
-    <hr>
-    <button class="js-transfer-package">Transfer package</button><br>
+    <div class="btn-group">
+    <div id="sign-in" class="btn disabled">Sign in</div>
+    <div id="send-tx" class="btn js-tx disabled">Send tx</div>
+    <div id="send-pack" class="btn js-tx">Send package</div>
+    </div>
+    <div class="cards">
+        <div class="card">
+            <header>input</header>
+            <div class="content" id="input"></div>
+        </div>
+        <div class="card">
+            <header>output</header>
+            <div class="content" id="output"></div>
+        </div>
+    </div>
 </main>
 </body>
 </html>

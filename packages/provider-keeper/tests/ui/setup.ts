@@ -1,7 +1,4 @@
 import { By, until, WebDriver } from 'selenium-webdriver';
-import getNetworkCode from '@waves/node-api-js/cjs/tools/blocks/getNetworkCode';
-import { broadcast, transfer, waitForTx } from '@waves/waves-transactions';
-import { address } from '@waves/ts-lib-crypto';
 import { get } from 'https';
 
 export async function fetchExtension(id: string): Promise<string> {
@@ -43,45 +40,9 @@ export async function fetchExtension(id: string): Promise<string> {
     });
 }
 
-type Account = { default: string; smart: string; rich: string };
+type Accounts = { default: string; smart: string; rich: string };
 
-export async function setupNodeAccounts(nodeUrl: string, accounts: Account) {
-    const chainId = await getNetworkCode(nodeUrl);
-    const options = { apiBase: nodeUrl };
-
-    const transferToDefaultTx = await broadcast(
-        transfer(
-            {
-                amount: '10000000000',
-                recipient: address(accounts.default, chainId),
-                chainId,
-            },
-            accounts.rich
-        ),
-        nodeUrl
-    );
-    await waitForTx(transferToDefaultTx.id, options);
-
-    const transferToSmartTx = await broadcast(
-        transfer(
-            {
-                amount: '10000000000',
-                recipient: address(accounts.smart, chainId),
-                chainId,
-            },
-            accounts.rich
-        ),
-        nodeUrl
-    );
-    await waitForTx(transferToSmartTx.id, options);
-}
-
-export async function setupWavesKeeperAccounts(
-    extension: string,
-    driver: WebDriver,
-    nodeUrl: string,
-    accounts: Account
-) {
+export async function setupWavesKeeperAccounts(extension: string, driver: WebDriver, accounts: Accounts) {
     const jsClick = (el) => {
         el.click();
     };
@@ -106,30 +67,20 @@ export async function setupWavesKeeperAccounts(
     submitBtn = await driver.findElement(By.css('.app button[type=submit]'));
     await submitBtn.click();
     // new account create page
-    // - change network to custom
+    // - change network to testnet
     const networkMenu = await driver.wait(
         until.elementLocated(By.xpath("//div[span[contains(@class, 'network-networkBottom')]]")),
         timeout
     );
     await driver.executeScript(jsClick, networkMenu);
-    const networkItemCustom = await driver.wait(
-        until.elementLocated(By.xpath("//div[contains(text(), 'Custom') and contains(@class, 'network-choose')]")),
+    const networkItemTestnet = await driver.wait(
+        until.elementLocated(By.xpath("//div[contains(text(), 'Testnet') and contains(@class, 'network-choose')]")),
         timeout
     );
-    await driver.executeScript(jsClick, networkItemCustom);
-    // - setup custom network
-    const networkCfgNodeUrlInput = await driver.wait(
-        until.elementLocated(By.css('#app-modal input#node_address')),
-        timeout
-    );
-    await networkCfgNodeUrlInput.sendKeys(nodeUrl);
-    const networkCfgSubmitBtn = await driver.findElement(By.css('#app-modal button[type=submit]'));
-    await networkCfgSubmitBtn.click();
-    await driver.sleep(1000);
+    await driver.executeScript(jsClick, networkItemTestnet);
     // - import account page
     let importAccountBtn = await driver.wait(until.elementLocated(By.css('.app button[type=transparent]')), timeout);
     await importAccountBtn.click();
-    // await driver.executeScript(jsClick, importAccountBtn);
     // -- set seed page
     let seedTextarea = await driver.wait(until.elementLocated(By.css('.app form textarea')), timeout);
     await seedTextarea.sendKeys(accounts.default);
