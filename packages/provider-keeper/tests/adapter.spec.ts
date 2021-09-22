@@ -19,17 +19,21 @@ import {
 } from '@waves/signer';
 import { expect } from 'chai';
 import { TRANSACTION_TYPE, TransactionMap } from '@waves/ts-types';
-
-const assetId = '7sP5abE9nGRwZxkgaEXgkQDZ3ERBcm9PLHixaUE5SYoT';
-const leaseId = '3N5HNJz5otiUavvoPrxMBrXBVv5HhYLdhiD';
-const aliasStr = 'merry';
-const recipient = '3N5HNJz5otiUavvoPrxMBrXBVv5HhYLdhiD';
-const script = 'base64:BQbtKNoM';
-const attachment = 'base64:BQbtKNoM';
-const amount = 123456790;
-const longMax = '9223372036854775807';
-const longMin = '-9223372036854775808';
-const dApp = '3My2kBJaGfeM2koiZroaYdd3y8rAgfV2EAx';
+import {
+    ALIAS,
+    BURN,
+    CANCEL_LEASE,
+    ISSUE,
+    LEASE,
+    MASS_TRANSFER,
+    REISSUE,
+    TRANSFER,
+    DATA,
+    SET_SCRIPT,
+    SPONSORSHIP,
+    SET_ASSET_SCRIPT,
+    INVOKE,
+} from './transactions';
 
 describe('Adapter', () => {
     describe('converting tx from Signer to Keeper', () => {
@@ -47,6 +51,9 @@ describe('Adapter', () => {
         function feeShouldBeValid(tx: SignerSetAssetScriptTx);
         function feeShouldBeValid(tx: SignerInvokeTx);
         function feeShouldBeValid(tx) {
+            const amount = 123456790;
+            const assetId = '7sP5abE9nGRwZxkgaEXgkQDZ3ERBcm9PLHixaUE5SYoT';
+
             it('fee is empty', () => {
                 expect(keeperTxFactory(tx).data.fee).to.be.undefined;
             });
@@ -71,15 +78,7 @@ describe('Adapter', () => {
         }
 
         describe('issue', () => {
-            const txIssue: SignerIssueTx = {
-                type: TRANSACTION_TYPE.ISSUE,
-                name: 'ScriptToken',
-                decimals: 8,
-                quantity: longMax,
-                reissuable: true,
-                description: 'ScriptToken',
-                script: script,
-            };
+            const txIssue: SignerIssueTx = { ...ISSUE };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txIssue)).to.be.deep.equal({
@@ -97,41 +96,36 @@ describe('Adapter', () => {
 
             it('optional fields are valid', () => {
                 delete txIssue.description; // description is undefined
-                expect(keeperTxFactory(txIssue).data.description).to.be.equal('');
                 delete txIssue.reissuable; // reissuable is undefined
-                expect(keeperTxFactory(txIssue).data.reissuable).to.be.equal(false);
                 delete txIssue.script; // script is undefined
-                expect(keeperTxFactory(txIssue).data.script).to.be.undefined;
+
+                const txIssueOptionals = keeperTxFactory(txIssue);
+
+                expect(txIssueOptionals.data.description).to.be.equal('');
+                expect(txIssueOptionals.data.reissuable).to.be.equal(false);
+                expect(txIssueOptionals.data.script).to.be.undefined;
             });
 
             feeShouldBeValid(txIssue);
         });
 
         describe('transfer', () => {
-            const txTransfer: SignerTransferTx = {
-                type: TRANSACTION_TYPE.TRANSFER,
-                recipient,
-                amount: amount, // amount in WAVES
-                attachment: attachment,
-            };
+            const txTransfer: SignerTransferTx = { ...TRANSFER };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txTransfer)).to.be.deep.equal({
                     type: txTransfer.type,
                     data: {
                         recipient: txTransfer.recipient,
-                        amount: { amount: txTransfer.amount, assetId: 'WAVES' },
+                        amount: { amount: txTransfer.amount, assetId: txTransfer.assetId },
                         attachment: txTransfer.attachment,
                     },
                 });
             });
 
-            it('amount in asset', () => {
-                txTransfer.assetId = assetId;
-                expect(keeperTxFactory(txTransfer).data.amount.assetId).to.be.equal(txTransfer.assetId);
-            });
-
-            it('attachment is undefined', () => {
+            it('optional fields are valid', () => {
+                delete txTransfer.assetId;
+                expect(keeperTxFactory(txTransfer).data.amount.assetId).to.be.equal('WAVES');
                 delete txTransfer.attachment;
                 expect(keeperTxFactory(txTransfer).data.attachment).to.be.undefined;
             });
@@ -140,12 +134,8 @@ describe('Adapter', () => {
         });
 
         describe('reissue', () => {
-            const txReissue: SignerReissueTx = {
-                type: TRANSACTION_TYPE.REISSUE,
-                assetId: assetId,
-                quantity: amount,
-                reissuable: true,
-            };
+            const txReissue: SignerReissueTx = { ...REISSUE };
+
             it('is valid', () => {
                 expect(keeperTxFactory(txReissue)).to.be.deep.equal({
                     type: txReissue.type,
@@ -156,15 +146,12 @@ describe('Adapter', () => {
                     },
                 });
             });
+
             feeShouldBeValid(txReissue);
         });
 
         describe('burn', () => {
-            const txBurn: SignerBurnTx = {
-                type: TRANSACTION_TYPE.BURN,
-                assetId: assetId,
-                amount: amount,
-            };
+            const txBurn: SignerBurnTx = { ...BURN };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txBurn)).to.be.deep.equal({
@@ -180,11 +167,7 @@ describe('Adapter', () => {
         });
 
         describe('lease', () => {
-            const txLease: SignerLeaseTx = {
-                type: TRANSACTION_TYPE.LEASE,
-                recipient: recipient,
-                amount: amount,
-            };
+            const txLease: SignerLeaseTx = { ...LEASE };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txLease)).to.be.deep.equal({
@@ -200,10 +183,7 @@ describe('Adapter', () => {
         });
 
         describe('lease cancel', () => {
-            const txLeaseCancel: SignerCancelLeaseTx = {
-                type: TRANSACTION_TYPE.CANCEL_LEASE,
-                leaseId: leaseId,
-            };
+            const txLeaseCancel: SignerCancelLeaseTx = { ...CANCEL_LEASE };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txLeaseCancel)).to.be.deep.equal({
@@ -218,10 +198,7 @@ describe('Adapter', () => {
         });
 
         describe('alias', () => {
-            const txAlias: SignerAliasTx = {
-                type: TRANSACTION_TYPE.ALIAS,
-                alias: aliasStr,
-            };
+            const txAlias: SignerAliasTx = { ...ALIAS };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txAlias)).to.be.deep.equal({
@@ -236,29 +213,15 @@ describe('Adapter', () => {
         });
 
         describe('mass transfer', () => {
-            const txMassTransfer: SignerMassTransferTx = {
-                type: TRANSACTION_TYPE.MASS_TRANSFER,
-                assetId: assetId,
-                transfers: [
-                    {
-                        amount: 1,
-                        recipient: 'testy',
-                    },
-                    {
-                        amount: 1,
-                        recipient: 'merry',
-                    },
-                ],
-                attachment: attachment,
-            };
+            const txMassTransfer: SignerMassTransferTx = { ...MASS_TRANSFER };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txMassTransfer)).to.be.deep.equal({
                     type: txMassTransfer.type,
                     data: {
-                        totalAmount: { amount: 0, assetId: assetId },
+                        totalAmount: { amount: 0, assetId: txMassTransfer.assetId },
                         transfers: txMassTransfer.transfers,
-                        attachment: attachment,
+                        attachment: txMassTransfer.attachment,
                     },
                 });
             });
@@ -274,15 +237,7 @@ describe('Adapter', () => {
         });
 
         describe('data', () => {
-            const txData: SignerDataTx = {
-                type: TRANSACTION_TYPE.DATA,
-                data: [
-                    { key: 'stringValue', type: 'string', value: 'Lorem ipsum dolor sit amet' },
-                    { key: 'longMaxValue', type: 'integer', value: longMax },
-                    { key: 'flagValue', type: 'boolean', value: true },
-                    { key: 'base64', type: 'binary', value: script },
-                ],
-            };
+            const txData: SignerDataTx = { ...DATA };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txData)).to.be.deep.equal({
@@ -297,10 +252,7 @@ describe('Adapter', () => {
         });
 
         describe('set script', () => {
-            const txSetScript: SignerSetScriptTx = {
-                type: TRANSACTION_TYPE.SET_SCRIPT,
-                script: script,
-            };
+            const txSetScript: SignerSetScriptTx = { ...SET_SCRIPT };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txSetScript)).to.be.deep.equal({
@@ -315,11 +267,7 @@ describe('Adapter', () => {
         });
 
         describe('sponsorship', () => {
-            const txSponsorship: SignerSponsorshipTx = {
-                type: TRANSACTION_TYPE.SPONSORSHIP,
-                assetId: assetId,
-                minSponsoredAssetFee: amount,
-            };
+            const txSponsorship: SignerSponsorshipTx = { ...SPONSORSHIP };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txSponsorship)).to.be.deep.equal({
@@ -337,11 +285,7 @@ describe('Adapter', () => {
         });
 
         describe('set asset script', () => {
-            const txSetAssetScript: SignerSetAssetScriptTx = {
-                type: TRANSACTION_TYPE.SET_ASSET_SCRIPT,
-                assetId: assetId,
-                script: script,
-            };
+            const txSetAssetScript: SignerSetAssetScriptTx = { ...SET_ASSET_SCRIPT };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txSetAssetScript)).to.be.deep.equal({
@@ -357,35 +301,13 @@ describe('Adapter', () => {
         });
 
         describe('invoke script', () => {
-            const txInvokeScript: SignerInvokeTx = {
-                type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-                dApp: dApp,
-                call: {
-                    function: 'someFunctionToCall',
-                    args: [
-                        { type: 'binary', value: 'base64:BQbtKNoM' },
-                        { type: 'boolean', value: true },
-                        { type: 'integer', value: longMax },
-                        { type: 'string', value: 'Lorem ipsum dolor sit amet' },
-                    ],
-                },
-                payment: [
-                    {
-                        assetId: null,
-                        amount: 1,
-                    },
-                    {
-                        assetId: assetId,
-                        amount: 1,
-                    },
-                ],
-            };
+            const txInvokeScript: SignerInvokeTx = { ...INVOKE };
 
             it('is valid', () => {
                 expect(keeperTxFactory(txInvokeScript)).to.be.deep.equal({
                     type: txInvokeScript.type,
                     data: {
-                        dApp: dApp,
+                        dApp: txInvokeScript.dApp,
                         call: {
                             function: txInvokeScript.call!.function,
                             args: txInvokeScript.call!.args,
@@ -400,7 +322,10 @@ describe('Adapter', () => {
     });
 
     describe('converting signed tx from Keeper to Signer', () => {
-        function isValidTx(signedTx: SignedTx<SignerTx>, type: keyof TransactionMap) {
+        const longMax = '9223372036854775807';
+        const longMin = '-9223372036854775808';
+
+        function signedTxShouldBeValid(signedTx: SignedTx<SignerTx>, type: keyof TransactionMap) {
             it('is valid', () => {
                 expect(signedTx.id).exist;
                 expect(signedTx.type).to.be.equal(type);
@@ -421,7 +346,7 @@ describe('Adapter', () => {
                 '"id":"2Bp948nuo35W8Mfyn43x966F5yyDco1YP3iPUpJFQUWv"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerIssueTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.ISSUE);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.ISSUE);
 
             it('quantity is long', () => {
                 expect(jsonTx.quantity).to.be.equal(longMax);
@@ -436,7 +361,7 @@ describe('Adapter', () => {
                 '"chainId":84,"id":"FxdVVSaxg39w4wjxhdg9eEEhHJhiMHZHdX7P2LxiNAU7"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerTransferTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.TRANSFER);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.TRANSFER);
 
             it('amount is long', () => {
                 expect(jsonTx.amount).to.be.equal(longMax);
@@ -451,7 +376,7 @@ describe('Adapter', () => {
                 '"id":"HesBbvik7ZAU3poHKkYgvPNmLkhVdCZ6hwpc2gRALJK1"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerReissueTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.REISSUE);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.REISSUE);
 
             it('quantity is long', () => {
                 expect(jsonTx.quantity).to.be.equal(longMax);
@@ -466,7 +391,7 @@ describe('Adapter', () => {
                 '"id":"GqHCGGrkhmghxjpiqLQsPpzRUoiRXcBFGT2w3zc78rHW","quantity":{"bn":{"s":1,"e":18,"c":[92233,72036854775807]}}}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerBurnTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.BURN);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.BURN);
 
             it('amount is long', () => {
                 expect(jsonTx.amount).to.be.equal(longMax);
@@ -481,7 +406,7 @@ describe('Adapter', () => {
                 '"chainId":84,"id":"CDeJFP8zCzS55eBve5wrCt7XaEKm9gPVuKJG2VrtUnU7","leaseAssetId":null}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerLeaseTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.LEASE);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.LEASE);
         });
 
         describe('lease cancel', () => {
@@ -492,7 +417,7 @@ describe('Adapter', () => {
                 '"id":"CRkSDzty2VfnWaYpSq35hs7oYSdpacXAfhjEzSr4dvhM"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerCancelLeaseTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.CANCEL_LEASE);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.CANCEL_LEASE);
         });
 
         describe('alias', () => {
@@ -503,7 +428,7 @@ describe('Adapter', () => {
                 '"id":"J2nE6nHhZ8N9CKsx6P3K1dRa6ZTKiKYeWxZADPAFfQMP"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerAliasTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.ALIAS);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.ALIAS);
         });
 
         describe('mass transfer', () => {
@@ -515,7 +440,7 @@ describe('Adapter', () => {
                 '"chainId":84,"id":"6cHCKWyCW8g559CWWJDAL8iV57TJGoJFfpnRZ5HAkcZD"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerMassTransferTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.MASS_TRANSFER);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.MASS_TRANSFER);
 
             it('amount is long', () => {
                 expect(jsonTx.transfers[0].amount).to.be.equal(longMax);
@@ -531,7 +456,7 @@ describe('Adapter', () => {
                 '"key":"longMinValue","type":"integer"}]}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerDataTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.DATA);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.DATA);
 
             it('longMaxValue is long', () => {
                 expect(jsonTx.data[0].value).to.be.equal(longMax);
@@ -549,7 +474,7 @@ describe('Adapter', () => {
                 '"id":"BnAYgdjAywznY39Pj1Qtmpx1LjVpmt1vZtjEJACwNNhQ","script":"base64:BQbtKNoM"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerSetScriptTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.SET_SCRIPT);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SET_SCRIPT);
         });
 
         describe('sponsorship', () => {
@@ -561,7 +486,7 @@ describe('Adapter', () => {
                 '"id":"Age9ZkrntpB3HyE5cdHh8qyEC5dg7dgCDtrr2J1kUs89"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerSponsorshipTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.SPONSORSHIP);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SPONSORSHIP);
 
             it('minSponsoredAssetFee is long', () => {
                 expect(jsonTx.minSponsoredAssetFee).to.be.equal(longMax);
@@ -577,7 +502,7 @@ describe('Adapter', () => {
                 '"id":"DfdAaKyEhGV5pmqsQ4LVSFHwp71Wg4m6wiwAdY1mVdS1","script":"base64:BQbtKNoM"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerSetAssetScriptTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.SET_ASSET_SCRIPT);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SET_ASSET_SCRIPT);
         });
 
         describe('invoke script', () => {
@@ -590,7 +515,7 @@ describe('Adapter', () => {
                 '"id":"BTvyYZpGgy23eknbnnqYrJoK6q3hJDQ1A2gt6FrofNa"}';
             const jsonTx = signerTxFactory(tx) as SignerTxToSignedTx<SignerInvokeTx>;
 
-            isValidTx(jsonTx, TRANSACTION_TYPE.INVOKE_SCRIPT);
+            signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.INVOKE_SCRIPT);
 
             it('payment amount is long', () => {
                 expect(jsonTx.payment![0].amount).to.be.equal(longMax);

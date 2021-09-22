@@ -4,20 +4,29 @@ import * as chrome from 'selenium-webdriver/chrome';
 import { GenericContainer, StartedTestContainer, Network, StartedNetwork } from 'testcontainers';
 import { resolve } from 'path';
 import { fetchExtension, setupWavesKeeperAccounts } from './ui';
-import { TRANSACTION_TYPE } from '@waves/ts-types';
+import {
+    ALIAS,
+    BURN,
+    CANCEL_LEASE,
+    DATA,
+    INVOKE_DEFAULT_CALL,
+    INVOKE_LIST_ARGS_NO_PAYMENTS,
+    INVOKE_NATIVE_ARGS_NO_PAYMENTS,
+    INVOKE_NO_ARGS_MANY_PAYMENTS,
+    INVOKE_NO_ARGS_SINGLE_PAYMENTS,
+    ISSUE,
+    LEASE,
+    MASS_TRANSFER,
+    REISSUE,
+    SET_ASSET_SCRIPT,
+    SET_SCRIPT,
+    SPONSORSHIP,
+    TRANSFER,
+} from './transactions';
 
 const s = 1000,
     m = 60000,
-    timeout = 10 * s,
-    maxLong = '9223372036854775807',
-    minLong = '-9223372036854775808',
-    assetScript = '7sP5abE9nGRwZxkgaEXgkQDZ3ERBcm9PLHixaUE5SYoT',
-    scriptTrue = 'base64:BQbtKNoM',
-    // compiled version of `scriptTest.ride`
-    scriptTest =
-        'base64:AAIFAAAAAAAAAiUIAhIAEgASBgoEAgQBCBIGCgQSFBEYGgcKAmExEgFpGgoKAmEyEgR0eElkGhQKAmEzEg5hZGRQYXltZW50SW5mbxoJCgJhNBIDYWNjGgsKAmE1EgVpbmRleBoJCgJhNhIDcG10GgsKAmE3EgVhc3NldBoNCgJhOBIHJG1hdGNoMBoICgJhORICaWQaCwoCYjESBXdhdmVzGhEKAmIyEgskbGlzdDcxNDc3NRoRCgJiMxILJHNpemU3MTQ3NzUaEQoCYjQSCyRhY2MwNzE0Nzc1GhEKAmI1EgskYWNjMTcxNDc3NRoRCgJiNhILJGFjYzI3MTQ3NzUaEQoCYjcSCyRhY2MzNzE0Nzc1GhEKAmI4EgskYWNjNDcxNDc3NRoRCgJiORILJGFjYzU3MTQ3NzUaEQoCYzESCyRhY2M2NzE0Nzc1GhEKAmMyEgskYWNjNzcxNDc3NRoRCgJjMxILJGFjYzg3MTQ3NzUaEQoCYzQSCyRhY2M5NzE0Nzc1GhIKAmM1EgwkYWNjMTA3MTQ3NzUaEgoCYzYSDCRhY2MxMTcxNDc3NRoJCgJjNxIDYmluGgoKAmM4EgRib29sGgkKAmM5EgNpbnQaCQoCZDESA3N0choNCgJkMhIHYmluU2l6ZRoOCgJkMxIIYm9vbFNpemUaDQoCZDQSB2ludFNpemUaDQoCZDUSB3N0clNpemUaCAoCZDYSAnR4GgwKAmQ3EgZ2ZXJpZnkAAAAAAAAABAAAAAJhMQEAAAAHZGVmYXVsdAAAAAAJAARMAAAAAgkBAAAAC1N0cmluZ0VudHJ5AAAAAgIAAAAPZGVmYXVsdC1jYWxsLWlkCQACWAAAAAEIBQAAAAJhMQAAAA10cmFuc2FjdGlvbklkBQAAAANuaWwAAAACYTEBAAAAGWNhbGxXaXRoUGF5bWVudHNCdXROb0FyZ3MAAAAABAAAAAJhMgkAAlgAAAABCAUAAAACYTEAAAANdHJhbnNhY3Rpb25JZAoBAAAAAmEzAAAAAgAAAAJhNAAAAAJhNQMJAABnAAAAAgUAAAACYTUJAAGQAAAAAQgFAAAAAmExAAAACHBheW1lbnRzBQAAAAJhNAQAAAACYTYJAAGRAAAAAggFAAAAAmExAAAACHBheW1lbnRzBQAAAAJhNQQAAAACYTcEAAAAAmE4CAUAAAACYTYAAAAHYXNzZXRJZAMJAAABAAAAAgUAAAACYTgCAAAACkJ5dGVWZWN0b3IEAAAAAmE5BQAAAAJhOAkAASwAAAACCQABLAAAAAIJAAEsAAAAAggJAQAAAAV2YWx1ZQAAAAEJAAPsAAAAAQUAAAACYTkAAAAEbmFtZQIAAAACICgJAAJYAAAAAQUAAAACYTkCAAAAASkDCQAAAQAAAAIFAAAAAmE4AgAAAARVbml0BAAAAAJiMQUAAAACYTgCAAAABVdBVkVTCQAAAgAAAAECAAAAC01hdGNoIGVycm9yCQAETQAAAAIFAAAAAmE0CQEAAAALU3RyaW5nRW50cnkAAAACCQABLAAAAAIJAAEsAAAAAgUAAAACYTICAAAAAV8JAAGkAAAAAQUAAAACYTUJAAEsAAAAAgkAASwAAAACCQABpAAAAAEIBQAAAAJhNgAAAAZhbW91bnQCAAAAASAFAAAAAmE3BAAAAAJiMgkABEwAAAACAAAAAAAAAAAACQAETAAAAAIAAAAAAAAAAAEJAARMAAAAAgAAAAAAAAAAAgkABEwAAAACAAAAAAAAAAADCQAETAAAAAIAAAAAAAAAAAQJAARMAAAAAgAAAAAAAAAABQkABEwAAAACAAAAAAAAAAAGCQAETAAAAAIAAAAAAAAAAAcJAARMAAAAAgAAAAAAAAAACAkABEwAAAACAAAAAAAAAAAJBQAAAANuaWwEAAAAAmIzCQABkAAAAAEFAAAAAmIyBAAAAAJiNAUAAAADbmlsAwkAAAAAAAACBQAAAAJiMwAAAAAAAAAAAAUAAAACYjQEAAAAAmI1CQEAAAACYTMAAAACBQAAAAJiNAkAAZEAAAACBQAAAAJiMgAAAAAAAAAAAAMJAAAAAAAAAgUAAAACYjMAAAAAAAAAAAEFAAAAAmI1BAAAAAJiNgkBAAAAAmEzAAAAAgUAAAACYjUJAAGRAAAAAgUAAAACYjIAAAAAAAAAAAEDCQAAAAAAAAIFAAAAAmIzAAAAAAAAAAACBQAAAAJiNgQAAAACYjcJAQAAAAJhMwAAAAIFAAAAAmI2CQABkQAAAAIFAAAAAmIyAAAAAAAAAAACAwkAAAAAAAACBQAAAAJiMwAAAAAAAAAAAwUAAAACYjcEAAAAAmI4CQEAAAACYTMAAAACBQAAAAJiNwkAAZEAAAACBQAAAAJiMgAAAAAAAAAAAwMJAAAAAAAAAgUAAAACYjMAAAAAAAAAAAQFAAAAAmI4BAAAAAJiOQkBAAAAAmEzAAAAAgUAAAACYjgJAAGRAAAAAgUAAAACYjIAAAAAAAAAAAQDCQAAAAAAAAIFAAAAAmIzAAAAAAAAAAAFBQAAAAJiOQQAAAACYzEJAQAAAAJhMwAAAAIFAAAAAmI5CQABkQAAAAIFAAAAAmIyAAAAAAAAAAAFAwkAAAAAAAACBQAAAAJiMwAAAAAAAAAABgUAAAACYzEEAAAAAmMyCQEAAAACYTMAAAACBQAAAAJjMQkAAZEAAAACBQAAAAJiMgAAAAAAAAAABgMJAAAAAAAAAgUAAAACYjMAAAAAAAAAAAcFAAAAAmMyBAAAAAJjMwkBAAAAAmEzAAAAAgUAAAACYzIJAAGRAAAAAgUAAAACYjIAAAAAAAAAAAcDCQAAAAAAAAIFAAAAAmIzAAAAAAAAAAAIBQAAAAJjMwQAAAACYzQJAQAAAAJhMwAAAAIFAAAAAmMzCQABkQAAAAIFAAAAAmIyAAAAAAAAAAAIAwkAAAAAAAACBQAAAAJiMwAAAAAAAAAACQUAAAACYzQEAAAAAmM1CQEAAAACYTMAAAACBQAAAAJjNAkAAZEAAAACBQAAAAJiMgAAAAAAAAAACQMJAAAAAAAAAgUAAAACYjMAAAAAAAAAAAoFAAAAAmM1BAAAAAJjNgkBAAAAAmEzAAAAAgUAAAACYzUJAAGRAAAAAgUAAAACYjIAAAAAAAAAAAoJAAACAAAAAQIAAAATTGlzdCBzaXplIGV4Y2VlZCAxMAAAAAJhMQEAAAAfY2FsbFdpdGhOYXRpdmVBcmdzQW5kTm9QYXltZW50cwAAAAQAAAACYzcAAAACYzgAAAACYzkAAAACZDEEAAAAAmEyCQACWAAAAAEIBQAAAAJhMQAAAA10cmFuc2FjdGlvbklkCQAETAAAAAIJAQAAAAtCaW5hcnlFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAABF9iaW4FAAAAAmM3CQAETAAAAAIJAQAAAAxCb29sZWFuRW50cnkAAAACCQABLAAAAAIFAAAAAmEyAgAAAAVfYm9vbAUAAAACYzgJAARMAAAAAgkBAAAADEludGVnZXJFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAABF9pbnQFAAAAAmM5CQAETAAAAAIJAQAAAAtTdHJpbmdFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAABF9zdHIFAAAAAmQxBQAAAANuaWwAAAACYTEBAAAAHWNhbGxXaXRoTGlzdEFyZ3NBbmROb1BheW1lbnRzAAAABAAAAAJjNwAAAAJjOAAAAAJjOQAAAAJkMQQAAAACYTIJAAJYAAAAAQgFAAAAAmExAAAADXRyYW5zYWN0aW9uSWQEAAAAAmQyCQABkAAAAAEFAAAAAmM3BAAAAAJkMwkAAZAAAAABBQAAAAJjOAQAAAACZDQJAAGQAAAAAQUAAAACYzkEAAAAAmQ1CQABkAAAAAEFAAAAAmQxCQAETAAAAAIJAQAAAAxJbnRlZ2VyRW50cnkAAAACCQABLAAAAAIFAAAAAmEyAgAAAAlfYmluX3NpemUFAAAAAmQyCQAETAAAAAIJAQAAAAtCaW5hcnlFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAACl9iaW5fZmlyc3QJAAGRAAAAAgUAAAACYzcAAAAAAAAAAAAJAARMAAAAAgkBAAAAC0JpbmFyeUVudHJ5AAAAAgkAASwAAAACBQAAAAJhMgIAAAAJX2Jpbl9sYXN0CQABkQAAAAIFAAAAAmM3CQAAZQAAAAIFAAAAAmQyAAAAAAAAAAABCQAETAAAAAIJAQAAAAxJbnRlZ2VyRW50cnkAAAACCQABLAAAAAIFAAAAAmEyAgAAAApfYm9vbF9zaXplBQAAAAJkMwkABEwAAAACCQEAAAAMQm9vbGVhbkVudHJ5AAAAAgkAASwAAAACBQAAAAJhMgIAAAALX2Jvb2xfZmlyc3QJAAGRAAAAAgUAAAACYzgAAAAAAAAAAAAJAARMAAAAAgkBAAAADEJvb2xlYW5FbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAACl9ib29sX2xhc3QJAAGRAAAAAgUAAAACYzgJAABlAAAAAgUAAAACZDMAAAAAAAAAAAEJAARMAAAAAgkBAAAADEludGVnZXJFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAACV9pbnRfc2l6ZQUAAAACZDQJAARMAAAAAgkBAAAADEludGVnZXJFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAACl9pbnRfZmlyc3QJAAGRAAAAAgUAAAACYzkAAAAAAAAAAAAJAARMAAAAAgkBAAAADEludGVnZXJFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAACV9pbnRfbGFzdAkAAZEAAAACBQAAAAJjOQkAAGUAAAACBQAAAAJkNAAAAAAAAAAAAQkABEwAAAACCQEAAAAMSW50ZWdlckVudHJ5AAAAAgkAASwAAAACBQAAAAJhMgIAAAAJX3N0cl9zaXplBQAAAAJkNQkABEwAAAACCQEAAAALU3RyaW5nRW50cnkAAAACCQABLAAAAAIFAAAAAmEyAgAAAApfc3RyX2ZpcnN0CQABkQAAAAIFAAAAAmQxAAAAAAAAAAAACQAETAAAAAIJAQAAAAtTdHJpbmdFbnRyeQAAAAIJAAEsAAAAAgUAAAACYTICAAAACV9zdHJfbGFzdAkAAZEAAAACBQAAAAJkMQkAAGUAAAACBQAAAAJkNQAAAAAAAAAAAQUAAAADbmlsAAAAAQAAAAJkNgEAAAACZDcAAAAACQAB9AAAAAMIBQAAAAJkNgAAAAlib2R5Qnl0ZXMJAAGRAAAAAggFAAAAAmQ2AAAABnByb29mcwAAAAAAAAAAAAgFAAAAAmQ2AAAAD3NlbmRlclB1YmxpY0tleYCvB0c=',
-    dApp = '3My2kBJaGfeM2koiZroaYdd3y8rAgfV2EAx',
-    dAppMinFee = 1000000;
+    timeout = 10 * s;
 
 describe('Selenium webdriver', function () {
     let driver, cSelenium: StartedTestContainer, cUI: StartedTestContainer;
@@ -102,7 +111,7 @@ describe('Selenium webdriver', function () {
         expect(userData.signature).to.exist;
     });
 
-    const isValidSignedTx = async (formSelector, tx) => {
+    const signedTxShouldBeValid = async (tx, formSelector) => {
         await driver.switchTo().window(tabUI);
         await driver.executeScript((tx) => {
             (window as any).setInput(tx);
@@ -126,272 +135,92 @@ describe('Selenium webdriver', function () {
         });
         expect(signed.length).to.be.equal(1);
         const signedTx = signed[0];
-        expect(signedTx.id).to.exist;
-        expect(signedTx.type).to.exist;
-        expect(signedTx.chainId).to.exist;
-        expect(signedTx.senderPublicKey).to.exist;
-        expect(signedTx.timestamp).to.exist;
-        expect(signedTx.proofs).to.exist;
-        expect(signedTx.version).to.exist;
+        const commonFields = ['id', 'type', 'chainId', 'senderPublicKey', 'timestamp', 'proofs', 'version'];
+        expect(signedTx).to.include.all.keys(...commonFields, ...Object.keys(tx));
     };
 
     it('issue tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-issueTx')]"), {
-            type: TRANSACTION_TYPE.ISSUE,
-            name: 'UiTest',
-            decimals: 8,
-            quantity: maxLong,
-            reissuable: true,
-            description: 'issued token from ui test',
-            script: scriptTrue,
-        });
+        await signedTxShouldBeValid(ISSUE, By.xpath("//div[contains(@class, '-issueTx')]"));
     });
 
     it('transfer tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-transferTx')]"), {
-            type: TRANSACTION_TYPE.TRANSFER,
-            amount: 1,
-            recipient: 'merry',
-        });
+        await signedTxShouldBeValid(TRANSFER, By.xpath("//div[contains(@class, '-transferTx')]"));
     });
 
     it('reissue tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-reissueTx')]"), {
-            type: TRANSACTION_TYPE.REISSUE,
-            assetId: assetScript,
-            quantity: maxLong,
-            reissuable: true,
-        });
+        await signedTxShouldBeValid(REISSUE, By.xpath("//div[contains(@class, '-reissueTx')]"));
     });
 
     it('burn tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-burnTx')]"), {
-            type: TRANSACTION_TYPE.BURN,
-            assetId: assetScript,
-            amount: maxLong,
-        });
+        await signedTxShouldBeValid(BURN, By.xpath("//div[contains(@class, '-burnTx')]"));
     });
 
     it('lease tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-leaseTx')]"), {
-            type: TRANSACTION_TYPE.LEASE,
-            amount: maxLong,
-            recipient: 'merry',
-        });
+        await signedTxShouldBeValid(LEASE, By.xpath("//div[contains(@class, '-leaseTx')]"));
     });
 
     it('cancel lease tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-cancelLeaseTx')]"), {
-            type: TRANSACTION_TYPE.CANCEL_LEASE,
-            leaseId: '6r2u8Bf3WTqJw4HQvPTsWs8Zak5PLwjzjjGU76nXph1u',
-        });
+        await signedTxShouldBeValid(CANCEL_LEASE, By.xpath("//div[contains(@class, '-cancelLeaseTx')]"));
     });
 
     it('alias tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-aliasTx')]"), {
-            type: TRANSACTION_TYPE.ALIAS,
-            alias: `testy`,
-        });
+        await signedTxShouldBeValid(ALIAS, By.xpath("//div[contains(@class, '-aliasTx')]"));
     });
 
     it('mass transfer tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-massTransferTx')]"), {
-            type: TRANSACTION_TYPE.MASS_TRANSFER,
-            transfers: [
-                {
-                    amount: maxLong,
-                    recipient: 'testy',
-                },
-                {
-                    amount: 1,
-                    recipient: 'merry',
-                },
-            ],
-        });
+        await signedTxShouldBeValid(MASS_TRANSFER, By.xpath("//div[contains(@class, '-massTransferTx')]"));
     });
 
     it('data tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-dataTx')]"), {
-            type: TRANSACTION_TYPE.DATA,
-            data: [
-                { key: 'name', type: 'string', value: 'Lorem ipsum dolor sit amet' },
-                { key: 'longMaxValue', type: 'integer', value: maxLong },
-                { key: 'longMinValue', type: 'integer', value: minLong },
-                { key: 'flag1', type: 'boolean', value: true },
-                { key: 'flag2', type: 'boolean', value: true },
-                { key: 'flag3', type: 'boolean', value: true },
-                { key: 'flag4', type: 'boolean', value: true },
-            ],
-        });
+        await signedTxShouldBeValid(DATA, By.xpath("//div[contains(@class, '-dataTx')]"));
     });
 
     it('set script tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-setScriptTx')]"), {
-            type: TRANSACTION_TYPE.SET_SCRIPT,
-            script: scriptTest,
-        });
+        await signedTxShouldBeValid(SET_SCRIPT, By.xpath("//div[contains(@class, '-setScriptTx')]"));
     });
 
     it('sponsorship tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-sponsorshipTx')]"), {
-            type: TRANSACTION_TYPE.SPONSORSHIP,
-            assetId: assetScript,
-            minSponsoredAssetFee: maxLong,
-        });
+        await signedTxShouldBeValid(SPONSORSHIP, By.xpath("//div[contains(@class, '-sponsorshipTx')]"));
     });
 
     it('set asset script tx', async () => {
-        await isValidSignedTx(By.xpath("//div[contains(@class, '-assetScriptTx')]"), {
-            type: TRANSACTION_TYPE.SET_ASSET_SCRIPT,
-            assetId: assetScript,
-            script: scriptTrue,
-        });
+        await signedTxShouldBeValid(SET_ASSET_SCRIPT, By.xpath("//div[contains(@class, '-assetScriptTx')]"));
     });
 
     describe('invoke tx', async () => {
         it('default call', async () => {
-            await isValidSignedTx(By.xpath("//div[contains(@class, '-scriptInvocationTx')]"), {
-                type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-                dApp: dApp,
-                fee: dAppMinFee,
-                call: {
-                    function: 'default',
-                    args: [],
-                },
-                payment: [],
-            });
+            await signedTxShouldBeValid(
+                INVOKE_DEFAULT_CALL,
+                By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+            );
         });
 
         it('with no args but single payment', async () => {
-            await isValidSignedTx(By.xpath("//div[contains(@class, '-scriptInvocationTx')]"), {
-                type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-                dApp: dApp,
-                fee: dAppMinFee,
-                payment: [
-                    {
-                        assetId: 'WAVES',
-                        amount: maxLong,
-                    },
-                ],
-                call: {
-                    function: 'callWithPaymentsButNoArgs',
-                    args: [],
-                },
-            });
+            await signedTxShouldBeValid(
+                INVOKE_NO_ARGS_SINGLE_PAYMENTS,
+                By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+            );
         });
 
         it('with no args but many payments', async () => {
-            await isValidSignedTx(By.xpath("//div[contains(@class, '-scriptInvocationTx')]"), {
-                type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-                dApp: dApp,
-                fee: dAppMinFee,
-                payment: [
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                    {
-                        assetId: 'WAVES',
-                        amount: 1,
-                    },
-                ],
-                call: {
-                    function: 'callWithPaymentsButNoArgs',
-                    args: [],
-                },
-            });
+            await signedTxShouldBeValid(
+                INVOKE_NO_ARGS_MANY_PAYMENTS,
+                By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+            );
         });
 
         it('with native args and no payments', async () => {
-            await isValidSignedTx(By.xpath("//div[contains(@class, '-scriptInvocationTx')]"), {
-                type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-                dApp: dApp,
-                fee: dAppMinFee,
-                call: {
-                    function: 'callWithNativeArgsAndNoPayments',
-                    args: [
-                        { type: 'binary', value: 'base64:BQbtKNoM' },
-                        { type: 'boolean', value: true },
-                        { type: 'integer', value: maxLong },
-                        { type: 'string', value: 'Lorem ipsum dolor sit amet' },
-                    ],
-                },
-                payment: [],
-            });
+            await signedTxShouldBeValid(
+                INVOKE_NATIVE_ARGS_NO_PAYMENTS,
+                By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+            );
         });
 
         it('with list args and no payments', async () => {
-            await isValidSignedTx(By.xpath("//div[contains(@class, '-scriptInvocationTx')]"), {
-                type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-                dApp: dApp,
-                fee: dAppMinFee,
-                call: {
-                    function: 'callWithListArgsAndNoPayments',
-                    args: [
-                        {
-                            type: 'list',
-                            value: [
-                                { type: 'binary', value: scriptTrue },
-                                { type: 'binary', value: scriptTest },
-                            ],
-                        },
-                        {
-                            type: 'list',
-                            value: [
-                                { type: 'boolean', value: true },
-                                { type: 'boolean', value: false },
-                            ],
-                        },
-                        {
-                            type: 'list',
-                            value: [
-                                { type: 'integer', value: maxLong },
-                                { type: 'integer', value: minLong },
-                            ],
-                        },
-                        {
-                            type: 'list',
-                            value: [
-                                { type: 'string', value: 'Lorem ipsum' },
-                                { type: 'string', value: 'dolor sit amet' },
-                            ],
-                        },
-                    ],
-                },
-                payment: [],
-            });
+            await signedTxShouldBeValid(
+                INVOKE_LIST_ARGS_NO_PAYMENTS,
+                By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+            );
         });
     });
 });
