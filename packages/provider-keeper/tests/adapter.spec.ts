@@ -263,9 +263,11 @@ describe('Adapter', () => {
                 });
             });
 
-            it('attachment is null', () => {
+            it('optional fields are valid', () => {
                 txMassTransfer.attachment = null;
                 expect(keeperTxFactory(txMassTransfer).data.attachment).to.be.undefined;
+                delete txMassTransfer.assetId;
+                expect(keeperTxFactory(txMassTransfer).data.totalAmount.assetId).to.be.equal('WAVES');
             });
 
             feeShouldBeValid(txMassTransfer);
