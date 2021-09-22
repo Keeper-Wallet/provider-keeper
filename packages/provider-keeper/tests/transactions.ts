@@ -33,11 +33,11 @@ const scriptTest =
 
 export const ISSUE: SignerIssueTx = {
     type: TRANSACTION_TYPE.ISSUE,
-    name: 'ScriptToken',
+    name: 'ShortToken',
     decimals: 8,
     quantity: longMax,
     reissuable: true,
-    description: 'ScriptToken',
+    description: 'Full description of ShortToken',
     script: script,
 };
 
