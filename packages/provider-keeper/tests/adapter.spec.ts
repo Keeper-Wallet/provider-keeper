@@ -95,11 +95,13 @@ describe('Adapter', () => {
                 });
             });
 
-            it('optional fields is valid', () => {
+            it('optional fields are valid', () => {
                 delete txIssue.description; // description is undefined
                 expect(keeperTxFactory(txIssue).data.description).to.be.equal('');
                 delete txIssue.reissuable; // reissuable is undefined
                 expect(keeperTxFactory(txIssue).data.reissuable).to.be.equal(false);
+                delete txIssue.script; // script is undefined
+                expect(keeperTxFactory(txIssue).data.script).to.be.undefined;
             });
 
             isValidFee(txIssue);
