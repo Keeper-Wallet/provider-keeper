@@ -1,5 +1,5 @@
 {
-  "name": "@waves/provider-keeper-ui",
+  "name": "test-app",
   "scripts": {
     "build": "webpack",
     "start": "http-server ./dist/ -p 8081"

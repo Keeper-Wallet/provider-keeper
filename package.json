@@ -6,12 +6,12 @@
     "provider:test": "npm run test -workspace=packages/provider-keeper",
     "provider:coverage": "npm run coverage -workspace=packages/provider-keeper",
     "provider:build": "npm run build -workspace=packages/provider-keeper",
-    "ui:build": "npm run build -workspace=packages/provider-keeper-ui",
-    "ui:start": "npm run start -workspace=packages/provider-keeper-ui"
+    "ui:build": "npm run build -workspace=packages/test-app",
+    "ui:start": "npm run start -workspace=packages/test-app"
   },
   "workspaces": [
     "packages/provider-keeper",
-    "packages/provider-keeper-ui"
+    "packages/test-app"
   ],
   "engineStrict": true,
   "engines": {

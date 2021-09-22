@@ -5,7 +5,7 @@ WORKDIR /app
 RUN npm install -g npm@7
 
 COPY package.json .
-COPY packages/provider-keeper-ui/package.json ./packages/provider-keeper-ui/package.json
+COPY packages/test-app/package.json ./packages/test-app/package.json
 
 RUN npm install
 
