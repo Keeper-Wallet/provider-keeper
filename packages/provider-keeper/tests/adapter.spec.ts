@@ -33,20 +33,20 @@ const dApp = '3My2kBJaGfeM2koiZroaYdd3y8rAgfV2EAx';
 
 describe('Adapter', () => {
     describe('converting tx from Signer to Keeper', () => {
-        function isValidFee(tx: SignerIssueTx);
-        function isValidFee(tx: SignerTransferTx);
-        function isValidFee(tx: SignerReissueTx);
-        function isValidFee(tx: SignerBurnTx);
-        function isValidFee(tx: SignerLeaseTx);
-        function isValidFee(tx: SignerCancelLeaseTx);
-        function isValidFee(tx: SignerAliasTx);
-        function isValidFee(tx: SignerMassTransferTx);
-        function isValidFee(tx: SignerDataTx);
-        function isValidFee(tx: SignerSetScriptTx);
-        function isValidFee(tx: SignerSponsorshipTx);
-        function isValidFee(tx: SignerSetAssetScriptTx);
-        function isValidFee(tx: SignerInvokeTx);
-        function isValidFee(tx) {
+        function feeShouldBeValid(tx: SignerIssueTx);
+        function feeShouldBeValid(tx: SignerTransferTx);
+        function feeShouldBeValid(tx: SignerReissueTx);
+        function feeShouldBeValid(tx: SignerBurnTx);
+        function feeShouldBeValid(tx: SignerLeaseTx);
+        function feeShouldBeValid(tx: SignerCancelLeaseTx);
+        function feeShouldBeValid(tx: SignerAliasTx);
+        function feeShouldBeValid(tx: SignerMassTransferTx);
+        function feeShouldBeValid(tx: SignerDataTx);
+        function feeShouldBeValid(tx: SignerSetScriptTx);
+        function feeShouldBeValid(tx: SignerSponsorshipTx);
+        function feeShouldBeValid(tx: SignerSetAssetScriptTx);
+        function feeShouldBeValid(tx: SignerInvokeTx);
+        function feeShouldBeValid(tx) {
             it('fee is empty', () => {
                 expect(keeperTxFactory(tx).data.fee).to.be.undefined;
             });
@@ -104,7 +104,7 @@ describe('Adapter', () => {
                 expect(keeperTxFactory(txIssue).data.script).to.be.undefined;
             });
 
-            isValidFee(txIssue);
+            feeShouldBeValid(txIssue);
         });
 
         describe('transfer', () => {
@@ -136,7 +136,7 @@ describe('Adapter', () => {
                 expect(keeperTxFactory(txTransfer).data.attachment).to.be.undefined;
             });
 
-            isValidFee(txTransfer);
+            feeShouldBeValid(txTransfer);
         });
 
         describe('reissue', () => {
@@ -156,7 +156,7 @@ describe('Adapter', () => {
                     },
                 });
             });
-            isValidFee(txReissue);
+            feeShouldBeValid(txReissue);
         });
 
         describe('burn', () => {
@@ -176,7 +176,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txBurn);
+            feeShouldBeValid(txBurn);
         });
 
         describe('lease', () => {
@@ -196,7 +196,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txLease);
+            feeShouldBeValid(txLease);
         });
 
         describe('lease cancel', () => {
@@ -214,7 +214,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txLeaseCancel);
+            feeShouldBeValid(txLeaseCancel);
         });
 
         describe('alias', () => {
@@ -232,7 +232,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txAlias);
+            feeShouldBeValid(txAlias);
         });
 
         describe('mass transfer', () => {
@@ -268,7 +268,7 @@ describe('Adapter', () => {
                 expect(keeperTxFactory(txMassTransfer).data.attachment).to.be.undefined;
             });
 
-            isValidFee(txMassTransfer);
+            feeShouldBeValid(txMassTransfer);
         });
 
         describe('data', () => {
@@ -290,7 +290,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txData);
+            feeShouldBeValid(txData);
         });
 
         describe('set script', () => {
@@ -308,7 +308,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txSetScript);
+            feeShouldBeValid(txSetScript);
         });
 
         describe('sponsorship', () => {
@@ -330,7 +330,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txSponsorship);
+            feeShouldBeValid(txSponsorship);
         });
 
         describe('set asset script', () => {
@@ -350,7 +350,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txSetAssetScript);
+            feeShouldBeValid(txSetAssetScript);
         });
 
         describe('invoke script', () => {
@@ -392,7 +392,7 @@ describe('Adapter', () => {
                 });
             });
 
-            isValidFee(txInvokeScript);
+            feeShouldBeValid(txInvokeScript);
         });
     });
 
