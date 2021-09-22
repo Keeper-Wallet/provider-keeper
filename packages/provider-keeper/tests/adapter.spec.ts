@@ -280,6 +280,7 @@ describe('Adapter', () => {
                     { key: 'stringValue', type: 'string', value: 'Lorem ipsum dolor sit amet' },
                     { key: 'longMaxValue', type: 'integer', value: longMax },
                     { key: 'flagValue', type: 'boolean', value: true },
+                    { key: 'base64', type: 'binary', value: script },
                 ],
             };
 
