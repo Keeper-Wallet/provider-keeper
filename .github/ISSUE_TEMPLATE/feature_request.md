@@ -7,7 +7,7 @@ assignees: msmolyakov
 
 ---
 
-**Аbstract**
+**Abstract**
 Is your feature request related to a problem? Please describe.
 
 **Motivation and Purposes**
