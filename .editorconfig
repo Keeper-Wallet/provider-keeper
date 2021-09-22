@@ -14,3 +14,6 @@ spaces_around_operators = true
 [*.json]
 indent_size = 2
 quote_type = double
+
+[*.yml]
+indent_size = 2
