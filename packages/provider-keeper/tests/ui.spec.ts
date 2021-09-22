@@ -38,11 +38,11 @@ describe('Selenium webdriver', function () {
         smart: 'waves private node seed with smart account',
     };
 
-    this.timeout(10 * m);
+    this.timeout(15 * m);
     let tabWavesKeeper, tabUI;
 
     before(async function () {
-        this.timeout(5 * m);
+        this.timeout(10 * m);
         const ext: Promise<string> = fetchExtension(extension);
         const local: StartedNetwork = await new Network().start();
 
