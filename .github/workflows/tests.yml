@@ -22,10 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run tests
-        run: npm run provider:test
-
-      - name: Get coverage
+      - name: Run tests with coverage
         run: npm run provider:coverage
 
       - name: Codecov
