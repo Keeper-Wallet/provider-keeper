@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Build and publish to NPM
-        run: npm publish --access public
+        run: npm publish --access public --workspace provider
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
