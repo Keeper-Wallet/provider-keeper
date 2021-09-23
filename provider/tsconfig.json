@@ -4,7 +4,7 @@
     "declarationDir": "./dist/types",
     "outDir": "./dist",
     "types": [
-      "../../node_modules/@waves/waveskeeper-types",
+      "../node_modules/@waves/waveskeeper-types",
       "node",
       "mocha",
       "chai"
@@ -15,7 +15,7 @@
     "dist",
     "tests"
   ],
-  "extends": "../../tsconfig.json",
+  "extends": "../tsconfig.json",
   "include": [
     "src"
   ]

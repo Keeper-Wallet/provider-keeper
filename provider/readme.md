@@ -1,7 +1,5 @@
 # ProviderKeeper
 
-[![npm](https://img.shields.io/npm/v/@waves/provider-keeper?color=blue&label=%40waves%2Fprovider-keeper&logo=npm)](https://www.npmjs.com/package/@waves/provider-keeper)
-
 * [Overview](#overview)
 * [Getting Started](#getting-started)
 
@@ -11,7 +9,7 @@ ProviderKeeper implements a Signature Provider for [Signer](https://github.com/w
 
 ## Getting Started
 
-### 1. Library installation
+### Library installation
 
 To install Signer and ProviderKeeper libraries use
 
@@ -19,7 +17,7 @@ To install Signer and ProviderKeeper libraries use
 npm i @waves/signer @waves/provider-keeper
 ```
 
-### 2. Library initialization
+### Library initialization
 
 Add library initialization to your app.
 
@@ -54,7 +52,7 @@ Add library initialization to your app.
    signer.setProvider(keeper);
    ```
 
-### 3. Basic example
+### Basic example
 
 Now your application is ready to work with Waves Platform. Let's test it by implementing basic functionality.
 
@@ -93,3 +91,10 @@ const [invoke] = await signer
 ```
 
 For more examples see [Signer documentation](https://github.com/wavesplatform/signer/blob/master/README.md).
+
+### How to build
+
+```shell
+npm ci
+npm run build
+```

@@ -11,10 +11,10 @@
     "baseUrl": ".",
     "paths": {
       "@waves/provider-keeper": [
-        "./packages/components/src"
+        "./provider/src"
       ],
       "@waves/provider-keeper/*": [
-        "./packages/components/src/*"
+        "./provider/src/*"
       ]
     },
     "sourceMap": false,

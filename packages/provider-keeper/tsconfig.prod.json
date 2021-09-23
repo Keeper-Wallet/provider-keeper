@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "types": [
-      "../../node_modules/@waves/waveskeeper-types"
-    ]
-  },
-  "extends": "./tsconfig.json",
-}

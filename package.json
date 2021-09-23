@@ -3,15 +3,15 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "provider:test": "npm run test -workspace=packages/provider-keeper",
-    "provider:coverage": "npm run coverage -workspace=packages/provider-keeper",
-    "provider:build": "npm run build -workspace=packages/provider-keeper",
-    "ui:build": "npm run build -workspace=packages/test-app",
-    "ui:start": "npm run start -workspace=packages/test-app"
+    "provider:test": "npm run test -workspace=provider",
+    "provider:coverage": "npm run coverage -workspace=provider",
+    "provider:build": "npm run build -workspace=provider",
+    "ui:build": "npm run build -workspace=test-app",
+    "ui:start": "npm run start -workspace=test-app"
   },
   "workspaces": [
-    "packages/provider-keeper",
-    "packages/test-app"
+    "provider",
+    "test-app"
   ],
   "engineStrict": true,
   "engines": {
