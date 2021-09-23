@@ -24,6 +24,3 @@ jobs:
 
       - name: Run tests with coverage
         run: npm run provider:coverage
-
-      - name: Codecov
-        uses: codecov/codecov-action@v2

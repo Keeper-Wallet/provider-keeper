@@ -31,7 +31,7 @@ const s = 1000,
 describe('Selenium webdriver', function () {
     let driver, cSelenium: StartedTestContainer, cUI: StartedTestContainer;
     const extension = 'lpilbniiabackdjcionkobglmddfbcjo';
-    const ui = { host: 'ui', port: 8081, dockerFilePath: resolve(__dirname, '..', '..', '..') };
+    const ui = { host: 'ui', port: 8081, dockerFilePath: resolve(__dirname, '..', '..') };
     const accounts = {
         rich: 'waves private node seed with waves tokens',
         default: 'waves private node seed with test account',

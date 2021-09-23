@@ -25,7 +25,7 @@ module.exports = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
         alias: {
-            '@waves/provider-keeper': path.resolve(__dirname, '../../packages/provider-keeper/src'),
+            '@waves/provider-keeper': path.resolve(__dirname, '../provider/src'),
         },
     },
     output: {

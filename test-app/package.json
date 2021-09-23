@@ -2,7 +2,7 @@
   "name": "test-app",
   "scripts": {
     "build": "webpack",
-    "start": "http-server ./dist/ -p 8081"
+    "start": "http-server dist -p 8081"
   },
   "author": "",
   "license": "ISC",

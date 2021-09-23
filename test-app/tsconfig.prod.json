@@ -7,7 +7,7 @@
     "node_modules",
     "dist"
   ],
-  "extends": "../../tsconfig.json",
+  "extends": "../tsconfig.json",
   "include": [
     "src"
   ]
