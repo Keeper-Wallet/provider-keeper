@@ -23,6 +23,7 @@ import {
     SPONSORSHIP,
     TRANSFER,
 } from './transactions';
+import { SignerTx } from '@waves/signer';
 
 const s = 1000,
     m = 60000,
@@ -111,11 +112,12 @@ describe('Selenium webdriver', function () {
         expect(userData.signature).to.exist;
     });
 
-    const signedTxShouldBeValid = async (tx, formSelector) => {
+    const signedTxShouldBeValid = async (tx: SignerTx | SignerTx[], formSelector: By) => {
         await driver.switchTo().window(tabUI);
         await driver.executeScript((tx) => {
             (window as any).setInput(tx);
         }, tx);
+
         const sendTxBtn = await driver.wait(until.elementLocated(By.css('#send-tx:not(.disabled)')), timeout);
         await sendTxBtn.click();
 
@@ -133,10 +135,13 @@ describe('Selenium webdriver', function () {
         const signed = await driver.executeScript(() => {
             return (window as any).getOutput();
         });
-        expect(signed.length).to.be.equal(1);
-        const signedTx = signed[0];
-        const commonFields = ['id', 'type', 'chainId', 'senderPublicKey', 'timestamp', 'proofs', 'version'];
-        expect(signedTx).to.include.all.keys(...commonFields, ...Object.keys(tx));
+
+        tx = !Array.isArray(tx) ? [tx] : tx;
+        expect(signed.length).to.be.equal(tx.length);
+        signed.forEach((signedTx, idx) => {
+            const commonFields = ['id', 'type', 'chainId', 'senderPublicKey', 'timestamp', 'proofs', 'version'];
+            expect(signedTx).to.include.all.keys(...commonFields, ...Object.keys(tx[idx]));
+        });
     };
 
     it('issue tx', async () => {
@@ -185,6 +190,17 @@ describe('Selenium webdriver', function () {
 
     it('set asset script tx', async () => {
         await signedTxShouldBeValid(SET_ASSET_SCRIPT, By.xpath("//div[contains(@class, '-assetScriptTx')]"));
+    });
+
+    it('package tx', async () => {
+        await signedTxShouldBeValid(
+            [ISSUE, TRANSFER, REISSUE, BURN, LEASE, CANCEL_LEASE, ALIAS],
+            By.xpath("//div[contains(@class, '-dataTx')]")
+        );
+        await signedTxShouldBeValid(
+            [MASS_TRANSFER, DATA, SET_SCRIPT, SPONSORSHIP, SET_ASSET_SCRIPT],
+            By.xpath("//div[contains(@class, '-dataTx')]")
+        );
     });
 
     describe('invoke tx', async () => {
