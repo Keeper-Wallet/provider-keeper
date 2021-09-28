@@ -8,12 +8,12 @@ let signer, input, output;
 window.setInput = (value) => {
     resetIO();
     input = value;
+
     document.querySelector('#input').textContent = JSON.stringify(value);
     document.querySelector('#send-tx.disabled').classList.remove('disabled');
 };
 
 const setOutput = (value) => {
-    console.log(value);
     output = value;
 
     if (!Array.isArray(value)) {
@@ -51,6 +51,10 @@ resetIO();
 window.setupSigner('https://nodes-testnet.wavesnodes.com');
 
 const signerByTxType = (tx) => {
+    if (Array.isArray(tx)) {
+        return signer.batch(tx);
+    }
+
     switch (tx.type) {
         case TRANSACTION_TYPE.ISSUE:
             return signer.issue(tx);
@@ -99,37 +103,8 @@ document.querySelector('#send-tx').addEventListener('click', async (evt) => {
         return;
     }
     try {
-        document.querySelector('#send-tx').classList.add('disabled');
+        evt.target.classList.add('disabled');
         setOutput(await signerByTxType(input).sign());
-    } catch (err) {
-        setOutput(err);
-    }
-});
-
-document.querySelector('#send-pack').addEventListener('click', async () => {
-    try {
-        window.setInput([
-            {
-                recipient: 'merry',
-                amount: 100,
-            },
-            {
-                recipient: '3My2kBJaGfeM2koiZroaYdd3y8rAgfV2EAx',
-                amount: 100,
-            },
-        ]);
-        setOutput(
-            await signer
-                .transfer({
-                    recipient: 'merry',
-                    amount: 100,
-                })
-                .transfer({
-                    recipient: '3My2kBJaGfeM2koiZroaYdd3y8rAgfV2EAx',
-                    amount: 100,
-                })
-                .sign()
-        );
     } catch (err) {
         setOutput(err);
     }
