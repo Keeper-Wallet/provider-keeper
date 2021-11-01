@@ -18,9 +18,9 @@ import {
 import { TRANSACTION_TYPE } from '@waves/ts-types';
 import { json } from '@waves/marshall';
 
-function moneyFactory(amount: number | string, assetId: string | null = 'WAVES'): WavesKeeper.IMoneyAmount {
+function moneyFactory(amount: number | string, assetId: string | null = 'WAVES'): WavesKeeper.IMoneyCoins {
     return {
-        amount,
+        coins: amount,
         assetId: assetId ?? 'WAVES',
     };
 }
