@@ -62,7 +62,7 @@ describe('Adapter', () => {
                 tx.fee = amount; // now tx with fee in WAVES
 
                 expect(keeperTxFactory(tx).data.fee).to.be.deep.equal({
-                    amount: tx.fee,
+                    coins: tx.fee,
                     assetId: 'WAVES',
                 });
 
@@ -70,7 +70,7 @@ describe('Adapter', () => {
                     tx.feeAssetId = assetId; // tx with fee in asset
 
                     expect(keeperTxFactory(tx).data.fee).to.be.deep.equal({
-                        amount: tx.fee,
+                        coins: tx.fee,
                         assetId: tx.feeAssetId,
                     });
                 }
@@ -117,7 +117,7 @@ describe('Adapter', () => {
                     type: txTransfer.type,
                     data: {
                         recipient: txTransfer.recipient,
-                        amount: { amount: txTransfer.amount, assetId: txTransfer.assetId },
+                        amount: { coins: txTransfer.amount, assetId: txTransfer.assetId },
                         attachment: txTransfer.attachment,
                     },
                 });
@@ -219,7 +219,7 @@ describe('Adapter', () => {
                 expect(keeperTxFactory(txMassTransfer)).to.be.deep.equal({
                     type: txMassTransfer.type,
                     data: {
-                        totalAmount: { amount: 0, assetId: txMassTransfer.assetId },
+                        totalAmount: { coins: 0, assetId: txMassTransfer.assetId },
                         transfers: txMassTransfer.transfers,
                         attachment: txMassTransfer.attachment,
                     },
@@ -274,7 +274,7 @@ describe('Adapter', () => {
                     type: txSponsorship.type,
                     data: {
                         minSponsoredAssetFee: {
-                            amount: txSponsorship.minSponsoredAssetFee,
+                            coins: txSponsorship.minSponsoredAssetFee,
                             assetId: txSponsorship.assetId,
                         },
                     },
