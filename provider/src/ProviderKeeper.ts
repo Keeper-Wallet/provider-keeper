@@ -12,6 +12,7 @@ export class ProviderKeeper implements Provider {
         NODE_URL: 'https://nodes.wavesnodes.com',
     };
     private readonly _emitter: EventEmitter<AuthEvents> = new EventEmitter<AuthEvents>();
+    private readonly _maxRetries = 10;
 
     constructor(authData: WavesKeeper.IAuthData) {
         this._authData = authData;
@@ -38,14 +39,14 @@ export class ProviderKeeper implements Provider {
     public connect(options: ConnectOptions): Promise<void> {
         this._options = options;
 
-        const poll = (resolve) => {
+        const poll = (resolve, reject, attempt = 0) => {
+            if (attempt > this._maxRetries) {
+                return reject(new Error('WavesKeeper is not installed.'));
+            }
+
             if (!!window.WavesKeeper) {
-                resolve(
-                    window.WavesKeeper.initialPromise.then((api) => {
-                        this._api = api;
-                    })
-                );
-            } else setTimeout((_) => poll(resolve), 100);
+                return window.WavesKeeper.initialPromise.then((api) => resolve((this._api = api)));
+            } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
         };
 
         return new Promise(poll);
