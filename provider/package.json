@@ -33,6 +33,7 @@
   "dependencies": {
     "@waves/marshall": "^0.14.0",
     "@waves/ts-types": "^1.0.0",
+    "@waves/waveskeeper-types": "^0.2.1",
     "tslib": "^2.1.0",
     "typed-ts-events": "^1.2.1"
   },
@@ -46,7 +47,6 @@
     "@types/selenium-webdriver": "^4.0.15",
     "@waves/signer": "^1.0.3",
     "@waves/waves-transactions": "^4.2.1-beta.6",
-    "@waves/waveskeeper-types": "^0.2.0",
     "c8": "^7.9.0",
     "chai": "^4.3.4",
     "chromedriver": "^93.0.1",

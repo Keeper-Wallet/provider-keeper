@@ -4,7 +4,7 @@
     "declarationDir": "./dist/types",
     "outDir": "./dist",
     "types": [
-      "../node_modules/@waves/waveskeeper-types",
+      "@waves/waveskeeper-types",
       "node",
       "mocha",
       "chai"
