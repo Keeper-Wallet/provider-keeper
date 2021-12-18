@@ -5,7 +5,7 @@ import { TRANSACTION_TYPE } from '@waves/ts-types';
 
 let signer, input, output;
 
-window.setInput = (value) => {
+window.setInput = value => {
     resetIO();
     input = value;
 
@@ -13,7 +13,7 @@ window.setInput = (value) => {
     document.querySelector('#send-tx.disabled').classList.remove('disabled');
 };
 
-const setOutput = (value) => {
+const setOutput = value => {
     output = value;
 
     if (!Array.isArray(value)) {
@@ -21,7 +21,7 @@ const setOutput = (value) => {
     }
 
     document.querySelector('#output').textContent = value
-        .map((item) => {
+        .map(item => {
             const stringify = !!value.type ? json.stringifyTx : JSON.stringify;
             return stringify(item) || stringify(item.message);
         })
@@ -32,7 +32,7 @@ window.getOutput = () => {
     return output;
 };
 
-window.setupSigner = async (nodeUrl) => {
+window.setupSigner = async nodeUrl => {
     document.querySelector('#sign-in').classList.add('disabled');
     signer = new Signer({ NODE_URL: nodeUrl, LOG_LEVEL: 'verbose' });
     const provider = new ProviderKeeper({ data: 'test-generated-data' });
@@ -50,7 +50,7 @@ const resetIO = () => {
 resetIO();
 window.setupSigner('https://nodes-testnet.wavesnodes.com');
 
-const signerByTxType = (tx) => {
+const signerByTxType = tx => {
     if (Array.isArray(tx)) {
         return signer.batch(tx);
     }
@@ -87,7 +87,7 @@ const signerByTxType = (tx) => {
     }
 };
 
-document.querySelector('#sign-in').addEventListener('click', async (evt) => {
+document.querySelector('#sign-in').addEventListener('click', async evt => {
     if (evt.target.classList.contains('disabled')) {
         return;
     }
@@ -98,7 +98,7 @@ document.querySelector('#sign-in').addEventListener('click', async (evt) => {
     }
 });
 
-document.querySelector('#send-tx').addEventListener('click', async (evt) => {
+document.querySelector('#send-tx').addEventListener('click', async evt => {
     if (evt.target.classList.contains('disabled')) {
         return;
     }

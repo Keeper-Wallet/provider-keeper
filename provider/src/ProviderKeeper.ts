@@ -1,6 +1,6 @@
 import { AuthEvents, ConnectOptions, Handler, Provider, SignedTx, SignerTx, TypedData, UserData } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
-import { stringToBytes, base64Encode } from '@waves/ts-lib-crypto';
+import { base64Encode, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
 
 export class ProviderKeeper implements Provider {
@@ -45,7 +45,7 @@ export class ProviderKeeper implements Provider {
             }
 
             if (!!window.WavesKeeper) {
-                return window.WavesKeeper.initialPromise.then((api) => resolve((this._api = api)));
+                return window.WavesKeeper.initialPromise.then(api => resolve((this._api = api)));
             } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
         };
 
@@ -53,7 +53,7 @@ export class ProviderKeeper implements Provider {
     }
 
     public login(): Promise<UserData> {
-        return this._api.auth(this._authData).then((userData) => {
+        return this._api.auth(this._authData).then(userData => {
             this.user = userData;
             return userData;
         });
@@ -70,7 +70,7 @@ export class ProviderKeeper implements Provider {
                 version: 1,
                 binary: 'base64:' + base64Encode(stringToBytes(String(data))),
             })
-            .then((data) => data.signature);
+            .then(data => data.signature);
     }
 
     public signTypedData(data: Array<TypedData>): Promise<string> {
@@ -79,7 +79,7 @@ export class ProviderKeeper implements Provider {
                 version: 2,
                 data: data as WavesKeeper.TTypedData[],
             })
-            .then((data) => data.signature);
+            .then(data => data.signature);
     }
 
     public sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
@@ -87,11 +87,11 @@ export class ProviderKeeper implements Provider {
         if (toSign.length == 1) {
             return this._api
                 .signTransaction(keeperTxFactory(toSign[0]))
-                .then((data) => [signerTxFactory(data)]) as Promise<SignedTx<T>>;
+                .then(data => [signerTxFactory(data)]) as Promise<SignedTx<T>>;
         }
 
         return this._api
-            .signTransactionPackage(toSign.map((tx) => keeperTxFactory(tx)) as WavesKeeper.TSignTransactionPackageData)
-            .then((data) => data.map((tx) => signerTxFactory(tx))) as Promise<SignedTx<T>>;
+            .signTransactionPackage(toSign.map(tx => keeperTxFactory(tx)) as WavesKeeper.TSignTransactionPackageData)
+            .then(data => data.map(tx => signerTxFactory(tx))) as Promise<SignedTx<T>>;
     }
 }

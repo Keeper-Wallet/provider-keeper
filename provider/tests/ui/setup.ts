@@ -20,18 +20,18 @@ export async function fetchExtension(id: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         let body = '';
 
-        get(url, (response) => {
+        get(url, response => {
             if (response.statusCode === 302) {
-                get(response.headers.location!, (response) => {
+                get(response.headers.location!, response => {
                     response.setEncoding('base64');
                     response
-                        .on('data', (chunk) => {
+                        .on('data', chunk => {
                             body += chunk;
                         })
                         .on('end', () => {
                             resolve(body);
                         })
-                        .on('error', (err) => {
+                        .on('error', err => {
                             reject(err);
                         });
                 });
@@ -43,7 +43,7 @@ export async function fetchExtension(id: string): Promise<string> {
 type Accounts = { default: string; smart: string; rich: string };
 
 export async function setupWavesKeeperAccounts(extension: string, driver: WebDriver, accounts: Accounts) {
-    const jsClick = (el) => {
+    const jsClick = el => {
         el.click();
     };
     const timeout = 10 * 1000;
