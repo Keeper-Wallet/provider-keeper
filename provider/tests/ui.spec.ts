@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { Builder, until, By } from 'selenium-webdriver';
+import { Builder, By, until } from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
-import { GenericContainer, StartedTestContainer, Network, StartedNetwork } from 'testcontainers';
+import { GenericContainer, Network, StartedNetwork, StartedTestContainer } from 'testcontainers';
 import { resolve } from 'path';
 import { fetchExtension, setupWavesKeeperAccounts } from './ui';
 import {
@@ -43,7 +43,6 @@ describe('Selenium webdriver', function () {
     let tabWavesKeeper, tabUI;
 
     before(async function () {
-        this.timeout(10 * m);
         const ext: Promise<string> = fetchExtension(extension);
         const local: StartedNetwork = await new Network().start();
 
@@ -80,7 +79,6 @@ describe('Selenium webdriver', function () {
     });
 
     after(async function () {
-        this.timeout(60 * s);
         driver && (await driver.quit());
         cSelenium && (await cSelenium.stop());
         cUI && (await cUI.stop());
@@ -114,7 +112,7 @@ describe('Selenium webdriver', function () {
 
     const signedTxShouldBeValid = async (tx: SignerTx | SignerTx[], formSelector: By) => {
         await driver.switchTo().window(tabUI);
-        await driver.executeScript((tx) => {
+        await driver.executeScript(tx => {
             (window as any).setInput(tx);
         }, tx);
 

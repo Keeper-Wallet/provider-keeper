@@ -52,6 +52,7 @@
     "chromedriver": "^93.0.1",
     "codecov": "^3.8.3",
     "mocha": "^9.1.1",
+    "prettier": "^2.5.1",
     "selenium-webdriver": "^4.0.0-rc-1",
     "testcontainers": "^7.20.2",
     "ts-loader": "^6.2.1",
