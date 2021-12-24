@@ -2,6 +2,7 @@ import { AuthEvents, ConnectOptions, Handler, Provider, SignedTx, SignerTx, Type
 import { EventEmitter } from 'typed-ts-events';
 import { base64Encode, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
+import { ensureNetwork } from './decorators';
 
 export class ProviderKeeper implements Provider {
     public user: UserData | null = null;
@@ -31,7 +32,7 @@ export class ProviderKeeper implements Provider {
     }
 
     public off<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-        this._emitter.once(event, handler);
+        this._emitter.off(event, handler);
 
         return this;
     }
@@ -52,18 +53,22 @@ export class ProviderKeeper implements Provider {
         return new Promise(poll);
     }
 
+    @ensureNetwork
     public login(): Promise<UserData> {
         return this._api.auth(this._authData).then(userData => {
             this.user = userData;
+            this._emitter.trigger('login', userData);
             return userData;
         });
     }
 
     public logout(): Promise<void> {
         this.user = null;
+        this._emitter.trigger('logout', void 0);
         return Promise.resolve();
     }
 
+    @ensureNetwork
     public signMessage(data: string | number): Promise<string> {
         return this._api
             .signCustomData({
@@ -73,6 +78,7 @@ export class ProviderKeeper implements Provider {
             .then(data => data.signature);
     }
 
+    @ensureNetwork
     public signTypedData(data: Array<TypedData>): Promise<string> {
         return this._api
             .signCustomData({
@@ -83,6 +89,7 @@ export class ProviderKeeper implements Provider {
     }
 
     public sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
+    @ensureNetwork
     public sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>> {
         if (toSign.length == 1) {
             return this._api
