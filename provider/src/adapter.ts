@@ -18,6 +18,14 @@ import {
 import { TRANSACTION_TYPE } from '@waves/ts-types';
 import { json } from '@waves/marshall';
 
+function isAlias(source: string): boolean {
+    return source.startsWith('alias:');
+}
+
+function addressFactory(address: string): string {
+    return !isAlias(address) ? address : address.split(':')[2];
+}
+
 function moneyFactory(amount: number | string, assetId: string | null = 'WAVES'): WavesKeeper.IMoneyCoins {
     return {
         coins: amount,
@@ -57,7 +65,7 @@ function transferAdapter(tx: SignerTransferTx): WavesKeeper.TTransferTxData {
     const data: WavesKeeper.ITransferTx = {
         ...defaultsFactory(tx),
         amount: moneyFactory(amount, assetId),
-        recipient,
+        recipient: addressFactory(recipient),
         ...(attachment ? { attachment } : {}),
         ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
     };
@@ -89,7 +97,7 @@ function leaseAdapter(tx: SignerLeaseTx): WavesKeeper.TLeaseTxData {
     const { recipient, amount } = tx;
     const data: WavesKeeper.ILeaseTx = {
         ...defaultsFactory(tx),
-        recipient,
+        recipient: addressFactory(recipient),
         amount,
     };
     return { type: TRANSACTION_TYPE.LEASE, data };
@@ -118,7 +126,10 @@ function massTransferAdapter(tx: SignerMassTransferTx): WavesKeeper.TMassTransfe
     const data: WavesKeeper.IMassTransferTx = {
         ...defaultsFactory(tx),
         totalAmount: moneyFactory(0, assetId),
-        transfers: transfers as Array<WavesKeeper.ITransfer>,
+        transfers: transfers.map(transfer => ({
+            recipient: addressFactory(transfer.recipient),
+            amount: transfer.amount,
+        })),
         ...(attachment ? { attachment } : {}),
     };
     return { type: TRANSACTION_TYPE.MASS_TRANSFER, data };
@@ -165,7 +176,7 @@ function invokeScriptAdapter(tx: SignerInvokeTx): WavesKeeper.TScriptInvocationT
     const { dApp, fee, feeAssetId, payment, call } = tx;
     const data: WavesKeeper.IScriptInvocationTx = {
         ...defaultsFactory(tx),
-        dApp,
+        dApp: addressFactory(dApp),
         ...(call ? { call: call as WavesKeeper.ICall } : {}),
         ...(payment ? { payment: payment as Array<WavesKeeper.TMoney> } : {}),
         ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
