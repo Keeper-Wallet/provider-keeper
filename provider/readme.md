@@ -21,8 +21,6 @@ npm i @waves/signer @waves/provider-keeper
 
 Add library initialization to your app.
 
-Please note, that the Keeper extension API may not be ready on the page yet, so you should execute the asynchronous `signer.setProvider(keeper)` using `await`.
-
 - For Testnet:
 
   ```js
