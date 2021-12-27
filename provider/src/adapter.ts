@@ -177,8 +177,8 @@ function invokeScriptAdapter(tx: SignerInvokeTx): WavesKeeper.TScriptInvocationT
     const data: WavesKeeper.IScriptInvocationTx = {
         ...defaultsFactory(tx),
         dApp: addressFactory(dApp),
+        payment: (payment ?? []) as Array<WavesKeeper.TMoney>,
         ...(call ? { call: call as WavesKeeper.ICall } : {}),
-        ...(payment ? { payment: payment as Array<WavesKeeper.TMoney> } : {}),
         ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
     };
     return { type: TRANSACTION_TYPE.INVOKE_SCRIPT, data };

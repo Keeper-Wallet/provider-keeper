@@ -1,6 +1,6 @@
 import { AuthEvents, ConnectOptions, Handler, Provider, SignedTx, SignerTx, TypedData, UserData } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
-import { base64Encode, stringToBytes } from '@waves/ts-lib-crypto';
+import { base16Encode, base64Encode, randomBytes, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
 import { ensureNetwork } from './decorators';
 
@@ -15,8 +15,8 @@ export class ProviderKeeper implements Provider {
     private readonly _emitter: EventEmitter<AuthEvents> = new EventEmitter<AuthEvents>();
     private readonly _maxRetries = 10;
 
-    constructor(authData: WavesKeeper.IAuthData) {
-        this._authData = authData;
+    constructor() {
+        this._authData = { data: base16Encode(randomBytes(16)) };
     }
 
     public on<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
@@ -55,10 +55,10 @@ export class ProviderKeeper implements Provider {
 
     @ensureNetwork
     public login(): Promise<UserData> {
-        return this._api.auth(this._authData).then(userData => {
-            this.user = userData;
-            this._emitter.trigger('login', userData);
-            return userData;
+        return this._api.auth(this._authData).then(auth => {
+            this.user = { address: auth.address, publicKey: auth.publicKey };
+            this._emitter.trigger('login', this.user);
+            return this.user;
         });
     }
 
