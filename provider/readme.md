@@ -33,11 +33,8 @@ Please note, that the Keeper extension API may not be ready on the page yet, so 
       // Specify URL of the node on Testnet
       NODE_URL: 'https://nodes-testnet.wavesnodes.com',
   });
-  const authData = {
-      data: 'server generated string',
-  };
-  const keeper = new ProviderKeeper(authData);
-  await signer.setProvider(keeper);
+  const keeper = new ProviderKeeper();
+  signer.setProvider(keeper);
   ```
 
 - For Mainnet:
@@ -47,11 +44,8 @@ Please note, that the Keeper extension API may not be ready on the page yet, so 
   import { ProviderKeeper } from '@waves/provider-keeper';
 
   const signer = new Signer();
-  const authData = {
-      data: 'server generated string',
-  };
-  const keeper = new ProviderKeeper(authData);
-  await signer.setProvider(keeper);
+  const keeper = new ProviderKeeper();
+  signer.setProvider(keeper);
   ```
 
 ### Basic example
