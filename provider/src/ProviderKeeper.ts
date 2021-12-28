@@ -3,6 +3,8 @@ import { EventEmitter } from 'typed-ts-events';
 import { base16Encode, base64Encode, randomBytes, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
 import { ensureNetwork } from './decorators';
+import { calculateFee } from './utils';
+import { TRANSACTION_TYPE } from '@waves/ts-types';
 
 export class ProviderKeeper implements Provider {
     public user: UserData | null = null;
@@ -88,17 +90,36 @@ export class ProviderKeeper implements Provider {
             .then(data => data.signature);
     }
 
-    public sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
+    public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
     @ensureNetwork
-    public sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>> {
-        if (toSign.length == 1) {
+    public async sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>> {
+        const toSignWithFee = await Promise.all(toSign.map(tx => this._txWithFee(tx)));
+
+        if (toSignWithFee.length == 1) {
             return this._api
-                .signTransaction(keeperTxFactory(toSign[0]))
+                .signTransaction(keeperTxFactory(toSignWithFee[0]))
                 .then(data => [signerTxFactory(data)]) as Promise<SignedTx<T>>;
         }
 
         return this._api
-            .signTransactionPackage(toSign.map(tx => keeperTxFactory(tx)) as WavesKeeper.TSignTransactionPackageData)
+            .signTransactionPackage(
+                toSignWithFee.map(tx => keeperTxFactory(tx)) as WavesKeeper.TSignTransactionPackageData
+            )
             .then(data => data.map(tx => signerTxFactory(tx))) as Promise<SignedTx<T>>;
+    }
+
+    private _publicKeyPromise(): Promise<string | undefined> {
+        return this.user?.publicKey
+            ? Promise.resolve(this.user.publicKey)
+            : this._api.publicState().then(state => state.account?.publicKey);
+    }
+
+    private async _txWithFee(tx: SignerTx): Promise<SignerTx> {
+        return tx.type === TRANSACTION_TYPE.INVOKE_SCRIPT && !tx.fee
+            ? calculateFee(this._options.NODE_URL, {
+                  ...tx,
+                  senderPublicKey: await this._publicKeyPromise(),
+              })
+            : Promise.resolve(tx);
     }
 }
