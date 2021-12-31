@@ -3,12 +3,11 @@ import * as chrome from 'selenium-webdriver/chrome';
 import * as net from 'net';
 import * as mocha from 'mocha';
 import * as path from 'path';
-import { resolve } from 'path';
+import * as httpServer from 'http-server';
 import {
   GenericContainer,
-  Network,
-  StartedNetwork,
   StartedTestContainer,
+  TestContainers,
 } from 'testcontainers';
 import * as fs from 'fs';
 
@@ -23,12 +22,14 @@ declare module 'mocha' {
 
 interface GlobalFixturesContext {
   selenium: StartedTestContainer;
-  testApp: StartedTestContainer;
+  testApp: httpServer.HttpServer;
 }
 
 export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   const rootDir = path.resolve(__dirname, '..', '..', '..');
-  const wavesKeeperDir = path.resolve(rootDir, 'ext');
+  const wavesKeeperDir = path.resolve(rootDir, 'dist');
+  const testAppDir = path.resolve(rootDir, 'test-app', 'dist');
+
   if (
     !fs.existsSync(wavesKeeperDir) ||
     fs.readdirSync(wavesKeeperDir).length === 0
@@ -41,25 +42,28 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     );
   }
 
-  const local: StartedNetwork = await new Network().start();
+  if (!fs.existsSync(testAppDir) || fs.readdirSync(testAppDir).length === 0) {
+    throw new Error(
+      `
+      You should build test application first.
+      See more at .github/workflows/tests.yml
+      `
+    );
+  }
 
-  const exposedPorts = [4444, 5900];
+  this.testApp = httpServer.createServer({ root: testAppDir });
+  this.testApp.listen(8081, '0.0.0.0', function () {});
 
-  this.testApp = await (
-    await GenericContainer.fromDockerfile(resolve(rootDir)).build()
-  )
-    .withNetworkMode(local.getName())
-    .withNetworkAliases('test-app')
-    .start();
+  await TestContainers.exposeHostPorts(8081);
 
+  const seleniumPorts = [4444, 5900];
   this.selenium = await new GenericContainer('selenium/standalone-chrome')
     .withBindMount(path.resolve(wavesKeeperDir), '/app/waves_keeper', 'ro')
-    .withNetworkMode(local.getName())
-    .withExposedPorts(...exposedPorts)
+    .withExposedPorts(...seleniumPorts)
     .start();
 
   await Promise.all(
-    exposedPorts.map(
+    seleniumPorts.map(
       (port: number) =>
         new Promise((resolve, reject) => {
           net
@@ -86,7 +90,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
 
 export async function mochaGlobalTeardown(this: GlobalFixturesContext) {
   await this.selenium.stop();
-  await this.testApp.stop();
+  this.testApp.close();
 }
 
 export const mochaHooks = () => ({
@@ -119,7 +123,7 @@ export const mochaHooks = () => ({
       }
     }
 
-    this.testAppUrl = 'http://test-app:8081';
+    this.testAppUrl = 'http://host.testcontainers.internal:8081';
   },
 
   afterAll(this: mocha.Context, done: mocha.Done) {
