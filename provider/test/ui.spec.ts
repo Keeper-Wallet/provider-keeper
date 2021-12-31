@@ -1,14 +1,6 @@
 import { expect } from 'chai';
-import { Builder, By, until } from 'selenium-webdriver';
-import * as chrome from 'selenium-webdriver/chrome';
-import {
-  GenericContainer,
-  Network,
-  StartedNetwork,
-  StartedTestContainer,
-} from 'testcontainers';
-import { resolve } from 'path';
-import { fetchExtension, setupWavesKeeperAccounts } from './ui';
+import * as mocha from 'mocha';
+import { By, until } from 'selenium-webdriver';
 import {
   ALIAS,
   BURN,
@@ -28,146 +20,111 @@ import {
   SPONSORSHIP,
   TRANSFER,
 } from './transactions';
-import { SignerTx } from '@waves/signer';
+import { SignerTx, UserData } from '@waves/signer';
+import { App, CreateNewAccount, Network, Settings } from './utils/actions';
 
-const s = 1000,
-  m = 60000,
-  timeout = 10 * s;
+const m = 60000;
 
 describe('Selenium webdriver', function () {
-  let driver, cSelenium: StartedTestContainer, cUI: StartedTestContainer;
-  const extension = 'lpilbniiabackdjcionkobglmddfbcjo';
-  const ui = {
-    host: 'ui',
-    port: 8081,
-    dockerFilePath: resolve(__dirname, '..', '..'),
-  };
-  const accounts = {
-    rich: 'waves private node seed with waves tokens',
-    default: 'waves private node seed with test account',
-    smart: 'waves private node seed with smart account',
-  };
-
   this.timeout(15 * m);
   let tabWavesKeeper, tabUI;
 
   before(async function () {
-    const ext: Promise<string> = fetchExtension(extension);
-    const local: StartedNetwork = await new Network().start();
-
-    // ui container
-    cUI = await (
-      await GenericContainer.fromDockerfile(ui.dockerFilePath).build()
-    )
-      .withNetworkMode(local.getName())
-      .withNetworkAliases(ui.host)
-      .start();
-
-    // selenium container
-    cSelenium = await new GenericContainer('selenium/standalone-chrome')
-      .withExposedPorts(4444)
-      .withNetworkMode(local.getName())
-      .start();
-
-    // selenium webdriver
-    driver = new Builder()
-      .forBrowser('chrome')
-      .usingServer(
-        `http://${cSelenium.getHost()}:${cSelenium.getMappedPort(4444)}/wd/hub`
-      )
-      .setChromeOptions(new chrome.Options().addExtensions(await ext))
-      .build();
-
-    await setupWavesKeeperAccounts(extension, driver, accounts);
+    await App.initVault.call(this);
+    await Network.switchTo.call(this, 'Testnet');
+    await CreateNewAccount.importAccount.call(
+      this,
+      'rich',
+      'waves private node seed with waves tokens'
+    );
+    await Settings.setMaxSessionTimeout.call(this);
 
     // prepare browse keeper and ui tabs
-    await driver.get(`chrome-extension://${extension}/popup.html`);
-    tabWavesKeeper = await driver.getWindowHandle();
+    await App.open.call(this);
+    tabWavesKeeper = await this.driver.getWindowHandle();
 
-    await driver.switchTo().newWindow('tab');
-    await driver.get(`http://${ui.host}:${ui.port}`);
-    await driver.wait(until.elementLocated(By.id('sign-in')), timeout);
-    tabUI = await driver.getWindowHandle();
-    await driver.sleep(2000);
+    await this.driver.switchTo().newWindow('tab');
+    await this.driver.get(this.testAppUrl);
+    await this.driver.wait(until.elementLocated(By.id('sign-in')), this.wait);
+    tabUI = await this.driver.getWindowHandle();
+    await this.driver.sleep(2000);
   });
 
-  after(async function () {
-    driver && (await driver.quit());
-    cSelenium && (await cSelenium.stop());
-    cUI && (await cUI.stop());
-  });
+  it('auth tx', async function () {
+    await this.driver.switchTo().window(tabUI);
 
-  it('auth tx', async () => {
-    await driver.switchTo().window(tabUI);
-
-    const loginBtn = await driver.wait(
+    const loginBtn = await this.driver.wait(
       until.elementLocated(By.css('#sign-in:not(.disabled)')),
-      timeout
+      this.wait
     );
     await loginBtn.click();
 
-    await driver.switchTo().window(tabWavesKeeper);
+    await this.driver.switchTo().window(tabWavesKeeper);
     // site permission request
-    await driver.wait(
+    await this.driver.wait(
       until.elementLocated(By.xpath("//div[contains(@class, '-originAuthTx')]"))
     );
-    let acceptBtn = await driver.findElement(
+    let acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
     );
     await acceptBtn.click();
     // site auth request
-    await driver.wait(
+    await this.driver.wait(
       until.elementLocated(By.xpath("//div[contains(@class, '-authTx')]"))
     );
-    acceptBtn = await driver.findElement(By.css('.app button[type=submit]'));
-    await acceptBtn.click();
-    // close window
-    const closeBtn = await driver.wait(
-      until.elementLocated(By.xpath("//button[contains(@class, '-closeBtn')]"))
-    );
-    await closeBtn.click();
-
-    await driver.switchTo().window(tabUI);
-    const userData = await driver.executeScript(() => {
-      return (window as any).getOutput();
-    });
-    expect(userData.signature).to.exist;
-  });
-
-  const signedTxShouldBeValid = async (
-    tx: SignerTx | SignerTx[],
-    formSelector: By
-  ) => {
-    await driver.switchTo().window(tabUI);
-    await driver.executeScript(tx => {
-      (window as any).setInput(tx);
-    }, tx);
-
-    const sendTxBtn = await driver.wait(
-      until.elementLocated(By.css('#send-tx:not(.disabled)')),
-      timeout
-    );
-    await sendTxBtn.click();
-
-    // tx request
-    await driver.switchTo().window(tabWavesKeeper);
-    await driver.wait(until.elementLocated(formSelector));
-    const acceptBtn = await driver.findElement(
+    acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
     );
     await acceptBtn.click();
     // close window
-    const closeBtn = await driver.wait(
-      until.elementLocated(By.xpath("//button[contains(@class, '-closeBtn')]"))
+    const closeBtn = await this.driver.wait(
+      until.elementLocated(By.css('[data-testid="closeTransaction"]'))
     );
     await closeBtn.click();
 
-    await driver.switchTo().window(tabUI);
-    await driver.wait(
-      until.elementLocated(By.css('#send-tx.disabled')),
-      timeout
+    await this.driver.switchTo().window(tabUI);
+    const userData: UserData = await this.driver.executeScript(() => {
+      return (window as any).getOutput();
+    });
+    expect(userData.address).to.exist;
+    expect(userData.publicKey).to.exist;
+  });
+
+  const signedTxShouldBeValid = async function (
+    this: mocha.Context,
+    tx: SignerTx | SignerTx[],
+    formSelector: By
+  ) {
+    await this.driver.switchTo().window(tabUI);
+    await this.driver.executeScript(tx => {
+      (window as any).setInput(tx);
+    }, tx);
+
+    const sendTxBtn = await this.driver.wait(
+      until.elementLocated(By.css('#send-tx:not(.disabled)')),
+      this.wait
     );
-    const signed = await driver.executeScript(() => {
+    await sendTxBtn.click();
+
+    // tx request
+    await this.driver.switchTo().window(tabWavesKeeper);
+    await this.driver.wait(until.elementLocated(formSelector));
+    const acceptBtn = await this.driver.findElement(
+      By.css('.app button[type=submit]')
+    );
+    await acceptBtn.click();
+    // close window
+    const closeBtn = await this.driver.wait(
+      until.elementLocated(By.css('[data-testid="closeTransaction"]'))
+    );
+    await closeBtn.click();
+
+    await this.driver.switchTo().window(tabUI);
+    await this.driver.wait(
+      until.elementLocated(By.css('#send-tx.disabled')),
+      this.wait
+    );
+    const signed: any[] = await this.driver.executeScript(() => {
       return (window as any).getOutput();
     });
 
@@ -190,132 +147,151 @@ describe('Selenium webdriver', function () {
     });
   };
 
-  it('issue tx', async () => {
-    await signedTxShouldBeValid(
+  it('issue tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       ISSUE,
       By.xpath("//div[contains(@class, '-issueTx')]")
     );
   });
 
-  it('transfer tx', async () => {
-    await signedTxShouldBeValid(
+  it('transfer tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       TRANSFER,
       By.xpath("//div[contains(@class, '-transferTx')]")
     );
   });
 
-  it('reissue tx', async () => {
-    await signedTxShouldBeValid(
+  it('reissue tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       REISSUE,
       By.xpath("//div[contains(@class, '-reissueTx')]")
     );
   });
 
-  it('burn tx', async () => {
-    await signedTxShouldBeValid(
+  it('burn tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       BURN,
       By.xpath("//div[contains(@class, '-burnTx')]")
     );
   });
 
-  it('lease tx', async () => {
-    await signedTxShouldBeValid(
+  it('lease tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       LEASE,
       By.xpath("//div[contains(@class, '-leaseTx')]")
     );
   });
 
-  it('cancel lease tx', async () => {
-    await signedTxShouldBeValid(
+  it('cancel lease tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       CANCEL_LEASE,
       By.xpath("//div[contains(@class, '-cancelLeaseTx')]")
     );
   });
 
-  it('alias tx', async () => {
-    await signedTxShouldBeValid(
+  it('alias tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       ALIAS,
       By.xpath("//div[contains(@class, '-aliasTx')]")
     );
   });
 
-  it('mass transfer tx', async () => {
-    await signedTxShouldBeValid(
+  it('mass transfer tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       MASS_TRANSFER,
       By.xpath("//div[contains(@class, '-massTransferTx')]")
     );
   });
 
-  it('data tx', async () => {
-    await signedTxShouldBeValid(
+  it('data tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       DATA,
       By.xpath("//div[contains(@class, '-dataTx')]")
     );
   });
 
-  it('set script tx', async () => {
-    await signedTxShouldBeValid(
+  it('set script tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       SET_SCRIPT,
       By.xpath("//div[contains(@class, '-setScriptTx')]")
     );
   });
 
-  it('sponsorship tx', async () => {
-    await signedTxShouldBeValid(
+  it('sponsorship tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       SPONSORSHIP,
       By.xpath("//div[contains(@class, '-sponsorshipTx')]")
     );
   });
 
-  it('set asset script tx', async () => {
-    await signedTxShouldBeValid(
+  it('set asset script tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       SET_ASSET_SCRIPT,
       By.xpath("//div[contains(@class, '-assetScriptTx')]")
     );
   });
 
-  it('package tx', async () => {
-    await signedTxShouldBeValid(
+  it('package tx', async function () {
+    await signedTxShouldBeValid.call(
+      this,
       [ISSUE, TRANSFER, REISSUE, BURN, LEASE, CANCEL_LEASE, ALIAS],
       By.xpath("//div[contains(@class, '-dataTx')]")
     );
-    await signedTxShouldBeValid(
+    await signedTxShouldBeValid.call(
+      this,
       [MASS_TRANSFER, DATA, SET_SCRIPT, SPONSORSHIP, SET_ASSET_SCRIPT],
       By.xpath("//div[contains(@class, '-dataTx')]")
     );
   });
 
-  describe('invoke tx', async () => {
-    it('default call', async () => {
-      await signedTxShouldBeValid(
+  describe('invoke tx', function () {
+    it('default call', async function () {
+      await signedTxShouldBeValid.call(
+        this,
         INVOKE_DEFAULT_CALL,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
     });
 
-    it('with no args but single payment', async () => {
-      await signedTxShouldBeValid(
+    it('with no args but single payment', async function () {
+      await signedTxShouldBeValid.call(
+        this,
         INVOKE_NO_ARGS_SINGLE_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
     });
 
-    it('with no args but many payments', async () => {
-      await signedTxShouldBeValid(
+    it('with no args but many payments', async function () {
+      await signedTxShouldBeValid.call(
+        this,
         INVOKE_NO_ARGS_MANY_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
     });
 
-    it('with native args and no payments', async () => {
-      await signedTxShouldBeValid(
+    it('with native args and no payments', async function () {
+      await signedTxShouldBeValid.call(
+        this,
         INVOKE_NATIVE_ARGS_NO_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
     });
 
-    it('with list args and no payments', async () => {
-      await signedTxShouldBeValid(
+    it('with list args and no payments', async function () {
+      await signedTxShouldBeValid.call(
+        this,
         INVOKE_LIST_ARGS_NO_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );

@@ -35,7 +35,8 @@
       "ts"
     ],
     "require": [
-      "ts-node/register"
+      "ts-node/register",
+      "test/utils/hooks.ts"
     ]
   },
   "dependencies": {
@@ -73,10 +74,5 @@
   "engines": {
     "node": "^16",
     "npm": "^7"
-  },
-  "exclude": [
-    "./tests/",
-    "./node_modules/",
-    "./dist/"
-  ]
+  }
 }

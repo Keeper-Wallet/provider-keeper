@@ -32,11 +32,11 @@ window.getOutput = () => {
   return output;
 };
 
-window.setupSigner = async nodeUrl => {
+window.setupSigner = nodeUrl => {
   document.querySelector('#sign-in').classList.add('disabled');
-  signer = new Signer({ NODE_URL: nodeUrl, LOG_LEVEL: 'verbose' });
-  const provider = new ProviderKeeper({ data: 'test-generated-data' });
-  await signer.setProvider(provider);
+  signer = new Signer({ NODE_URL: nodeUrl });
+  const provider = new ProviderKeeper();
+  signer.setProvider(provider);
   document.querySelector('#sign-in').classList.remove('disabled');
 };
 

@@ -24,5 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Download and extract latest Waves Keeper
+        run: rm -rf ext; curl -L "https://clients2.google.com/service/update2/crx?response=redirect&os=mac&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromecrx&prodchannel=unknown&prodversion=93.0.4577.63&acceptformat=crx2,crx3&x=id%3Dlpilbniiabackdjcionkobglmddfbcjo%26uc"  --output ext.crx; mkdir ext; unzip ext.crx -d ext; rm -rf ext.crx
+
       - name: Run tests with coverage
         run: npm run provider:coverage
