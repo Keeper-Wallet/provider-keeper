@@ -1,21 +1,12 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "es5",
-      "es2015.promise",
-      "scripthost"
-    ],
+    "lib": ["dom", "es5", "es2015.promise", "scripthost"],
     "module": "commonjs",
     "noImplicitAny": false,
     "baseUrl": ".",
     "paths": {
-      "@waves/provider-keeper": [
-        "./provider/src"
-      ],
-      "@waves/provider-keeper/*": [
-        "./provider/src/*"
-      ]
+      "@waves/provider-keeper": ["./provider/src"],
+      "@waves/provider-keeper/*": ["./provider/src/*"]
     },
     "sourceMap": false,
     "strict": true,
