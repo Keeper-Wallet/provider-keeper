@@ -1,4 +1,4 @@
-import { fetchCalculateFee, TFeeInfo } from '@waves/node-api-js/es/api-node/transactions';
+import { fetchCalculateFee, TFeeInfo } from '@waves/node-api-js/cjs/api-node/transactions';
 import { SignerTx } from '@waves/signer';
 
 export function calculateFee(base: string, tx: any): Promise<SignerTx> {
