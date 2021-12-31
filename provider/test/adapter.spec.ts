@@ -23,16 +23,16 @@ import {
     ALIAS,
     BURN,
     CANCEL_LEASE,
+    DATA,
+    INVOKE,
     ISSUE,
     LEASE,
     MASS_TRANSFER,
     REISSUE,
-    TRANSFER,
-    DATA,
+    SET_ASSET_SCRIPT,
     SET_SCRIPT,
     SPONSORSHIP,
-    SET_ASSET_SCRIPT,
-    INVOKE,
+    TRANSFER,
 } from './transactions';
 
 describe('Adapter', () => {

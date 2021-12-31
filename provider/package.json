@@ -26,9 +26,17 @@
   },
   "scripts": {
     "build": "webpack",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.spec.ts'",
+    "test": "mocha",
     "coverage": "c8 npm test",
     "prepublish": "npm run build"
+  },
+  "mocha": {
+    "extension": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
   },
   "dependencies": {
     "@waves/marshall": "^0.14.0",

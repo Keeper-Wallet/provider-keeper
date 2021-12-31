@@ -1,9 +1,23 @@
 {
+  "include": [
+    "src/**/*",
+    "test/**/*"
+  ],
   "compilerOptions": {
-    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationDir": "./dist/types",
+    "experimentalDecorators": true,
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noErrorTruncation": true,
     "outDir": "./dist",
+    "pretty": true,
+    "target": "es6",
     "types": [
       "@waves/waveskeeper-types",
       "node",
@@ -11,13 +25,5 @@
       "chai"
     ]
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "tests"
-  ],
-  "extends": "../tsconfig.json",
-  "include": [
-    "src"
-  ]
+  "extends": "../tsconfig.json"
 }
