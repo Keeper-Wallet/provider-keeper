@@ -21,10 +21,10 @@ export function ensureNetwork(
       const networkByte = state.network.code.charCodeAt(0);
       if (
         nodeUrl.replace(/(-keeper(\.wavesnodes\.com))?\/?$/, '$2') !==
-        this._options.NODE_URL.replace(/\/?$/, '').replace(
+          this._options.NODE_URL.replace(/\/?$/, '').replace(
             /\.wavesplatform\.com$/,
             '.wavesnodes.com'
-        ) ||
+          ) ||
         networkByte !== this._options.NETWORK_BYTE
       ) {
         throw new Error(
