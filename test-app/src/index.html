@@ -1,27 +1,30 @@
 <!DOCTYPE html>
-<html lang='en'>
-<head>
-    <meta charset='UTF-8' />
+<html lang="en" style="height: 100%">
+  <head>
+    <meta charset="UTF-8" />
     <title>ProviderKeeper</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-</head>
-<body>
-<main>
-    <div class='btn-group'>
-        <div id='sign-in' class='btn disabled'>Sign in</div>
-        <div></div>
-        <div id='send-tx' class='btn js-tx disabled'>Send tx</div>
-    </div>
-    <div class='cards'>
-        <div class='card'>
-            <header>input</header>
-            <div class='content' id='input'></div>
-        </div>
-        <div class='card'>
-            <header>output</header>
-            <div class='content' id='output'></div>
-        </div>
-    </div>
-</main>
-</body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body style="height: 100%">
+    <main
+      style="
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        margin: 0;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div>Provider and Signer classes available at:</div>
+      <pre style="background-color: #eee; padding: 1em; border-radius: 4px">
+window.Signer && window.ProviderKeeper</pre
+      >
+
+      <div>You can call any method directly from console, e.g:</div>
+      <pre style="background-color: #eee; padding: 1em; border-radius: 4px">
+new Signer().login()</pre
+      >
+    </main>
+  </body>
 </html>
