@@ -22,7 +22,7 @@ import {
 } from './transactions';
 import { Signer, SignerTx, UserData } from '@waves/signer';
 import { App, CreateNewAccount, Network, Settings } from './utils/actions';
-import ProviderKeeper from '@waves/provider-keeper';
+import { ProviderKeeper } from '../src';
 
 const m = 60000;
 
