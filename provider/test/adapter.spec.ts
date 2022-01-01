@@ -33,7 +33,7 @@ import {
   SET_SCRIPT,
   SPONSORSHIP,
   TRANSFER,
-} from './transactions';
+} from './utils/transactions';
 
 describe('Adapter', () => {
   describe('converting tx from Signer to Keeper', () => {

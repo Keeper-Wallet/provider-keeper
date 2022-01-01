@@ -19,7 +19,7 @@ import {
   SET_SCRIPT,
   SPONSORSHIP,
   TRANSFER,
-} from './transactions';
+} from './utils/transactions';
 import { Signer, SignerTx, UserData } from '@waves/signer';
 import { App, CreateNewAccount, Network, Settings } from './utils/actions';
 import { ProviderKeeper } from '../src';
@@ -37,7 +37,7 @@ declare global {
 }
 
 describe('Signer integration', function () {
-  this.timeout(15 * m);
+  this.timeout(5 * m);
   let wavesKeeper, testApp;
 
   before(async function () {
@@ -50,18 +50,18 @@ describe('Signer integration', function () {
     );
     await Settings.setMaxSessionTimeout.call(this);
 
-    // prepare browse keeper and ui tabs
+    // prepare browse keeper and test-app tabs
     await App.open.call(this);
     wavesKeeper = await this.driver.getWindowHandle();
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
-    await this.driver.executeScript(function () {
+    await this.driver.executeScript(function (nodeUrl) {
       window.signer = new window.Signer({
-        NODE_URL: 'https://nodes-testnet.wavesnodes.com',
+        NODE_URL: nodeUrl,
       });
       window.signer.setProvider(new window.ProviderKeeper());
-    });
+    }, 'https://nodes-testnet.wavesnodes.com');
     testApp = await this.driver.getWindowHandle();
   });
 
@@ -122,10 +122,12 @@ describe('Signer integration', function () {
     await Network.switchTo.call(this, 'Mainnet');
 
     await this.driver.switchTo().window(testApp);
-    const error: SignerError = await this.driver.executeAsyncScript(() => {
-      const done = arguments[arguments.length - 1];
-      window.signer.login().then(done).catch(done);
-    });
+    const error: SignerError = await this.driver.executeAsyncScript(
+      function () {
+        const done = arguments[arguments.length - 1];
+        window.signer.login().then(done).catch(done);
+      }
+    );
     expect(error.code).to.be.equal(ERRORS.ENSURE_PROVIDER);
     expect(error.type).to.be.equal('provider');
 

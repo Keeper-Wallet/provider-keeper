@@ -190,7 +190,11 @@ export const Settings = {
 };
 
 export const Network = {
-  switchTo: async function (this: mocha.Context, network: string) {
+  switchTo: async function (
+    this: mocha.Context,
+    network: 'Mainnet' | 'Stagenet' | 'Testnet' | 'Custom',
+    nodeUrl?: string
+  ) {
     await this.driver
       .wait(
         until.elementIsVisible(
@@ -220,6 +224,28 @@ export const Network = {
         )
       )
       .click();
+
+    if (network === 'Custom') {
+      const customNetworkSettings = this.driver.wait(
+        until.elementIsVisible(
+          this.driver.wait(
+            until.elementLocated(By.css('div#customNetwork')),
+            this.wait
+          )
+        ),
+        this.wait
+      );
+
+      if (nodeUrl) {
+        customNetworkSettings
+          .findElement(By.css('input#node_address'))
+          .sendKeys(nodeUrl);
+      }
+
+      await customNetworkSettings
+        .findElement(By.css('button#networkSettingsSave'))
+        .click();
+    }
 
     await this.driver.wait(
       until.elementLocated(By.xpath("//div[contains(@class, '-intro-intro')]")),
