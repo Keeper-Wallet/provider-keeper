@@ -193,24 +193,46 @@ export const Network = {
   switchTo: async function (this: mocha.Context, network: string) {
     await this.driver
       .wait(
-        until.elementLocated(
-          By.xpath("//i[contains(@class, '-network-networkIcon')]")
+        until.elementIsVisible(
+          this.driver.wait(
+            until.elementLocated(
+              By.xpath("//i[contains(@class, '-network-networkIcon')]")
+            ),
+            this.wait
+          )
         ),
         this.wait
       )
       .click();
 
-    await this.driver.executeScript(
-      el => el.click(),
-      await this.driver.wait(
-        until.elementLocated(
-          By.xpath(
-            `//div[contains(@class, '-network-chooseNetwork')][contains(text(), '${network}')]` +
-              "//i[contains(@class, '-network-networkIcon')]"
+    await this.driver
+      .wait(
+        until.elementIsVisible(
+          this.driver.wait(
+            until.elementLocated(
+              By.xpath(
+                `//div[contains(@class, '-network-chooseNetwork')][text()='${network}']` +
+                  "//i[contains(@class, '-network-networkIcon')]"
+              )
+            ),
+            this.wait
           )
-        ),
-        this.wait
+        )
       )
+      .click();
+
+    await this.driver.wait(
+      until.elementLocated(By.xpath("//div[contains(@class, '-intro-intro')]")),
+      this.wait
+    );
+
+    await this.driver.wait(
+      until.elementLocated(
+        By.xpath(
+          `//span[contains(@class, '-network-networkBottom')][text()='${network}']`
+        )
+      ),
+      this.wait
     );
   },
 };

@@ -23,6 +23,7 @@ import {
 import { Signer, SignerTx, UserData } from '@waves/signer';
 import { App, CreateNewAccount, Network, Settings } from './utils/actions';
 import { ProviderKeeper } from '../src';
+import { ERRORS, SignerError } from '@waves/signer/dist/cjs/SignerError';
 
 const m = 60000;
 
@@ -114,6 +115,22 @@ describe('Signer integration', function () {
     const userData: UserData = await windowResult.call(this);
     expect(userData.address).to.exist;
     expect(userData.publicKey).to.exist;
+  });
+
+  it('Error when Waves Keeper on the wrong network', async function () {
+    await this.driver.switchTo().window(wavesKeeper);
+    await Network.switchTo.call(this, 'Mainnet');
+
+    await this.driver.switchTo().window(testApp);
+    const error: SignerError = await this.driver.executeAsyncScript(() => {
+      const done = arguments[arguments.length - 1];
+      window.signer.login().then(done).catch(done);
+    });
+    expect(error.code).to.be.equal(ERRORS.ENSURE_PROVIDER);
+    expect(error.type).to.be.equal('provider');
+
+    await this.driver.switchTo().window(wavesKeeper);
+    await Network.switchTo.call(this, 'Testnet');
   });
 
   const signedTxShouldBeValid = async function (
