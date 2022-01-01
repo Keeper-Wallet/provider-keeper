@@ -15,8 +15,10 @@ export function ensureNetwork(target, propertyKey: string, descriptor: PropertyD
         return api.publicState().then(state => {
             const nodeUrl = state.network.server;
             const networkByte = state.network.code.charCodeAt(0);
+
             if (
-                nodeUrl.replace(/\/$/, '') !== this._options.NODE_URL.replace(/\/$/, '') ||
+                nodeUrl.replace(/(-keeper(\.wavesnodes\.com))?\/?$/, '$2') !==
+                    this._options.NODE_URL.replace(/\/?$/, '').replace(/\.wavesplatform\.com$/, '.wavesnodes.com') ||
                 networkByte !== this._options.NETWORK_BYTE
             ) {
                 throw new Error(
