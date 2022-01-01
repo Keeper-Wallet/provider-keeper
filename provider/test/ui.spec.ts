@@ -20,14 +20,24 @@ import {
   SPONSORSHIP,
   TRANSFER,
 } from './transactions';
-import { SignerTx, UserData } from '@waves/signer';
+import { Signer, SignerTx, UserData } from '@waves/signer';
 import { App, CreateNewAccount, Network, Settings } from './utils/actions';
+import ProviderKeeper from '@waves/provider-keeper';
 
 const m = 60000;
 
-describe('Selenium webdriver', function () {
+declare global {
+  interface Window {
+    signer: Signer;
+    Signer: typeof Signer;
+    ProviderKeeper: typeof ProviderKeeper;
+    result: any;
+  }
+}
+
+describe('Signer integration', function () {
   this.timeout(15 * m);
-  let tabWavesKeeper, tabUI;
+  let wavesKeeper, testApp;
 
   before(async function () {
     await App.initVault.call(this);
@@ -41,25 +51,42 @@ describe('Selenium webdriver', function () {
 
     // prepare browse keeper and ui tabs
     await App.open.call(this);
-    tabWavesKeeper = await this.driver.getWindowHandle();
+    wavesKeeper = await this.driver.getWindowHandle();
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
-    await this.driver.wait(until.elementLocated(By.id('sign-in')), this.wait);
-    tabUI = await this.driver.getWindowHandle();
-    await this.driver.sleep(2000);
+    await this.driver.executeScript(function () {
+      window.signer = new window.Signer({
+        NODE_URL: 'https://nodes-testnet.wavesnodes.com',
+      });
+      window.signer.setProvider(new window.ProviderKeeper());
+    });
+    testApp = await this.driver.getWindowHandle();
   });
 
+  it('Current provider is ProviderKeeper', async function () {
+    expect(
+      await this.driver.executeScript(function () {
+        return window.signer.currentProvider instanceof window.ProviderKeeper;
+      })
+    ).to.be.true;
+  });
+
+  function windowResult(this: mocha.Context): any {
+    return this.driver.executeAsyncScript(function () {
+      const done = arguments[arguments.length - 1];
+      window.result.then(done).catch(done);
+    });
+  }
+
   it('auth tx', async function () {
-    await this.driver.switchTo().window(tabUI);
+    await this.driver.switchTo().window(testApp);
 
-    const loginBtn = await this.driver.wait(
-      until.elementLocated(By.css('#sign-in:not(.disabled)')),
-      this.wait
-    );
-    await loginBtn.click();
+    await this.driver.executeScript(() => {
+      window.result = window.signer.login();
+    });
 
-    await this.driver.switchTo().window(tabWavesKeeper);
+    await this.driver.switchTo().window(wavesKeeper);
     // site permission request
     await this.driver.wait(
       until.elementLocated(By.xpath("//div[contains(@class, '-originAuthTx')]"))
@@ -82,32 +109,30 @@ describe('Selenium webdriver', function () {
     );
     await closeBtn.click();
 
-    await this.driver.switchTo().window(tabUI);
-    const userData: UserData = await this.driver.executeScript(() => {
-      return (window as any).getOutput();
-    });
+    await this.driver.switchTo().window(testApp);
+
+    const userData: UserData = await windowResult.call(this);
     expect(userData.address).to.exist;
     expect(userData.publicKey).to.exist;
   });
 
   const signedTxShouldBeValid = async function (
     this: mocha.Context,
+    method: string,
     tx: SignerTx | SignerTx[],
     formSelector: By
   ) {
-    await this.driver.switchTo().window(tabUI);
-    await this.driver.executeScript(tx => {
-      (window as any).setInput(tx);
-    }, tx);
-
-    const sendTxBtn = await this.driver.wait(
-      until.elementLocated(By.css('#send-tx:not(.disabled)')),
-      this.wait
+    await this.driver.switchTo().window(testApp);
+    await this.driver.executeScript(
+      function (tx, method) {
+        window.result = window.signer[method](tx).sign();
+      },
+      tx,
+      method
     );
-    await sendTxBtn.click();
 
     // tx request
-    await this.driver.switchTo().window(tabWavesKeeper);
+    await this.driver.switchTo().window(wavesKeeper);
     await this.driver.wait(until.elementLocated(formSelector));
     const acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
@@ -119,14 +144,8 @@ describe('Selenium webdriver', function () {
     );
     await closeBtn.click();
 
-    await this.driver.switchTo().window(tabUI);
-    await this.driver.wait(
-      until.elementLocated(By.css('#send-tx.disabled')),
-      this.wait
-    );
-    const signed: any[] = await this.driver.executeScript(() => {
-      return (window as any).getOutput();
-    });
+    await this.driver.switchTo().window(testApp);
+    const signed: any[] = await windowResult.call(this);
 
     tx = !Array.isArray(tx) ? [tx] : tx;
     expect(signed.length).to.be.equal(tx.length);
@@ -150,6 +169,7 @@ describe('Selenium webdriver', function () {
   it('issue tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'issue',
       ISSUE,
       By.xpath("//div[contains(@class, '-issueTx')]")
     );
@@ -158,6 +178,7 @@ describe('Selenium webdriver', function () {
   it('transfer tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'transfer',
       TRANSFER,
       By.xpath("//div[contains(@class, '-transferTx')]")
     );
@@ -166,6 +187,7 @@ describe('Selenium webdriver', function () {
   it('reissue tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'reissue',
       REISSUE,
       By.xpath("//div[contains(@class, '-reissueTx')]")
     );
@@ -174,6 +196,7 @@ describe('Selenium webdriver', function () {
   it('burn tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'burn',
       BURN,
       By.xpath("//div[contains(@class, '-burnTx')]")
     );
@@ -182,6 +205,7 @@ describe('Selenium webdriver', function () {
   it('lease tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'lease',
       LEASE,
       By.xpath("//div[contains(@class, '-leaseTx')]")
     );
@@ -190,6 +214,7 @@ describe('Selenium webdriver', function () {
   it('cancel lease tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'cancelLease',
       CANCEL_LEASE,
       By.xpath("//div[contains(@class, '-cancelLeaseTx')]")
     );
@@ -198,6 +223,7 @@ describe('Selenium webdriver', function () {
   it('alias tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'alias',
       ALIAS,
       By.xpath("//div[contains(@class, '-aliasTx')]")
     );
@@ -206,6 +232,7 @@ describe('Selenium webdriver', function () {
   it('mass transfer tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'massTransfer',
       MASS_TRANSFER,
       By.xpath("//div[contains(@class, '-massTransferTx')]")
     );
@@ -214,6 +241,7 @@ describe('Selenium webdriver', function () {
   it('data tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'data',
       DATA,
       By.xpath("//div[contains(@class, '-dataTx')]")
     );
@@ -222,6 +250,7 @@ describe('Selenium webdriver', function () {
   it('set script tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'setScript',
       SET_SCRIPT,
       By.xpath("//div[contains(@class, '-setScriptTx')]")
     );
@@ -230,6 +259,7 @@ describe('Selenium webdriver', function () {
   it('sponsorship tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'sponsorship',
       SPONSORSHIP,
       By.xpath("//div[contains(@class, '-sponsorshipTx')]")
     );
@@ -238,6 +268,7 @@ describe('Selenium webdriver', function () {
   it('set asset script tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'setAssetScript',
       SET_ASSET_SCRIPT,
       By.xpath("//div[contains(@class, '-assetScriptTx')]")
     );
@@ -246,11 +277,13 @@ describe('Selenium webdriver', function () {
   it('package tx', async function () {
     await signedTxShouldBeValid.call(
       this,
+      'batch',
       [ISSUE, TRANSFER, REISSUE, BURN, LEASE, CANCEL_LEASE, ALIAS],
       By.xpath("//div[contains(@class, '-dataTx')]")
     );
     await signedTxShouldBeValid.call(
       this,
+      'batch',
       [MASS_TRANSFER, DATA, SET_SCRIPT, SPONSORSHIP, SET_ASSET_SCRIPT],
       By.xpath("//div[contains(@class, '-dataTx')]")
     );
@@ -260,6 +293,7 @@ describe('Selenium webdriver', function () {
     it('default call', async function () {
       await signedTxShouldBeValid.call(
         this,
+        'invoke',
         INVOKE_DEFAULT_CALL,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
@@ -268,6 +302,7 @@ describe('Selenium webdriver', function () {
     it('with no args but single payment', async function () {
       await signedTxShouldBeValid.call(
         this,
+        'invoke',
         INVOKE_NO_ARGS_SINGLE_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
@@ -276,6 +311,7 @@ describe('Selenium webdriver', function () {
     it('with no args but many payments', async function () {
       await signedTxShouldBeValid.call(
         this,
+        'invoke',
         INVOKE_NO_ARGS_MANY_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
@@ -284,6 +320,7 @@ describe('Selenium webdriver', function () {
     it('with native args and no payments', async function () {
       await signedTxShouldBeValid.call(
         this,
+        'invoke',
         INVOKE_NATIVE_ARGS_NO_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
@@ -292,6 +329,7 @@ describe('Selenium webdriver', function () {
     it('with list args and no payments', async function () {
       await signedTxShouldBeValid.call(
         this,
+        'invoke',
         INVOKE_LIST_ARGS_NO_PAYMENTS,
         By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
       );
