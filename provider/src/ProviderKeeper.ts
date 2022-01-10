@@ -152,6 +152,7 @@ export class ProviderKeeper implements Provider {
     return tx.type === TRANSACTION_TYPE.INVOKE_SCRIPT && !tx.fee
       ? calculateFee(this._options.NODE_URL, {
           ...tx,
+          payment: tx.payment ?? [],
           senderPublicKey: await this._publicKeyPromise(),
         })
       : Promise.resolve(tx);
