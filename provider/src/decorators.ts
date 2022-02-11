@@ -19,14 +19,7 @@ export function ensureNetwork(
     return api.publicState().then(state => {
       const nodeUrl = state.network.server;
       const networkByte = state.network.code.charCodeAt(0);
-      if (
-        nodeUrl.replace(/(-keeper(\.wavesnodes\.com))?\/?$/, '$2') !==
-          this._options.NODE_URL.replace(/\/?$/, '').replace(
-            /\.wavesplatform\.com$/,
-            '.wavesnodes.com'
-          ) ||
-        networkByte !== this._options.NETWORK_BYTE
-      ) {
+      if (networkByte !== this._options.NETWORK_BYTE) {
         throw new Error(
           `Invalid connect options. Signer connect (${this._options.NODE_URL} ${this._options.NETWORK_BYTE}) not equals keeper connect (${nodeUrl} ${networkByte})`
         );
