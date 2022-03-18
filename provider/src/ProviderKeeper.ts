@@ -23,7 +23,7 @@ import { TRANSACTION_TYPE } from '@waves/ts-types';
 export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
   private readonly _authData: WavesKeeper.IAuthData;
-  private _api!: WavesKeeper.TWavesKeeperApi;
+  private _apiPromise!: Promise<WavesKeeper.TWavesKeeperApi>;
   private _options: ConnectOptions = {
     NETWORK_BYTE: 'W'.charCodeAt(0),
     NODE_URL: 'https://nodes.wavesnodes.com',
@@ -34,6 +34,18 @@ export class ProviderKeeper implements Provider {
 
   constructor() {
     this._authData = { data: base16Encode(randomBytes(16)) };
+
+    const poll = (resolve, reject, attempt = 0) => {
+      if (attempt > this._maxRetries) {
+        return reject(new Error('WavesKeeper is not installed.'));
+      }
+
+      if (!!window.WavesKeeper) {
+        return window.WavesKeeper.initialPromise.then(api => resolve(api));
+      } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
+    };
+
+    this._apiPromise = new Promise(poll);
   }
 
   public on<EVENT extends keyof AuthEvents>(
@@ -65,29 +77,18 @@ export class ProviderKeeper implements Provider {
 
   public connect(options: ConnectOptions): Promise<void> {
     this._options = options;
-
-    const poll = (resolve, reject, attempt = 0) => {
-      if (attempt > this._maxRetries) {
-        return reject(new Error('WavesKeeper is not installed.'));
-      }
-
-      if (!!window.WavesKeeper) {
-        return window.WavesKeeper.initialPromise.then(api =>
-          resolve((this._api = api))
-        );
-      } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
-    };
-
-    return new Promise(poll);
+    return Promise.resolve();
   }
 
   @ensureNetwork
   public login(): Promise<UserData> {
-    return this._api.auth(this._authData).then(auth => {
-      this.user = { address: auth.address, publicKey: auth.publicKey };
-      this._emitter.trigger('login', this.user);
-      return this.user;
-    });
+    return this._apiPromise
+      .then(api => api.auth(this._authData))
+      .then(auth => {
+        this.user = { address: auth.address, publicKey: auth.publicKey };
+        this._emitter.trigger('login', this.user);
+        return this.user;
+      });
   }
 
   public logout(): Promise<void> {
@@ -98,21 +99,25 @@ export class ProviderKeeper implements Provider {
 
   @ensureNetwork
   public signMessage(data: string | number): Promise<string> {
-    return this._api
-      .signCustomData({
-        version: 1,
-        binary: 'base64:' + base64Encode(stringToBytes(String(data))),
-      })
+    return this._apiPromise
+      .then(api =>
+        api.signCustomData({
+          version: 1,
+          binary: 'base64:' + base64Encode(stringToBytes(String(data))),
+        })
+      )
       .then(data => data.signature);
   }
 
   @ensureNetwork
   public signTypedData(data: Array<TypedData>): Promise<string> {
-    return this._api
-      .signCustomData({
-        version: 2,
-        data: data as WavesKeeper.TTypedData[],
-      })
+    return this._apiPromise
+      .then(api =>
+        api.signCustomData({
+          version: 2,
+          data: data as WavesKeeper.TTypedData[],
+        })
+      )
       .then(data => data.signature);
   }
 
@@ -126,16 +131,18 @@ export class ProviderKeeper implements Provider {
     );
 
     if (toSignWithFee.length == 1) {
-      return this._api
-        .signTransaction(keeperTxFactory(toSignWithFee[0]))
+      return this._apiPromise
+        .then(api => api.signTransaction(keeperTxFactory(toSignWithFee[0])))
         .then(data => [signerTxFactory(data)]) as Promise<SignedTx<T>>;
     }
 
-    return this._api
-      .signTransactionPackage(
-        toSignWithFee.map(tx =>
-          keeperTxFactory(tx)
-        ) as WavesKeeper.TSignTransactionPackageData
+    return this._apiPromise
+      .then(api =>
+        api.signTransactionPackage(
+          toSignWithFee.map(tx =>
+            keeperTxFactory(tx)
+          ) as WavesKeeper.TSignTransactionPackageData
+        )
       )
       .then(data => data.map(tx => signerTxFactory(tx))) as Promise<
       SignedTx<T>
@@ -145,7 +152,9 @@ export class ProviderKeeper implements Provider {
   private _publicKeyPromise(): Promise<string | undefined> {
     return this.user?.publicKey
       ? Promise.resolve(this.user.publicKey)
-      : this._api.publicState().then(state => state.account?.publicKey);
+      : this._apiPromise
+          .then(api => api.publicState())
+          .then(state => state.account?.publicKey);
   }
 
   private async _txWithFee(tx: SignerTx): Promise<SignerTx> {

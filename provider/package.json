@@ -54,7 +54,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.1",
     "@types/selenium-webdriver": "^4.0.15",
-    "@waves/signer": "^1.0.6",
+    "@waves/signer": "^1.0.8",
     "@waves/waves-transactions": "^4.2.5-beta.1",
     "c8": "^7.9.0",
     "chai": "^4.3.4",
