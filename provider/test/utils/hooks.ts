@@ -36,7 +36,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   ) {
     throw new Error(
       `
-      You should build or download latest Waves Keeper for e2e tests.
+      You should build or download latest Keeper Wallet for e2e tests.
       See more at .github/workflows/tests.yml
       `
     );
@@ -109,7 +109,7 @@ export const mochaHooks = () => ({
       )
       .build();
 
-    // detect Waves Keeper extension URL
+    // detect Keeper Wallet extension URL
     await this.driver.get('chrome://system');
     for (const ext of (
       await this.driver
@@ -117,7 +117,7 @@ export const mochaHooks = () => ({
         .getText()
     ).split('\n')) {
       const [id, name] = ext.split(' : ');
-      if (name.toLowerCase() === 'Waves Keeper'.toLowerCase()) {
+      if (name.toLowerCase() === 'Keeper Wallet'.toLowerCase()) {
         this.extensionUrl = `chrome-extension://${id}/popup.html`;
         break;
       }
