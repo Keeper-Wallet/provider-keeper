@@ -117,7 +117,7 @@ describe('Signer integration', function () {
     expect(userData.publicKey).to.exist;
   });
 
-  it('Error when Waves Keeper on the wrong network', async function () {
+  it('Error when Keeper Wallet is on the wrong network', async function () {
     await this.driver.switchTo().window(wavesKeeper);
     await Network.switchTo.call(this, 'Mainnet');
 
