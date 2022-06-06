@@ -11,12 +11,13 @@ export function ensureNetwork(
   descriptor.value = function (
     this: { [Key in keyof ProviderKeeper]: ProviderKeeper[Key] } & {
       _apiPromise: Promise<WavesKeeper.TWavesKeeperApi>;
+      _connectPromise: Promise<void>;
       _options: ConnectOptions;
     },
     ...args: Array<any>
   ) {
-    return this._apiPromise
-      .then(api => api.publicState())
+    return Promise.all([this._apiPromise, this._connectPromise])
+      .then(([api]) => api.publicState())
       .then(state => {
         const nodeUrl = state.network.server;
         const networkByte = state.network.code.charCodeAt(0);

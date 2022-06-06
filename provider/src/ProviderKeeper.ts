@@ -23,7 +23,9 @@ import { TRANSACTION_TYPE } from '@waves/ts-types';
 export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
   private readonly _authData: WavesKeeper.IAuthData;
-  private _apiPromise!: Promise<WavesKeeper.TWavesKeeperApi>;
+  private _apiPromise: Promise<WavesKeeper.TWavesKeeperApi>;
+  private _connectPromise: Promise<void>; // used in @ensureNetwork decorator
+  private _connectResolve!: () => void; // initialized in Promise constructor
   private _options: ConnectOptions = {
     NETWORK_BYTE: 'W'.charCodeAt(0),
     NODE_URL: 'https://nodes.wavesnodes.com',
@@ -46,6 +48,10 @@ export class ProviderKeeper implements Provider {
     };
 
     this._apiPromise = new Promise(poll);
+
+    this._connectPromise = new Promise(resolve => {
+      this._connectResolve = resolve;
+    });
   }
 
   public on<EVENT extends keyof AuthEvents>(
@@ -77,6 +83,7 @@ export class ProviderKeeper implements Provider {
 
   public connect(options: ConnectOptions): Promise<void> {
     this._options = options;
+    this._connectResolve();
     return Promise.resolve();
   }
 
