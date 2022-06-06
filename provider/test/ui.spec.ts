@@ -38,21 +38,42 @@ declare global {
 
 describe('Signer integration', function () {
   this.timeout(5 * m);
-  let wavesKeeper, testApp;
+  let tabKeeper, tabAccounts, tabTestApp;
 
   before(async function () {
     await App.initVault.call(this);
     await Network.switchTo.call(this, 'Testnet');
+    tabKeeper = await this.driver.getWindowHandle();
+    await this.driver
+      .wait(
+        until.elementLocated(By.css('[data-testid="importForm"]')),
+        this.wait
+      )
+      .findElement(By.css('[data-testid="addAccountBtn"]'))
+      .click();
+    await this.driver.wait(
+      async () => (await this.driver.getAllWindowHandles()).length === 2,
+      this.wait
+    );
+    for (const handle of await this.driver.getAllWindowHandles()) {
+      if (handle !== tabKeeper) {
+        tabAccounts = handle;
+        await this.driver.switchTo().window(tabAccounts);
+        await this.driver.navigate().refresh();
+        break;
+      }
+    }
     await CreateNewAccount.importAccount.call(
       this,
       'rich',
       'waves private node seed with waves tokens'
     );
+    await this.driver.close();
+    await this.driver.switchTo().window(tabKeeper);
     await Settings.setMaxSessionTimeout.call(this);
 
     // prepare browse keeper and test-app tabs
     await App.open.call(this);
-    wavesKeeper = await this.driver.getWindowHandle();
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
@@ -62,7 +83,7 @@ describe('Signer integration', function () {
       });
       window.signer.setProvider(new window.ProviderKeeper());
     }, 'https://nodes-testnet.wavesnodes.com');
-    testApp = await this.driver.getWindowHandle();
+    tabTestApp = await this.driver.getWindowHandle();
   });
 
   it('Current provider is ProviderKeeper', async function () {
@@ -81,13 +102,13 @@ describe('Signer integration', function () {
   }
 
   it('auth tx', async function () {
-    await this.driver.switchTo().window(testApp);
+    await this.driver.switchTo().window(tabTestApp);
 
     await this.driver.executeScript(() => {
       window.result = window.signer.login();
     });
 
-    await this.driver.switchTo().window(wavesKeeper);
+    await this.driver.switchTo().window(tabKeeper);
     // site permission request
     await this.driver.wait(
       until.elementLocated(By.xpath("//div[contains(@class, '-originAuthTx')]"))
@@ -110,7 +131,7 @@ describe('Signer integration', function () {
     );
     await closeBtn.click();
 
-    await this.driver.switchTo().window(testApp);
+    await this.driver.switchTo().window(tabTestApp);
 
     const userData: UserData = await windowResult.call(this);
     expect(userData.address).to.exist;
@@ -118,10 +139,10 @@ describe('Signer integration', function () {
   });
 
   it('Error when Keeper Wallet is on the wrong network', async function () {
-    await this.driver.switchTo().window(wavesKeeper);
+    await this.driver.switchTo().window(tabKeeper);
     await Network.switchTo.call(this, 'Mainnet');
 
-    await this.driver.switchTo().window(testApp);
+    await this.driver.switchTo().window(tabTestApp);
     const error: SignerError = await this.driver.executeAsyncScript(
       function () {
         const done = arguments[arguments.length - 1];
@@ -131,7 +152,7 @@ describe('Signer integration', function () {
     expect(error.code).to.be.equal(ERRORS.ENSURE_PROVIDER);
     expect(error.type).to.be.equal('provider');
 
-    await this.driver.switchTo().window(wavesKeeper);
+    await this.driver.switchTo().window(tabKeeper);
     await Network.switchTo.call(this, 'Testnet');
   });
 
@@ -141,7 +162,7 @@ describe('Signer integration', function () {
     tx: SignerTx | SignerTx[],
     formSelector: By
   ) {
-    await this.driver.switchTo().window(testApp);
+    await this.driver.switchTo().window(tabTestApp);
     await this.driver.executeScript(
       function (tx, method) {
         window.result = window.signer[method](tx).sign();
@@ -151,7 +172,7 @@ describe('Signer integration', function () {
     );
 
     // tx request
-    await this.driver.switchTo().window(wavesKeeper);
+    await this.driver.switchTo().window(tabKeeper);
     await this.driver.wait(until.elementLocated(formSelector));
     const acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
@@ -163,7 +184,7 @@ describe('Signer integration', function () {
     );
     await closeBtn.click();
 
-    await this.driver.switchTo().window(testApp);
+    await this.driver.switchTo().window(tabTestApp);
     const signed: any[] = await windowResult.call(this);
 
     tx = !Array.isArray(tx) ? [tx] : tx;
