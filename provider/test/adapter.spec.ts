@@ -34,6 +34,7 @@ import {
   SPONSORSHIP,
   TRANSFER,
 } from './utils/transactions';
+import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 
 describe('Adapter', () => {
   describe('converting tx from Signer to Keeper', () => {
@@ -121,7 +122,7 @@ describe('Adapter', () => {
           data: {
             recipient: txTransfer.recipient,
             amount: { coins: txTransfer.amount, assetId: txTransfer.assetId },
-            attachment: txTransfer.attachment,
+            attachment: BASE58_STRING(txTransfer.attachment as string),
           },
         });
       });
@@ -226,7 +227,7 @@ describe('Adapter', () => {
           data: {
             totalAmount: { coins: 0, assetId: txMassTransfer.assetId },
             transfers: txMassTransfer.transfers,
-            attachment: txMassTransfer.attachment,
+            attachment: BASE58_STRING(txMassTransfer.attachment as string),
           },
         });
       });

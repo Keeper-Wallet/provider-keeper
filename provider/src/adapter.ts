@@ -17,6 +17,7 @@ import {
 } from '@waves/signer';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
 import { json } from '@waves/marshall';
+import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 
 function isAlias(source: string): boolean {
   return source.startsWith('alias:');
@@ -72,7 +73,7 @@ function transferAdapter(tx: SignerTransferTx): WavesKeeper.TTransferTxData {
     ...defaultsFactory(tx),
     amount: moneyFactory(amount, assetId),
     recipient: addressFactory(recipient),
-    ...(attachment ? { attachment } : {}),
+    ...(attachment ? { attachment: BASE58_STRING(attachment) } : {}),
     ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
   };
   return { type: TRANSACTION_TYPE.TRANSFER, data };
@@ -140,7 +141,7 @@ function massTransferAdapter(
       recipient: addressFactory(transfer.recipient),
       amount: transfer.amount,
     })),
-    ...(attachment ? { attachment } : {}),
+    ...(attachment ? { attachment: BASE58_STRING(attachment) } : {}),
   };
   return { type: TRANSACTION_TYPE.MASS_TRANSFER, data };
 }
