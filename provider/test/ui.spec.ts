@@ -111,7 +111,9 @@ describe('Signer integration', function () {
     await this.driver.switchTo().window(tabKeeper);
     // site permission request
     await this.driver.wait(
-      until.elementLocated(By.xpath("//div[contains(@class, '-originAuthTx')]"))
+      until.elementLocated(
+        By.xpath("//div[contains(@class, 'originAuth-transaction')]")
+      )
     );
     let acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
@@ -119,7 +121,9 @@ describe('Signer integration', function () {
     await acceptBtn.click();
     // site auth request
     await this.driver.wait(
-      until.elementLocated(By.xpath("//div[contains(@class, '-authTx')]"))
+      until.elementLocated(
+        By.xpath("//div[contains(@class, 'auth-transaction')]")
+      )
     );
     acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
@@ -211,7 +215,7 @@ describe('Signer integration', function () {
       this,
       'issue',
       ISSUE,
-      By.xpath("//div[contains(@class, '-issueTx')]")
+      By.xpath("//div[contains(@class, 'issue-transaction')]")
     );
   });
 
@@ -220,7 +224,7 @@ describe('Signer integration', function () {
       this,
       'transfer',
       TRANSFER,
-      By.xpath("//div[contains(@class, '-transferTx')]")
+      By.xpath("//div[contains(@class, 'transfer-transaction')]")
     );
   });
 
@@ -229,7 +233,7 @@ describe('Signer integration', function () {
       this,
       'reissue',
       REISSUE,
-      By.xpath("//div[contains(@class, '-reissueTx')]")
+      By.xpath("//div[contains(@class, 'reissue-transaction')]")
     );
   });
 
@@ -238,7 +242,7 @@ describe('Signer integration', function () {
       this,
       'burn',
       BURN,
-      By.xpath("//div[contains(@class, '-burnTx')]")
+      By.xpath("//div[contains(@class, 'burn-transaction')]")
     );
   });
 
@@ -247,7 +251,7 @@ describe('Signer integration', function () {
       this,
       'lease',
       LEASE,
-      By.xpath("//div[contains(@class, '-leaseTx')]")
+      By.xpath("//div[contains(@class, 'lease-transaction')]")
     );
   });
 
@@ -256,7 +260,7 @@ describe('Signer integration', function () {
       this,
       'cancelLease',
       CANCEL_LEASE,
-      By.xpath("//div[contains(@class, '-cancelLeaseTx')]")
+      By.xpath("//div[contains(@class, 'cancelLease-transaction')]")
     );
   });
 
@@ -265,7 +269,7 @@ describe('Signer integration', function () {
       this,
       'alias',
       ALIAS,
-      By.xpath("//div[contains(@class, '-aliasTx')]")
+      By.xpath("//div[contains(@class, 'alias-transaction')]")
     );
   });
 
@@ -274,7 +278,7 @@ describe('Signer integration', function () {
       this,
       'massTransfer',
       MASS_TRANSFER,
-      By.xpath("//div[contains(@class, '-massTransferTx')]")
+      By.xpath("//div[contains(@class, 'massTransfer-transaction')]")
     );
   });
 
@@ -283,7 +287,7 @@ describe('Signer integration', function () {
       this,
       'data',
       DATA,
-      By.xpath("//div[contains(@class, '-dataTx')]")
+      By.xpath("//div[contains(@class, 'data-transaction')]")
     );
   });
 
@@ -292,7 +296,7 @@ describe('Signer integration', function () {
       this,
       'setScript',
       SET_SCRIPT,
-      By.xpath("//div[contains(@class, '-setScriptTx')]")
+      By.xpath("//div[contains(@class, 'setScript-transaction')]")
     );
   });
 
@@ -301,7 +305,7 @@ describe('Signer integration', function () {
       this,
       'sponsorship',
       SPONSORSHIP,
-      By.xpath("//div[contains(@class, '-sponsorshipTx')]")
+      By.xpath("//div[contains(@class, 'sponsorship-transaction')]")
     );
   });
 
@@ -310,7 +314,7 @@ describe('Signer integration', function () {
       this,
       'setAssetScript',
       SET_ASSET_SCRIPT,
-      By.xpath("//div[contains(@class, '-assetScriptTx')]")
+      By.xpath("//div[contains(@class, 'assetScript-transaction')]")
     );
   });
 
@@ -319,13 +323,13 @@ describe('Signer integration', function () {
       this,
       'batch',
       [ISSUE, TRANSFER, REISSUE, BURN, LEASE, CANCEL_LEASE, ALIAS],
-      By.xpath("//div[contains(@class, '-dataTx')]")
+      By.xpath("//div[contains(@class, 'package-transaction')]")
     );
     await signedTxShouldBeValid.call(
       this,
       'batch',
       [MASS_TRANSFER, DATA, SET_SCRIPT, SPONSORSHIP, SET_ASSET_SCRIPT],
-      By.xpath("//div[contains(@class, '-dataTx')]")
+      By.xpath("//div[contains(@class, 'package-transaction')]")
     );
   });
 
@@ -335,7 +339,7 @@ describe('Signer integration', function () {
         this,
         'invoke',
         INVOKE_DEFAULT_CALL,
-        By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
       );
     });
 
@@ -344,7 +348,7 @@ describe('Signer integration', function () {
         this,
         'invoke',
         INVOKE_NO_ARGS_SINGLE_PAYMENTS,
-        By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
       );
     });
 
@@ -353,7 +357,7 @@ describe('Signer integration', function () {
         this,
         'invoke',
         INVOKE_NO_ARGS_MANY_PAYMENTS,
-        By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
       );
     });
 
@@ -362,7 +366,7 @@ describe('Signer integration', function () {
         this,
         'invoke',
         INVOKE_NATIVE_ARGS_NO_PAYMENTS,
-        By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
       );
     });
 
@@ -371,7 +375,7 @@ describe('Signer integration', function () {
         this,
         'invoke',
         INVOKE_LIST_ARGS_NO_PAYMENTS,
-        By.xpath("//div[contains(@class, '-scriptInvocationTx')]")
+        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
       );
     });
   });

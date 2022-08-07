@@ -81,7 +81,7 @@ export const App = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, '-menu-settingsIcon')]")
+          By.xpath("//div[contains(@class, 'menu-settingsIcon')]")
         ),
         this.wait
       )
@@ -90,7 +90,7 @@ export const App = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, '-settings-deleteAccounts')]")
+          By.xpath("//div[contains(@class, 'settings-deleteAccounts')]")
         ),
         this.wait
       )
@@ -180,7 +180,7 @@ export const Settings = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, '-menu-settingsIcon')]")
+          By.xpath("//div[contains(@class, 'menu-settingsIcon')]")
         ),
         this.wait
       )
@@ -204,7 +204,7 @@ export const Settings = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, '-Select-module-trigger')]")
+          By.xpath("//div[contains(@class, 'Select-module-trigger')]")
         ),
         this.wait
       )
@@ -214,9 +214,7 @@ export const Settings = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath(
-            `//div[contains(@class, '-Select-module-item')][${position}]`
-          )
+          By.xpath(`//div[contains(@class, 'Select-module-item')][${position}]`)
         ),
         this.wait
       )
@@ -240,7 +238,7 @@ export const Network = {
         until.elementIsVisible(
           this.driver.wait(
             until.elementLocated(
-              By.xpath("//i[contains(@class, '-network-networkIcon')]")
+              By.xpath("//i[contains(@class, 'network-networkIcon')]")
             ),
             this.wait
           )
@@ -255,8 +253,8 @@ export const Network = {
           this.driver.wait(
             until.elementLocated(
               By.xpath(
-                `//div[contains(@class, '-network-chooseNetwork')][text()='${network}']` +
-                  "//i[contains(@class, '-network-networkIcon')]"
+                `//div[contains(@class, 'network-chooseNetwork')][text()='${network}']` +
+                  "//i[contains(@class, 'network-networkIcon')]"
               )
             ),
             this.wait
@@ -288,14 +286,14 @@ export const Network = {
     }
 
     await this.driver.wait(
-      until.elementLocated(By.xpath("//div[contains(@class, '-intro-intro')]")),
+      until.elementLocated(By.xpath("//div[contains(@class, 'intro-intro')]")),
       this.wait
     );
 
     await this.driver.wait(
       until.elementLocated(
         By.xpath(
-          `//span[contains(@class, '-network-networkBottom')][text()='${network}']`
+          `//span[contains(@class, 'network-networkBottom')][text()='${network}']`
         )
       ),
       this.wait
