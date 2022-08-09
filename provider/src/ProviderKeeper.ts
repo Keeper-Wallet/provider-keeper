@@ -23,7 +23,7 @@ export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
   private readonly _authData: WavesKeeper.IAuthData;
   protected _apiPromise: Promise<WavesKeeper.TWavesKeeperApi>;
-  protected _connectPromise: Promise<void>; // used in _getApi
+  protected _connectPromise: Promise<void>; // used in _ensuredApi
   private _connectResolve!: () => void; // initialized in Promise constructor
   private _options: ConnectOptions = {
     NETWORK_BYTE: 'W'.charCodeAt(0),
