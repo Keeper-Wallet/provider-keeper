@@ -17,7 +17,7 @@ import { TRANSACTION_TYPE } from '@waves/ts-types';
 export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
   protected _apiPromise: Promise<WavesKeeper.TWavesKeeperApi>;
-  protected _connectPromise: Promise<void>; // used in _ensuredApi
+  protected _connectPromise: Promise<void>; // used in _ensureApi
   private _connectResolve!: () => void; // initialized in Promise constructor
   private _options: ConnectOptions = {
     NETWORK_BYTE: 'W'.charCodeAt(0),
@@ -79,7 +79,7 @@ export class ProviderKeeper implements Provider {
   }
 
   public login(): Promise<UserData> {
-    return this._ensuredApi()
+    return this._ensureApi()
       .then(api => api.publicState())
       .then(state => {
         this.user = {
@@ -98,7 +98,7 @@ export class ProviderKeeper implements Provider {
   }
 
   public signMessage(data: string | number): Promise<string> {
-    return this._ensuredApi()
+    return this._ensureApi()
       .then(api =>
         api.signCustomData({
           version: 1,
@@ -109,7 +109,7 @@ export class ProviderKeeper implements Provider {
   }
 
   public signTypedData(data: Array<TypedData>): Promise<string> {
-    return this._ensuredApi()
+    return this._ensureApi()
       .then(api =>
         api.signCustomData({
           version: 2,
@@ -127,7 +127,7 @@ export class ProviderKeeper implements Provider {
       toSign.map(tx => this._txWithFee(tx))
     );
 
-    const apiPromise = this._ensuredApi();
+    const apiPromise = this._ensureApi();
 
     if (toSignWithFee.length == 1) {
       return apiPromise
@@ -148,7 +148,7 @@ export class ProviderKeeper implements Provider {
     >;
   }
 
-  private async _ensuredApi(): Promise<WavesKeeper.TWavesKeeperApi> {
+  private async _ensureApi(): Promise<WavesKeeper.TWavesKeeperApi> {
     // api is ready
     const [api] = await Promise.all([this._apiPromise, this._connectPromise]);
 
