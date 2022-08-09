@@ -165,7 +165,7 @@ export class ProviderKeeper implements Provider {
 
       throw new Error(
         `Invalid connect options. Signer connect ` +
-          `(${signerNodeUrl} ${signerNetworkByte}) not equals` +
+          `(${signerNodeUrl} ${signerNetworkByte}) not equals ` +
           `keeper connect (${keeperNodeUrl} ${keeperNetworkByte})`
       );
     }
