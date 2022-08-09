@@ -119,16 +119,6 @@ describe('Signer integration', function () {
       By.css('.app button[type=submit]')
     );
     await acceptBtn.click();
-    // site auth request
-    await this.driver.wait(
-      until.elementLocated(
-        By.xpath("//div[contains(@class, 'auth-transaction')]")
-      )
-    );
-    acceptBtn = await this.driver.findElement(
-      By.css('.app button[type=submit]')
-    );
-    await acceptBtn.click();
     // close window
     const closeBtn = await this.driver.wait(
       until.elementLocated(By.css('[data-testid="closeTransaction"]'))
