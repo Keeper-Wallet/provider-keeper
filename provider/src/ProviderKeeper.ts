@@ -9,19 +9,13 @@ import {
   UserData,
 } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
-import {
-  base16Encode,
-  base64Encode,
-  randomBytes,
-  stringToBytes,
-} from '@waves/ts-lib-crypto';
+import { base64Encode, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
 import { calculateFee } from './utils';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
 
 export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
-  private readonly _authData: WavesKeeper.IAuthData;
   protected _apiPromise: Promise<WavesKeeper.TWavesKeeperApi>;
   protected _connectPromise: Promise<void>; // used in _ensuredApi
   private _connectResolve!: () => void; // initialized in Promise constructor
@@ -34,8 +28,6 @@ export class ProviderKeeper implements Provider {
   private readonly _maxRetries = 10;
 
   constructor() {
-    this._authData = { data: base16Encode(randomBytes(16)) };
-
     const poll = (resolve, reject, attempt = 0) => {
       if (attempt > this._maxRetries) {
         return reject(new Error('WavesKeeper is not installed.'));
