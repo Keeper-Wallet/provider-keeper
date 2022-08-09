@@ -90,9 +90,12 @@ export class ProviderKeeper implements Provider {
   @ensureNetwork
   public login(): Promise<UserData> {
     return this._apiPromise
-      .then(api => api.auth(this._authData))
-      .then(auth => {
-        this.user = { address: auth.address, publicKey: auth.publicKey };
+      .then(api => api.publicState())
+      .then(state => {
+        this.user = {
+          address: state.account!.address,
+          publicKey: state.account!.publicKey,
+        };
         this._emitter.trigger('login', this.user);
         return this.user;
       });
