@@ -40,6 +40,10 @@ export class ProviderKeeper implements Provider {
 
     this._apiPromise = new Promise(poll);
 
+    this._apiPromise.catch(() => {
+      // avoid unhandled rejection
+    });
+
     this._connectPromise = new Promise(resolve => {
       this._connectResolve = resolve;
     });
