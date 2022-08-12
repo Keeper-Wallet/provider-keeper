@@ -1,6 +1,5 @@
 import { Builder, By, until, WebDriver } from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
-import * as net from 'net';
 import * as mocha from 'mocha';
 import * as path from 'path';
 import * as httpServer from 'http-server';
@@ -56,36 +55,19 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
 
   await TestContainers.exposeHostPorts(8081);
 
-  const seleniumPorts = [4444, 5900];
   this.selenium = await new GenericContainer('selenium/standalone-chrome')
     .withBindMount(path.resolve(wavesKeeperDir), '/app/waves_keeper', 'ro')
-    .withExposedPorts(...seleniumPorts)
-    .start();
-
-  await Promise.all(
-    seleniumPorts.map(
-      (port: number) =>
-        new Promise((resolve, reject) => {
-          net
-            .createServer(from => {
-              const to = net.createConnection({
-                port: this.selenium.getMappedPort(port),
-              });
-
-              from.pipe(to);
-              to.pipe(from);
-
-              to.once('error', () => {
-                from.destroy();
-              });
-            })
-            .once('listening', resolve)
-            .once('error', reject)
-            .listen(port)
-            .unref();
-        })
+    .withExposedPorts(
+      {
+        container: 4444,
+        host: 4444,
+      },
+      {
+        container: 5900,
+        host: 5900,
+      }
     )
-  );
+    .start();
 }
 
 export async function mochaGlobalTeardown(this: GlobalFixturesContext) {
