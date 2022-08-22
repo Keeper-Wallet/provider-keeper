@@ -69,10 +69,5 @@
     "typescript": "^3.7.4",
     "webpack": "^5.52.1",
     "webpack-cli": "^4.8.0"
-  },
-  "engineStrict": true,
-  "engines": {
-    "node": "^16",
-    "npm": "^8"
   }
 }
