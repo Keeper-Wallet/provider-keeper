@@ -51,7 +51,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   }
 
   this.testApp = httpServer.createServer({ root: testAppDir });
-  this.testApp.listen(8081, function () {});
+  this.testApp.listen(8081);
 
   await TestContainers.exposeHostPorts(8081);
 
