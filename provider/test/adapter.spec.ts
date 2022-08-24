@@ -122,7 +122,9 @@ describe('Adapter', () => {
           data: {
             recipient: txTransfer.recipient,
             amount: { coins: txTransfer.amount, assetId: txTransfer.assetId },
-            attachment: BASE58_STRING(txTransfer.attachment as string),
+            attachment: Array.from(
+              BASE58_STRING(txTransfer.attachment as string)
+            ),
           },
         });
       });
@@ -227,7 +229,9 @@ describe('Adapter', () => {
           data: {
             totalAmount: { coins: 0, assetId: txMassTransfer.assetId },
             transfers: txMassTransfer.transfers,
-            attachment: BASE58_STRING(txMassTransfer.attachment as string),
+            attachment: Array.from(
+              BASE58_STRING(txMassTransfer.attachment as string)
+            ),
           },
         });
       });
