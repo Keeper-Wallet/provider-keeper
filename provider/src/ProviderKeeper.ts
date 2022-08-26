@@ -33,7 +33,7 @@ export class ProviderKeeper implements Provider {
         return reject(new Error('WavesKeeper is not installed.'));
       }
 
-      if (!!window.WavesKeeper) {
+      if (window.WavesKeeper) {
         return window.WavesKeeper.initialPromise.then(api => resolve(api));
       } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
     };
