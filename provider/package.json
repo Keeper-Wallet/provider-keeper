@@ -27,8 +27,7 @@
   "scripts": {
     "build": "webpack",
     "test": "mocha",
-    "coverage": "c8 yarn run test",
-    "prepublish": "yarn run build"
+    "coverage": "c8 yarn run test"
   },
   "mocha": {
     "extension": [
