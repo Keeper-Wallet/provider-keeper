@@ -174,7 +174,7 @@ function sponsorshipAdapter(
   const { assetId, minSponsoredAssetFee } = tx;
   const data: WavesKeeper.ISponsoredFeeTx = {
     ...defaultsFactory(tx),
-    minSponsoredAssetFee: moneyFactory(minSponsoredAssetFee, assetId),
+    minSponsoredAssetFee: moneyFactory(minSponsoredAssetFee ?? 0, assetId),
   };
   return { type: TRANSACTION_TYPE.SPONSORSHIP, data };
 }
