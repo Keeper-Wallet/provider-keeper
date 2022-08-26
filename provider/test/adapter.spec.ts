@@ -313,7 +313,7 @@ describe('Adapter', () => {
     });
 
     describe('invoke script', () => {
-      const txInvokeScript: SignerInvokeTx = { ...INVOKE };
+      const txInvokeScript = { ...INVOKE };
 
       it('is valid', () => {
         expect(keeperTxFactory(txInvokeScript)).to.be.deep.equal({
@@ -321,8 +321,8 @@ describe('Adapter', () => {
           data: {
             dApp: txInvokeScript.dApp,
             call: {
-              function: txInvokeScript.call!.function,
-              args: txInvokeScript.call!.args,
+              function: txInvokeScript.call?.function,
+              args: txInvokeScript.call?.args,
             },
             payment: txInvokeScript.payment,
           },
@@ -545,7 +545,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.INVOKE_SCRIPT);
 
       it('payment amount is long', () => {
-        expect(jsonTx.payment![0].amount).to.be.equal(longMax);
+        expect(jsonTx.payment?.[0].amount).to.be.equal(longMax);
       });
     });
   });
