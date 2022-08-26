@@ -11,10 +11,16 @@ ProviderKeeper implements a Signature Provider for [Signer](https://github.com/w
 
 ### Library installation
 
-To install Signer and ProviderKeeper libraries use
+Install using npm:
 
-```bash
-npm i @waves/signer @waves/provider-keeper
+```sh
+npm install @waves/signer @waves/provider-keeper
+```
+
+or yarn
+
+```sh
+yarn add @waves/signer @waves/provider-keeper
 ```
 
 ### Library initialization
@@ -89,10 +95,3 @@ const [invoke] = await signer
 ```
 
 For more examples see [Signer documentation](https://github.com/wavesplatform/signer/blob/master/README.md).
-
-### How to build
-
-```shell
-npm ci
-npm run build
-```
