@@ -115,7 +115,7 @@ describe('Signer integration', function () {
         By.xpath("//div[contains(@class, 'originAuth-transaction')]")
       )
     );
-    let acceptBtn = await this.driver.findElement(
+    const acceptBtn = await this.driver.findElement(
       By.css('.app button[type=submit]')
     );
     await acceptBtn.click();
