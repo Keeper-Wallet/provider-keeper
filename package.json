@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "provider:test": "npm run test -workspace=provider",
-    "provider:coverage": "npm run coverage -workspace=provider",
-    "provider:build": "npm run build -workspace=provider",
-    "ui:build": "npm run build -workspace=test-app",
-    "ui:start": "npm run start -workspace=test-app"
+    "provider:test": "yarn workspace @waves/provider-keeper test",
+    "provider:coverage": "yarn workspace @waves/provider-keeper coverage",
+    "provider:build": "yarn workspace @waves/provider-keeper build",
+    "ui:build": "yarn workspace test-app build",
+    "ui:start": "yarn workspace test-app start"
   },
   "workspaces": [
     "provider",
