@@ -32,7 +32,7 @@ declare global {
     signer: Signer;
     Signer: typeof Signer;
     ProviderKeeper: typeof ProviderKeeper;
-    result: any;
+    result: Promise<unknown>;
   }
 }
 
@@ -94,7 +94,7 @@ describe('Signer integration', function () {
     ).to.be.true;
   });
 
-  function windowResult(this: mocha.Context): any {
+  function windowResult(this: mocha.Context): unknown {
     return this.driver.executeAsyncScript(function (...args) {
       const done = args[args.length - 1];
       window.result.then(done).catch(done);
@@ -127,7 +127,7 @@ describe('Signer integration', function () {
 
     await this.driver.switchTo().window(tabTestApp);
 
-    const userData: UserData = await windowResult.call(this);
+    const userData = (await windowResult.call(this)) as UserData;
     expect(userData.address).to.exist;
     expect(userData.publicKey).to.exist;
   });
@@ -179,7 +179,7 @@ describe('Signer integration', function () {
     await closeBtn.click();
 
     await this.driver.switchTo().window(tabTestApp);
-    const signed: any[] = await windowResult.call(this);
+    const signed = (await windowResult.call(this)) as SignerTx[];
 
     tx = !Array.isArray(tx) ? [tx] : tx;
     expect(signed.length).to.be.equal(tx.length);
