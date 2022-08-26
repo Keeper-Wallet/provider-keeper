@@ -23,10 +23,10 @@ jobs:
           scope: '@waves'
 
       - name: Install dependencies
-        run: npm install
+        run: yarn --frozen-lockfile
 
       - name: Build package
-        run: npm run provider:build
+        run: yarn run provider:build
 
       - name: Publish to NPM
         run: npm publish --access public --workspace provider

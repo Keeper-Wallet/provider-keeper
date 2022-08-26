@@ -22,16 +22,16 @@ jobs:
           node-version: '${{ steps.nvm.outputs.NODE_VERSION }}'
 
       - name: Install dependencies
-        run: npm install
+        run: yarn --frozen-lockfile
 
       - name: Download and extract latest Keeper Wallet
         run: curl -L "https://clients2.google.com/service/update2/crx?response=redirect&os=mac&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromecrx&prodchannel=unknown&prodversion=93.0.4577.63&acceptformat=crx2,crx3&x=id%3Dlpilbniiabackdjcionkobglmddfbcjo%26uc"  --output keeper.crx; mkdir dist; unzip keeper.crx -d dist || rm -rf keeper.crx
 
       - name: Build test application
-        run: npm run ui:build
+        run: yarn run ui:build
 
       - name: Run tests with coverage
-        run: npm run provider:coverage
+        run: yarn provider:coverage
 
       - name: Cleanup
         run: rm -rf provider/dist; rm -rf test-app/dist; rm -rf dist
