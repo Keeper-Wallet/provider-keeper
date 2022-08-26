@@ -95,8 +95,8 @@ describe('Signer integration', function () {
   });
 
   function windowResult(this: mocha.Context): any {
-    return this.driver.executeAsyncScript(function () {
-      const done = arguments[arguments.length - 1];
+    return this.driver.executeAsyncScript(function (...args) {
+      const done = args[args.length - 1];
       window.result.then(done).catch(done);
     });
   }
@@ -137,12 +137,12 @@ describe('Signer integration', function () {
     await Network.switchTo.call(this, 'Mainnet');
 
     await this.driver.switchTo().window(tabTestApp);
-    const error: SignerError = await this.driver.executeAsyncScript(
-      function () {
-        const done = arguments[arguments.length - 1];
-        window.signer.login().then(done).catch(done);
-      }
-    );
+    const error: SignerError = await this.driver.executeAsyncScript(function (
+      ...args
+    ) {
+      const done = args[args.length - 1];
+      window.signer.login().then(done).catch(done);
+    });
     expect(error.code).to.be.equal(ERRORS.ENSURE_PROVIDER);
     expect(error.type).to.be.equal('provider');
 
