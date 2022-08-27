@@ -8,7 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@waves/signer": "^1.0.8",
+    "@waves/signer": "^1.0.11",
     "@waves/waveskeeper-types": "^0.2.5"
   },
   "devDependencies": {

@@ -539,7 +539,7 @@
     "@types/long" "^4.0.0"
     protobufjs "^6.8.8"
 
-"@waves/signer@^1.0.8":
+"@waves/signer@^1.0.11":
   version "1.0.11"
   resolved "https://registry.yarnpkg.com/@waves/signer/-/signer-1.0.11.tgz#54b03e705721c3cb3becea076cc8d97eeaa57a7d"
   integrity sha512-Rsjh3iS8j2cmaQeNORsrJUsUkiSdLlWJanx0j/mkAHFUxzz82LS0tHiQAKGYCt/w6VMiHWo34LNAtOqhti1tqw==
