@@ -67,7 +67,7 @@
     "chai": "^4.3.6",
     "chromedriver": "^104.0.0",
     "codecov": "^3.8.3",
-    "eslint": "^8.23.0",
+    "eslint": "8.22",
     "eslint-config-prettier": "^8.5.0",
     "mocha": "^9.1.1",
     "prettier": "^2.7.1",
