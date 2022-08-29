@@ -4,15 +4,20 @@ This is a simple web application for e2e tests that communicates with Keeper Wal
 
 ## Usage
 
-For build use
+Install dependencies
 
 ```shell
-npm i
-npm run build
+yarn
 ```
 
-To run a server use
+Build
 
 ```shell
-npm run start
+yarn run build
+```
+
+And run server
+
+```shell
+yarn run start
 ```
