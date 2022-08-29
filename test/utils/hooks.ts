@@ -25,14 +25,11 @@ interface GlobalFixturesContext {
 }
 
 export async function mochaGlobalSetup(this: GlobalFixturesContext) {
-  const rootDir = path.resolve(__dirname, '..', '..', '..');
-  const wavesKeeperDir = path.resolve(rootDir, 'dist');
+  const rootDir = path.resolve(__dirname, '..', '..');
+  const keeperWalletDir = path.resolve(rootDir, 'keeper-wallet');
   const testAppDir = path.resolve(rootDir, 'test-app', 'dist');
 
-  if (
-    !fs.existsSync(wavesKeeperDir) ||
-    fs.readdirSync(wavesKeeperDir).length === 0
-  ) {
+  if (!fs.existsSync(path.resolve(keeperWalletDir, 'manifest.json'))) {
     throw new Error(
       `
       You should build or download latest Keeper Wallet for e2e tests.
@@ -41,7 +38,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     );
   }
 
-  if (!fs.existsSync(testAppDir) || fs.readdirSync(testAppDir).length === 0) {
+  if (!fs.existsSync(path.resolve(testAppDir, 'index.html'))) {
     throw new Error(
       `
       You should build test application first.
@@ -56,7 +53,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   await TestContainers.exposeHostPorts(8081);
 
   this.selenium = await new GenericContainer('selenium/standalone-chrome')
-    .withBindMount(path.resolve(wavesKeeperDir), '/app/waves_keeper', 'ro')
+    .withBindMount(path.resolve(keeperWalletDir), '/app/keeper-wallet', 'ro')
     .withExposedPorts(
       {
         container: 4444,
@@ -85,7 +82,7 @@ export const mochaHooks = () => ({
       .usingServer(`http://localhost:4444/wd/hub`)
       .setChromeOptions(
         new chrome.Options().addArguments(
-          `--load-extension=/app/waves_keeper`,
+          `--load-extension=/app/keeper-wallet`,
           '--disable-dev-shm-usage'
         )
       )
