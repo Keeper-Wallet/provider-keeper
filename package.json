@@ -42,7 +42,8 @@
     "test": "mocha",
     "coverage": "c8 yarn run test",
     "eslint": "eslint --ext .ts,.js --max-warnings 0 .",
-    "prettier": "prettier . --check"
+    "prettier": "prettier . --check",
+    "typecheck": "tsc --noEmit"
   },
   "mocha": {
     "extension": [

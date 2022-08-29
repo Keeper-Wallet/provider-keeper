@@ -27,6 +27,9 @@ jobs:
       - name: Check code formatting
         run: yarn run prettier
 
+      - name: Check types
+        run: yarn run typecheck
+
       - name: Check eslint
         run: yarn run eslint
 
