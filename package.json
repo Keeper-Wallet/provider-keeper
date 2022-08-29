@@ -7,7 +7,9 @@
     "provider:coverage": "yarn workspace @waves/provider-keeper coverage",
     "provider:build": "yarn workspace @waves/provider-keeper build",
     "ui:build": "yarn workspace test-app build",
-    "ui:start": "yarn workspace test-app start"
+    "ui:start": "yarn workspace test-app start",
+    "eslint": "eslint --ext .ts,.js --max-warnings 0 .",
+    "prettier": "prettier . --check"
   },
   "workspaces": [
     "provider",

@@ -33,7 +33,7 @@ export class ProviderKeeper implements Provider {
         return reject(new Error('WavesKeeper is not installed.'));
       }
 
-      if (!!window.WavesKeeper) {
+      if (window.WavesKeeper) {
         return window.WavesKeeper.initialPromise.then(api => resolve(api));
       } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
     };
@@ -86,8 +86,12 @@ export class ProviderKeeper implements Provider {
     return this._ensureApi()
       .then(api => api.publicState())
       .then(state => {
+        // in this case we already have state.account,
+        // otherwise api.publicState will throw an error
         this.user = {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           address: state.account!.address,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           publicKey: state.account!.publicKey,
         };
         this._emitter.trigger('login', this.user);
