@@ -1,6 +1,6 @@
 import { Signer } from '@waves/signer';
-import { ProviderKeeper } from '@waves/provider-keeper';
+import { ProviderKeeper } from '..';
 
 window.Signer = Signer;
 window.ProviderKeeper = ProviderKeeper;
-window.result = null;
+window.result = Promise.resolve();
