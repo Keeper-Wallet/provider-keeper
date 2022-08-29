@@ -25,4 +25,27 @@ module.exports = [
       path: resolve(__dirname, 'dist'),
     },
   },
+  {
+    entry: './src/index.ts',
+    mode: 'development',
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          use: ['ts-loader'],
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.ts', '.js'],
+    },
+    output: {
+      libraryTarget: 'umd',
+      globalObject: 'this',
+      library: 'providerKeeper',
+      filename: 'provider-keeper.js',
+      path: resolve(__dirname, 'dist'),
+    },
+  },
 ];
