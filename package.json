@@ -35,8 +35,9 @@
   "scripts": {
     "build": "vite build && vite build -c vite.config.min.ts && tsc -p tsconfig.types.json",
     "watch": "vite build --watch",
-    "build:ui": "parcel build",
-    "watch:ui": "parcel watch",
+    "build:ui": "vite build -c vite.config.test.ts",
+    "watch:ui": "vite build --watch -c vite.config.test.ts",
+    "start:ui": "vite preview -c vite.config.test.ts",
     "test": "mocha",
     "coverage": "c8 yarn run test",
     "eslint": "eslint --ext .ts,.js --max-warnings 0 .",
