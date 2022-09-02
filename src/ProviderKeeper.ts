@@ -9,7 +9,6 @@ import {
   UserData,
 } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
-import { base64Encode, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
 import { calculateFee } from './utils';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
@@ -110,7 +109,7 @@ export class ProviderKeeper implements Provider {
       .then(api =>
         api.signCustomData({
           version: 1,
-          binary: 'base64:' + base64Encode(stringToBytes(String(data))),
+          binary: 'base64:' + btoa(String(data)),
         })
       )
       .then(data => data.signature);
