@@ -14,13 +14,6 @@
   "main": "dist/provider-keeper.cjs.js",
   "unpkg": "dist/provider-keeper.umd.js",
   "types": "dist/types/index.d.ts",
-  "targets": {
-    "test-app": {
-      "source": "test-app/index.html",
-      "distDir": "test-app/dist",
-      "isLibrary": false
-    }
-  },
   "files": [
     "dist"
   ],
@@ -81,9 +74,7 @@
     "eslint-config-prettier": "^8.5.0",
     "http-server": "^14.1.1",
     "mocha": "^9.1.1",
-    "parcel": "^2.7.0",
     "prettier": "^2.7.1",
-    "process": "^0.11.10",
     "selenium-webdriver": "^4.0.0-rc-1",
     "testcontainers": "^8.12.0",
     "ts-node": "^10.9.1",
