@@ -12,11 +12,8 @@ export default defineConfig({
           entryFileNames: 'provider-keeper.cjs.js',
           format: 'cjs',
         },
-        {
-          entryFileNames: 'provider-keeper.es.js',
-          format: 'es',
-        },
       ],
+      external: [/node_modules/],
     },
     minify: false,
   },

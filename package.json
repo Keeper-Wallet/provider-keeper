@@ -12,8 +12,6 @@
   ],
   "author": "smelnikov@web3tech.ru",
   "main": "dist/provider-keeper.cjs.js",
-  "module": "dist/provider-keeper.es.js",
-  "browser": "./dist/provider-keeper.es.js",
   "unpkg": "dist/provider-keeper.umd.js",
   "types": "dist/types/index.d.ts",
   "targets": {
