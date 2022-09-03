@@ -16,8 +16,10 @@ import {
   SignerTx,
 } from '@waves/signer';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
-import { json } from '@waves/marshall';
 import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
+import create from 'parse-json-bignumber';
+
+const { parse } = create();
 
 function isAlias(source: string): boolean {
   return source.startsWith('alias:');
@@ -271,5 +273,5 @@ export function keeperTxFactory(tx) {
 }
 
 export function signerTxFactory(signed: string): SignedTx<SignerTx> {
-  return json.parseTx(signed);
+  return parse(signed);
 }

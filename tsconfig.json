@@ -1,9 +1,9 @@
 {
   "include": ["src/**/*"],
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationDir": "./dist/types",
+    "esModuleInterop": true,
     "lib": ["esnext", "dom"],
     "module": "commonjs",
     "moduleResolution": "node",
@@ -13,7 +13,7 @@
     "pretty": true,
     "sourceMap": false,
     "strict": true,
-    "target": "es6",
+    "target": "esnext",
     "types": ["@waves/waveskeeper-types"]
   }
 }
