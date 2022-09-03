@@ -419,17 +419,6 @@
   resolved "https://registry.yarnpkg.com/@waves/client-logs/-/client-logs-1.0.0.tgz#52d021a330eab674475c50d42e616d3877e1a537"
   integrity sha512-Uf8NKJGw4lgmPTEFtqIuDD6GZkk73MZLyaFI1VWDDElXhsFY2uxdWhxFQYqK/8GNZBSycCTvDsi0RNDEqE1ivw==
 
-"@waves/marshall@^0.14.0":
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/@waves/marshall/-/marshall-0.14.0.tgz#9b294be9d0df70a098d564424c6f998e0bcf74c8"
-  integrity sha512-zcmDEwlD3dgzaTX6d2UM57KaGO6DK759b9EfdGa48UzwsjLdqX+v/6hrcqZEPUYMeymD6fO8O4/S+0RDxue8Wg==
-  dependencies:
-    "@types/base64-js" "^1.2.5"
-    "@types/long" "^4.0.0"
-    "@waves/parse-json-bignumber" "^1.0.1"
-    base64-js "^1.3.0"
-    long "^4.0.0"
-
 "@waves/marshall@^0.15.0-beta.1":
   version "0.15.0-beta.1"
   resolved "https://registry.yarnpkg.com/@waves/marshall/-/marshall-0.15.0-beta.1.tgz#8006d21fa75fc0b81f80807a0c7944aa08018e0b"
