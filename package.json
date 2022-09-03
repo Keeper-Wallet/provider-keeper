@@ -27,10 +27,8 @@
   },
   "scripts": {
     "build": "vite build && vite build -c vite.config.min.ts && tsc",
-    "watch": "vite build --watch",
-    "build:ui": "vite build -c vite.config.test.ts",
-    "watch:ui": "vite build --watch -c vite.config.test.ts",
-    "start:ui": "vite preview -c vite.config.test.ts",
+    "watch": "vite build -c vite.config.min.ts",
+    "start": "http-server .",
     "test": "mocha",
     "coverage": "c8 yarn run test",
     "eslint": "eslint --ext .ts,.js --max-warnings 0 .",

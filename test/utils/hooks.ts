@@ -9,6 +9,7 @@ import {
   TestContainers,
 } from 'testcontainers';
 import * as fs from 'fs';
+import * as packageJson from '../../package.json';
 
 declare module 'mocha' {
   interface Context {
@@ -27,7 +28,6 @@ interface GlobalFixturesContext {
 export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   const rootDir = path.resolve(__dirname, '..', '..');
   const keeperWalletDir = path.resolve(rootDir, 'keeper-wallet');
-  const testAppDir = path.resolve(rootDir, 'test-app', 'dist');
 
   if (!fs.existsSync(path.resolve(keeperWalletDir, 'manifest.json'))) {
     throw new Error(
@@ -38,16 +38,16 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     );
   }
 
-  if (!fs.existsSync(path.resolve(testAppDir, 'index.html'))) {
+  if (!fs.existsSync(path.resolve(rootDir, packageJson.unpkg))) {
     throw new Error(
       `
-      You should build test application first.
+      You should build provider first.
       See more at .github/workflows/tests.yml
       `
     );
   }
 
-  this.testApp = httpServer.createServer({ root: testAppDir });
+  this.testApp = httpServer.createServer({ root: rootDir });
   this.testApp.listen(8081);
 
   await TestContainers.exposeHostPorts(8081);
