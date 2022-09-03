@@ -47,7 +47,6 @@
     ]
   },
   "dependencies": {
-    "@waves/node-api-js": "^1.3.0",
     "@waves/ts-types": "^1.0.0",
     "@waves/waveskeeper-types": "^0.2.7",
     "typed-ts-events": "^1.2.1"
