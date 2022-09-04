@@ -19,6 +19,7 @@ declare module 'mocha' {
     extensionUrl: string;
     testAppUrl: string;
     nodeUrl: string;
+    hostNodeUrl: string;
     wait: number;
   }
 }
@@ -62,7 +63,10 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
       startPeriod: 3000,
     })
     .withWaitStrategy(Wait.forHealthCheck())
-    .withExposedPorts(6869)
+    .withExposedPorts({
+      container: 6869,
+      host: 6869,
+    })
     .withNetworkMode(host.getName())
     .withNetworkAliases('waves-private-node')
     .start();
@@ -127,6 +131,7 @@ export const mochaHooks = () => ({
 
     this.testAppUrl = 'http://host.testcontainers.internal:8081';
     this.nodeUrl = 'http://waves-private-node:6869';
+    this.hostNodeUrl = 'http://localhost:6869';
   },
 
   afterAll(this: mocha.Context, done: mocha.Done) {
