@@ -43,11 +43,10 @@ declare global {
 describe('Signer integration', function () {
   this.timeout(5 * m);
 
-  let tabTestApp;
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let issuer, user1, user2;
 
+  let testAppTab: string | null = null;
   let messageWindow: string | null = null;
   let chainId;
 
@@ -109,12 +108,12 @@ describe('Signer integration', function () {
       });
       window.signer.setProvider(new window.ProviderKeeper());
     }, this.nodeUrl);
-    tabTestApp = await this.driver.getWindowHandle();
+    testAppTab = await this.driver.getWindowHandle();
 
     await this.driver.switchTo().window(tabAccounts);
     await this.driver.close();
 
-    await this.driver.switchTo().window(tabTestApp);
+    await this.driver.switchTo().window(testAppTab);
   });
 
   it('Current provider is ProviderKeeper', async function () {
@@ -153,7 +152,7 @@ describe('Signer integration', function () {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     await Windows.waitForWindowToClose.call(this, messageWindow!);
     messageWindow = null;
-    await this.driver.switchTo().window(tabTestApp);
+    await this.driver.switchTo().window(testAppTab);
   }
 
   describe('Permission request from origin', function () {
@@ -196,7 +195,7 @@ describe('Signer integration', function () {
       await App.open.call(this);
       await Network.switchTo.call(this, network);
       await this.driver.close();
-      await this.driver.switchTo().window(tabTestApp);
+      await this.driver.switchTo().window(testAppTab);
     }
 
     it('Rejected', async function () {
