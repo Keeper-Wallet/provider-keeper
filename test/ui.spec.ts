@@ -265,6 +265,15 @@ describe('Signer integration', function () {
     });
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let assetWithMaxValuesId: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let assetWithMinValuesId: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let smartAssetId: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let nftId: string;
+
   describe('Asset issue', function () {
     async function performIssueTransaction(
       this: mocha.Context,
@@ -299,9 +308,6 @@ describe('Signer integration', function () {
         })
       );
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let assetWithMaxValues: string;
 
     it('Asset with max values', async function () {
       const data = {
@@ -348,11 +354,8 @@ describe('Signer integration', function () {
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
 
-      assetWithMaxValues = parsedApproveResult.assetId;
+      assetWithMaxValuesId = parsedApproveResult.assetId;
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let assetWithMinValues: string;
 
     it('Asset with min values', async function () {
       const data = {
@@ -397,11 +400,8 @@ describe('Signer integration', function () {
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
 
-      assetWithMinValues = parsedApproveResult.assetId;
+      assetWithMinValuesId = parsedApproveResult.assetId;
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let smartAsset: string;
 
     it('Smart asset', async function () {
       const data = {
@@ -448,11 +448,8 @@ describe('Signer integration', function () {
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
 
-      smartAsset = parsedApproveResult.assetId;
+      smartAssetId = parsedApproveResult.assetId;
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let nft: string;
 
     it('NFT', async function () {
       const data = {
@@ -500,7 +497,7 @@ describe('Signer integration', function () {
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
 
-      nft = parsedApproveResult.assetId;
+      nftId = parsedApproveResult.assetId;
     });
   });
 
