@@ -24,8 +24,12 @@ import { Signer, SignerTx, UserData } from '@waves/signer';
 import { App, CreateNewAccount, Network, Settings } from './utils/actions';
 import { ProviderKeeper } from '../src';
 import { ERRORS, SignerError } from '@waves/signer/dist/cjs/SignerError';
+import { address } from '@waves/ts-lib-crypto';
+import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
+import { faucet, getNetworkByte } from './utils/nodeInteraction';
 
 const m = 60000;
+const WAVES = 100000000; // waves token scale
 
 declare global {
   interface Window {
@@ -40,9 +44,23 @@ describe('Signer integration', function () {
   this.timeout(5 * m);
   let tabKeeper, tabAccounts, tabTestApp;
 
+  let issuer, user1, user2;
+
   before(async function () {
+    const chainId = await getNetworkByte(this.hostNodeUrl);
+
+    issuer = address(ISSUER_SEED, chainId);
+    user1 = address(USER_1_SEED, chainId);
+    user2 = address(USER_2_SEED, chainId);
+
+    await faucet({
+      recipient: issuer,
+      amount: 10 * WAVES,
+      nodeUrl: this.hostNodeUrl,
+    });
+
     await App.initVault.call(this);
-    await Network.switchTo.call(this, 'Testnet');
+    await Network.switchTo.call(this, 'Custom', this.nodeUrl);
     tabKeeper = await this.driver.getWindowHandle();
     await this.driver
       .wait(
