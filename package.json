@@ -29,7 +29,7 @@
     "build": "vite build && vite build -c vite.config.min.ts && tsc",
     "watch": "vite build -c vite.config.min.ts",
     "start": "http-server .",
-    "test": "mocha",
+    "test": "mocha --exit",
     "coverage": "c8 yarn run test",
     "eslint": "eslint --ext .ts,.js --max-warnings 0 .",
     "prettier": "prettier . --check",
