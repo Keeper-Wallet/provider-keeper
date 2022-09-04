@@ -1,30 +1,16 @@
 import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
+import { Signer } from '@waves/signer';
 import {
-  ALIAS,
-  BURN,
-  CANCEL_LEASE,
-  DATA,
-  INVOKE_DEFAULT_CALL,
-  INVOKE_LIST_ARGS_NO_PAYMENTS,
-  INVOKE_NATIVE_ARGS_NO_PAYMENTS,
-  INVOKE_NO_ARGS_MANY_PAYMENTS,
-  INVOKE_NO_ARGS_SINGLE_PAYMENTS,
-  ISSUE,
-  LEASE,
-  MASS_TRANSFER,
-  REISSUE,
-  SET_ASSET_SCRIPT,
-  SET_SCRIPT,
-  SPONSORSHIP,
-  TRANSFER,
-} from './utils/transactions';
-import { Signer, SignerTx, UserData } from '@waves/signer';
-import { App, CreateNewAccount, Network, Settings } from './utils/actions';
+  App,
+  CreateNewAccount,
+  Network,
+  Settings,
+  Windows,
+} from './utils/actions';
 import { ProviderKeeper } from '../src';
-import { ERRORS, SignerError } from '@waves/signer/dist/cjs/SignerError';
-import { address } from '@waves/ts-lib-crypto';
+import { address, publicKey } from '@waves/ts-lib-crypto';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
 
@@ -36,62 +22,69 @@ declare global {
     signer: Signer;
     Signer: typeof Signer;
     ProviderKeeper: typeof ProviderKeeper;
-    result: Promise<unknown>;
+    result: unknown;
   }
 }
 
 describe('Signer integration', function () {
   this.timeout(5 * m);
-  let tabKeeper, tabAccounts, tabTestApp;
 
+  let tabTestApp;
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let issuer, user1, user2;
 
-  before(async function () {
+  let messageWindow: string | null = null;
+
+  async function prepareAccounts(this: mocha.Context) {
     const chainId = await getNetworkByte(this.hostNodeUrl);
 
-    issuer = address(ISSUER_SEED, chainId);
-    user1 = address(USER_1_SEED, chainId);
-    user2 = address(USER_2_SEED, chainId);
+    issuer = {
+      address: address(ISSUER_SEED, chainId),
+      publicKey: publicKey(ISSUER_SEED),
+    };
+    user1 = {
+      address: address(USER_1_SEED, chainId),
+      publicKey: publicKey(USER_1_SEED),
+    };
+    user2 = {
+      address: address(USER_2_SEED, chainId),
+      publicKey: publicKey(USER_2_SEED),
+    };
 
     await faucet({
-      recipient: issuer,
+      recipient: issuer.address,
       amount: 10 * WAVES,
       nodeUrl: this.hostNodeUrl,
     });
+  }
 
+  before(async function () {
+    await prepareAccounts.call(this);
     await App.initVault.call(this);
-    await Network.switchTo.call(this, 'Custom', this.nodeUrl);
-    tabKeeper = await this.driver.getWindowHandle();
+
+    const tabKeeper = await this.driver.getWindowHandle();
+    const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
     await this.driver
       .wait(
-        until.elementLocated(By.css('[data-testid="importForm"]')),
+        until.elementLocated(By.css('[data-testid="addAccountBtn"]')),
         this.wait
       )
-      .findElement(By.css('[data-testid="addAccountBtn"]'))
       .click();
-    await this.driver.wait(
-      async () => (await this.driver.getAllWindowHandles()).length === 2,
-      this.wait
-    );
-    for (const handle of await this.driver.getAllWindowHandles()) {
-      if (handle !== tabKeeper) {
-        tabAccounts = handle;
-        await this.driver.switchTo().window(tabAccounts);
-        await this.driver.navigate().refresh();
-        break;
-      }
-    }
-    await CreateNewAccount.importAccount.call(
-      this,
-      'rich',
-      'waves private node seed with waves tokens'
-    );
-    await this.driver.close();
+    const [tabAccounts] = await waitForNewWindows(1);
+
     await this.driver.switchTo().window(tabKeeper);
     await Settings.setMaxSessionTimeout.call(this);
+    await this.driver.close();
 
-    // prepare browse keeper and test-app tabs
-    await App.open.call(this);
+    await this.driver.switchTo().window(tabAccounts);
+    await this.driver.navigate().refresh();
+    await Network.switchTo.call(this, 'Custom', this.nodeUrl);
+    await CreateNewAccount.importAccount.call(this, 'user2', USER_2_SEED);
+    await CreateNewAccount.importAccount.call(this, 'user1', USER_1_SEED);
+    await CreateNewAccount.importAccount.call(this, 'issuer', ISSUER_SEED);
+    await Network.switchTo.call(this, 'Testnet');
+    await CreateNewAccount.importAccount.call(this, 'test', ISSUER_SEED);
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
@@ -100,8 +93,13 @@ describe('Signer integration', function () {
         NODE_URL: nodeUrl,
       });
       window.signer.setProvider(new window.ProviderKeeper());
-    }, 'https://nodes-testnet.wavesnodes.com');
+    }, this.nodeUrl);
     tabTestApp = await this.driver.getWindowHandle();
+
+    await this.driver.switchTo().window(tabAccounts);
+    await this.driver.close();
+
+    await this.driver.switchTo().window(tabTestApp);
   });
 
   it('Current provider is ProviderKeeper', async function () {
@@ -112,279 +110,149 @@ describe('Signer integration', function () {
     ).to.be.true;
   });
 
-  function windowResult(this: mocha.Context): unknown {
-    return this.driver.executeAsyncScript(function (...args) {
-      const done = args[args.length - 1];
-      window.result.then(done).catch(done);
-    });
+  async function approveMessage(this: mocha.Context, wait = this.wait) {
+    await this.driver
+      .wait(until.elementLocated(By.css('#approve')), wait)
+      .click();
+
+    await this.driver.wait(
+      until.elementLocated(By.css('.tx-approve-icon')),
+      this.wait
+    );
   }
 
-  it('auth tx', async function () {
-    await this.driver.switchTo().window(tabTestApp);
+  async function rejectMessage(this: mocha.Context, wait = this.wait) {
+    await this.driver
+      .wait(until.elementLocated(By.css('#reject')), wait)
+      .click();
 
-    await this.driver.executeScript(() => {
-      window.result = window.signer.login();
-    });
-
-    await this.driver.switchTo().window(tabKeeper);
-    // site permission request
     await this.driver.wait(
-      until.elementLocated(
-        By.xpath("//div[contains(@class, 'originAuth-transaction')]")
-      )
+      until.elementLocated(By.css('.tx-reject-icon')),
+      this.wait
     );
-    const acceptBtn = await this.driver.findElement(
-      By.css('.app button[type=submit]')
-    );
-    await acceptBtn.click();
-    // close window
-    const closeBtn = await this.driver.wait(
-      until.elementLocated(By.css('[data-testid="closeTransaction"]'))
-    );
-    await closeBtn.click();
+  }
 
+  async function closeMessage(this: mocha.Context) {
+    await this.driver.findElement(By.css('#close')).click();
+    expect(messageWindow).not.to.be.null;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await Windows.waitForWindowToClose.call(this, messageWindow!);
+    messageWindow = null;
     await this.driver.switchTo().window(tabTestApp);
+  }
 
-    const userData = (await windowResult.call(this)) as UserData;
-    expect(userData.address).to.exist;
-    expect(userData.publicKey).to.exist;
-  });
+  describe('Permission request from origin', function () {
+    async function performPermissionRequest(this: mocha.Context) {
+      await this.driver.executeScript(() => {
+        window.signer.login().then(
+          result => {
+            window.result = JSON.stringify(['RESOLVED', result]);
+          },
+          err => {
+            window.result = JSON.stringify(['REJECTED', err]);
+          }
+        );
+      });
+    }
 
-  it('Error when Keeper Wallet is on the wrong network', async function () {
-    await this.driver.switchTo().window(tabKeeper);
-    await Network.switchTo.call(this, 'Mainnet');
+    async function waitPermissionRequest(this: mocha.Context) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await performPermissionRequest.call(this);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
 
-    await this.driver.switchTo().window(tabTestApp);
-    const error: SignerError = await this.driver.executeAsyncScript(function (
-      ...args
+    async function getPermissionRequestResult(this: mocha.Context) {
+      return JSON.parse(
+        await this.driver.executeScript(() => {
+          const { result } = window;
+          delete window.result;
+          return result;
+        })
+      );
+    }
+
+    async function changeKeeperNetworkAndClose(
+      this: mocha.Context,
+      network: 'Mainnet' | 'Stagenet' | 'Testnet' | 'Custom'
     ) {
-      const done = args[args.length - 1];
-      window.signer.login().then(done).catch(done);
-    });
-    expect(error.code).to.be.equal(ERRORS.ENSURE_PROVIDER);
-    expect(error.type).to.be.equal('provider');
+      await this.driver.switchTo().newWindow('tab');
+      await App.open.call(this);
+      await Network.switchTo.call(this, network);
+      await this.driver.close();
+      await this.driver.switchTo().window(tabTestApp);
+    }
 
-    await this.driver.switchTo().window(tabKeeper);
-    await Network.switchTo.call(this, 'Testnet');
-  });
+    it('Rejected', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Custom');
 
-  const signedTxShouldBeValid = async function (
-    this: mocha.Context,
-    method: string,
-    tx: SignerTx | SignerTx[],
-    formSelector: By
-  ) {
-    await this.driver.switchTo().window(tabTestApp);
-    await this.driver.executeScript(
-      function (tx, method) {
-        window.result = window.signer[method](tx).sign();
-      },
-      tx,
-      method
-    );
+      await waitPermissionRequest.call(this);
+      await rejectMessage.call(this);
+      await closeMessage.call(this);
 
-    // tx request
-    await this.driver.switchTo().window(tabKeeper);
-    await this.driver.wait(until.elementLocated(formSelector));
-    const acceptBtn = await this.driver.findElement(
-      By.css('.app button[type=submit]')
-    );
-    await acceptBtn.click();
-    // close window
-    const closeBtn = await this.driver.wait(
-      until.elementLocated(By.css('[data-testid="closeTransaction"]'))
-    );
-    await closeBtn.click();
+      const [status, result] = await getPermissionRequestResult.call(this);
 
-    await this.driver.switchTo().window(tabTestApp);
-    const signed = (await windowResult.call(this)) as SignerTx[];
+      expect(status).to.equal('REJECTED');
 
-    tx = !Array.isArray(tx) ? [tx] : tx;
-    expect(signed.length).to.be.equal(tx.length);
-    signed.forEach((signedTx, idx) => {
-      const commonFields = [
-        'id',
-        'type',
-        'chainId',
-        'senderPublicKey',
-        'timestamp',
-        'proofs',
-        'version',
-      ];
-      expect(signedTx).to.include.all.keys(
-        ...commonFields,
-        ...Object.keys(tx[idx])
-      );
-    });
-  };
-
-  it('issue tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'issue',
-      ISSUE,
-      By.xpath("//div[contains(@class, 'issue-transaction')]")
-    );
-  });
-
-  it('transfer tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'transfer',
-      TRANSFER,
-      By.xpath("//div[contains(@class, 'transfer-transaction')]")
-    );
-  });
-
-  it('reissue tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'reissue',
-      REISSUE,
-      By.xpath("//div[contains(@class, 'reissue-transaction')]")
-    );
-  });
-
-  it('burn tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'burn',
-      BURN,
-      By.xpath("//div[contains(@class, 'burn-transaction')]")
-    );
-  });
-
-  it('lease tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'lease',
-      LEASE,
-      By.xpath("//div[contains(@class, 'lease-transaction')]")
-    );
-  });
-
-  it('cancel lease tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'cancelLease',
-      CANCEL_LEASE,
-      By.xpath("//div[contains(@class, 'cancelLease-transaction')]")
-    );
-  });
-
-  it('alias tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'alias',
-      ALIAS,
-      By.xpath("//div[contains(@class, 'alias-transaction')]")
-    );
-  });
-
-  it('mass transfer tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'massTransfer',
-      MASS_TRANSFER,
-      By.xpath("//div[contains(@class, 'massTransfer-transaction')]")
-    );
-  });
-
-  it('data tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'data',
-      DATA,
-      By.xpath("//div[contains(@class, 'data-transaction')]")
-    );
-  });
-
-  it('set script tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'setScript',
-      SET_SCRIPT,
-      By.xpath("//div[contains(@class, 'setScript-transaction')]")
-    );
-  });
-
-  it('sponsorship tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'sponsorship',
-      SPONSORSHIP,
-      By.xpath("//div[contains(@class, 'sponsorship-transaction')]")
-    );
-  });
-
-  it('set asset script tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'setAssetScript',
-      SET_ASSET_SCRIPT,
-      By.xpath("//div[contains(@class, 'assetScript-transaction')]")
-    );
-  });
-
-  it('package tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'batch',
-      [ISSUE, TRANSFER, REISSUE, BURN, LEASE, CANCEL_LEASE, ALIAS],
-      By.xpath("//div[contains(@class, 'package-transaction')]")
-    );
-    await signedTxShouldBeValid.call(
-      this,
-      'batch',
-      [MASS_TRANSFER, DATA, SET_SCRIPT, SPONSORSHIP, SET_ASSET_SCRIPT],
-      By.xpath("//div[contains(@class, 'package-transaction')]")
-    );
-  });
-
-  describe('invoke tx', function () {
-    it('default call', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_DEFAULT_CALL,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+      expect(result).to.deep.equal({
+        code: 1004,
+        type: 'provider',
+      });
     });
 
-    it('with no args but single payment', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_NO_ARGS_SINGLE_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('Approved', async function () {
+      await waitPermissionRequest.call(this);
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getPermissionRequestResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+      expect(result.address).to.equal(issuer.address);
+      expect(result.publicKey).to.equal(issuer.publicKey);
     });
 
-    it('with no args but many payments', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_NO_ARGS_MANY_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('Keeper has no accounts', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Mainnet');
+
+      await performPermissionRequest.call(this);
+
+      const [status, result] = await getPermissionRequestResult.call(this);
+
+      expect(status).to.equal('REJECTED');
+
+      expect(result).to.deep.equal({
+        code: 1004,
+        type: 'provider',
+      });
     });
 
-    it('with native args and no payments', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_NATIVE_ARGS_NO_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('Keeper network mismatch', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Testnet');
+
+      await performPermissionRequest.call(this);
+
+      const [status, result] = await getPermissionRequestResult.call(this);
+
+      expect(status).to.equal('REJECTED');
+
+      expect(result).to.deep.equal({
+        code: 1004,
+        type: 'provider',
+      });
     });
 
-    it('with list args and no payments', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_LIST_ARGS_NO_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('Already approved', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Custom');
+
+      await performPermissionRequest.call(this);
+
+      const [status, result] = await getPermissionRequestResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+      expect(result.address).to.equal(issuer.address);
+      expect(result.publicKey).to.equal(issuer.publicKey);
     });
   });
 });
