@@ -6,6 +6,7 @@ import {
   ReissueArgs,
   SetAssetScriptArgs,
   Signer,
+  SponsorshipArgs,
 } from '@waves/signer';
 import {
   App,
@@ -270,7 +271,6 @@ describe('Signer integration', function () {
     });
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let assetWithMaxValuesId: string;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let assetWithMinValuesId: string;
@@ -676,8 +676,107 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Enable sponsorship fee');
-    it('Disable sponsorship fee');
+    async function performSponsorshipTransaction(
+      this: mocha.Context,
+      data: SponsorshipArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.signer
+          .sponsorship(data)
+          .broadcast()
+          .then(
+            result => {
+              window.result = JSON.stringify(['RESOLVED', result]);
+            },
+            err => {
+              console.log(err);
+              window.result = JSON.stringify(['REJECTED', err]);
+            }
+          );
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
+    it('Enable sponsorship fee', async function () {
+      const data: SponsorshipArgs = {
+        minSponsoredAssetFee: 10000000,
+        assetId: assetWithMaxValuesId,
+      };
+
+      await performSponsorshipTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 14 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        minSponsoredAssetFee: data.minSponsoredAssetFee,
+        assetId: data.assetId,
+        fee: 100000,
+        chainId: nodeChainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Disable sponsorship fee', async function () {
+      const data: SponsorshipArgs = {
+        minSponsoredAssetFee: 0,
+        assetId: assetWithMaxValuesId,
+      };
+
+      await performSponsorshipTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 14 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        minSponsoredAssetFee: null,
+        assetId: data.assetId,
+        fee: 100000,
+        chainId: nodeChainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
   });
 
   describe('Transfers', function () {
