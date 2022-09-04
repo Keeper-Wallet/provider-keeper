@@ -351,7 +351,55 @@ describe('Signer integration', function () {
       assetWithMaxValues = parsedApproveResult.assetId;
     });
 
-    it('Asset with min values');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let assetWithMinValues: string;
+
+    it('Asset with min values', async function () {
+      const data = {
+        name: 'Four',
+        description: '',
+        quantity: 1,
+        decimals: 0 as const,
+        reissuable: false,
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, [parsedApproveResult]] =
+        await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        fee: 100000,
+        chainId: nodeChainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      assetWithMinValues = parsedApproveResult.assetId;
+    });
+
     it('Smart asset');
     it('NFT');
   });
