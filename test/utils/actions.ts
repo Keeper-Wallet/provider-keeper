@@ -264,7 +264,7 @@ export const Network = {
       .click();
 
     if (network === 'Custom') {
-      const customNetworkSettings = this.driver.wait(
+      await this.driver.wait(
         until.elementIsVisible(
           this.driver.wait(
             until.elementLocated(By.css('div#customNetwork')),
@@ -275,12 +275,12 @@ export const Network = {
       );
 
       if (nodeUrl) {
-        customNetworkSettings
+        await this.driver
           .findElement(By.css('input#node_address'))
-          .sendKeys(nodeUrl);
+          .sendKeys(this.nodeUrl);
       }
 
-      await customNetworkSettings
+      await this.driver
         .findElement(By.css('button#networkSettingsSave'))
         .click();
     }
@@ -297,6 +297,43 @@ export const Network = {
         )
       ),
       this.wait
+    );
+  },
+};
+
+export const Windows = {
+  async captureNewWindows(this: mocha.Context) {
+    const prevHandlesSet = new Set(await this.driver.getAllWindowHandles());
+
+    return {
+      waitForNewWindows: async (count: number) => {
+        let newHandles: string[] = [];
+
+        await this.driver.wait(
+          async () => {
+            const handles = await this.driver.getAllWindowHandles();
+
+            newHandles = handles.filter(handle => !prevHandlesSet.has(handle));
+
+            return newHandles.length >= count;
+          },
+          this.wait,
+          'waiting for new windows to appear'
+        );
+
+        return newHandles;
+      },
+    };
+  },
+  async waitForWindowToClose(this: mocha.Context, windowHandle: string) {
+    await this.driver.wait(
+      async () => {
+        const handles = await this.driver.getAllWindowHandles();
+
+        return !handles.includes(windowHandle);
+      },
+      this.wait,
+      'waiting for window to close'
     );
   },
 };
