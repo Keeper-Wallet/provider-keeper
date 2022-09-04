@@ -255,4 +255,46 @@ describe('Signer integration', function () {
       expect(result.publicKey).to.equal(issuer.publicKey);
     });
   });
+
+  describe('Asset issue', function () {
+    it('Asset with min values');
+    it('Smart asset');
+    it('NFT');
+  });
+
+  describe('Editing an asset', function () {
+    it('Reissue');
+    it('Burn');
+    it('Set asset script');
+    it('Enable sponsorship fee');
+    it('Disable sponsorhip fee');
+  });
+
+  describe('Transfers', function () {
+    it('Transfer');
+    it('Mass transfer');
+  });
+
+  describe('Record in the account data storage', function () {
+    it('Write to Data storage');
+    it('Remove entry from Data storage');
+    it('Write MAX values to Data storage');
+  });
+
+  describe('Installing the script on the account and calling it', function () {
+    it('Set script');
+    it('Invoke script with payment');
+    it('Invoke with argument');
+    it('Invoke with long arguments and payments list');
+    it('Remove script');
+  });
+
+  describe('Leasing', function () {
+    it('Lease');
+    it('Cancel lease');
+  });
+
+  describe('Aliases', function () {
+    it('Create alias');
+  });
 });
