@@ -8,6 +8,7 @@ import {
   Network,
   StartedTestContainer,
   TestContainers,
+  Wait,
 } from 'testcontainers';
 import * as fs from 'fs';
 import * as packageJson from '../../package.json';
@@ -53,6 +54,14 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   const host = await new Network().start();
 
   this.node = await new GenericContainer('wavesplatform/waves-private-node')
+    .withHealthCheck({
+      test: 'curl -f http://localhost:6869 || exit 1',
+      interval: 1000,
+      timeout: 3000,
+      retries: 10,
+      startPeriod: 3000,
+    })
+    .withWaitStrategy(Wait.forHealthCheck())
     .withExposedPorts(6869)
     .withNetworkMode(host.getName())
     .withNetworkAliases('waves-private-node')
