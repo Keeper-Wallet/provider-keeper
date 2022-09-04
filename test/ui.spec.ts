@@ -269,10 +269,19 @@ describe('Signer integration', function () {
   let assetWithMaxValuesId: string;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let assetWithMinValuesId: string;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let smartAssetId: string;
+  let assetSmartId: string;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let nftId: string;
+
+  async function getSignTransactionResult(this: mocha.Context) {
+    return JSON.parse(
+      await this.driver.executeScript(() => {
+        const { result } = window;
+        delete window.result;
+        return result;
+      })
+    );
+  }
 
   describe('Asset issue', function () {
     async function performIssueTransaction(
@@ -297,16 +306,6 @@ describe('Signer integration', function () {
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
       await this.driver.navigate().refresh();
-    }
-
-    async function getSignTransactionResult(this: mocha.Context) {
-      return JSON.parse(
-        await this.driver.executeScript(() => {
-          const { result } = window;
-          delete window.result;
-          return result;
-        })
-      );
     }
 
     it('Asset with max values', async function () {
@@ -448,7 +447,7 @@ describe('Signer integration', function () {
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
 
-      smartAssetId = parsedApproveResult.assetId;
+      assetSmartId = parsedApproveResult.assetId;
     });
 
     it('NFT', async function () {
@@ -502,7 +501,64 @@ describe('Signer integration', function () {
   });
 
   describe('Editing an asset', function () {
-    it('Reissue');
+    it('Reissue', async function () {
+      const data = {
+        quantity: 777,
+        assetId: assetSmartId,
+        reissuable: false,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.signer
+          .reissue(data)
+          .broadcast()
+          .then(
+            result => {
+              window.result = JSON.stringify(['RESOLVED', result]);
+            },
+            err => {
+              console.log(err);
+              window.result = JSON.stringify(['REJECTED', err]);
+            }
+          );
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 5 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        quantity: data.quantity,
+        reissuable: data.reissuable,
+        chainId: nodeChainId,
+        fee: 500000,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Burn');
     it('Set asset script');
     it('Enable sponsorship fee');
