@@ -429,9 +429,9 @@ describe('Signer integration', function () {
         name: data.name,
         description: data.description,
         quantity: data.quantity,
-        script: data.script,
         decimals: data.decimals,
         reissuable: data.reissuable,
+        script: data.script,
         fee: 100000000,
         chainId: nodeChainId,
       };
@@ -451,7 +451,57 @@ describe('Signer integration', function () {
       smartAsset = parsedApproveResult.assetId;
     });
 
-    it('NFT');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let nft: string;
+
+    it('NFT', async function () {
+      const data = {
+        name: 'Non-fungible',
+        description:
+          'NFT is a non-reissuable asset with quantity 1 and decimals 0',
+        quantity: 1,
+        decimals: 0 as const,
+        reissuable: false,
+        script: 'base64:BQbtKNoM',
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        script: data.script,
+        fee: 100000,
+        chainId: nodeChainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      nft = parsedApproveResult.assetId;
+    });
   });
 
   describe('Editing an asset', function () {
