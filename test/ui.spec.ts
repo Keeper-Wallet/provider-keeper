@@ -318,11 +318,11 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, [parsedApproveResult]] =
-        await getSignTransactionResult.call(this);
+      const [status, result] = await getSignTransactionResult.call(this);
 
       expect(status).to.equal('RESOLVED');
 
+      const [parsedApproveResult] = result;
       const expectedApproveResult = {
         type: 3 as const,
         version: 3,
@@ -367,11 +367,11 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, [parsedApproveResult]] =
-        await getSignTransactionResult.call(this);
+      const [status, result] = await getSignTransactionResult.call(this);
 
       expect(status).to.equal('RESOLVED');
 
+      const [parsedApproveResult] = result;
       const expectedApproveResult = {
         type: 3 as const,
         version: 3,
@@ -400,7 +400,57 @@ describe('Signer integration', function () {
       assetWithMinValues = parsedApproveResult.assetId;
     });
 
-    it('Smart asset');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let smartAsset: string;
+
+    it('Smart asset', async function () {
+      const data = {
+        name: 'Smart Asset',
+        description: 'Asset with script',
+        quantity: 100000000000,
+        decimals: 8 as const,
+        reissuable: true,
+        script: 'base64:BQbtKNoM',
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        script: data.script,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        fee: 100000000,
+        chainId: nodeChainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      smartAsset = parsedApproveResult.assetId;
+    });
+
     it('NFT');
   });
 
