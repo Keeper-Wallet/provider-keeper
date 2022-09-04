@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
-import { Signer } from '@waves/signer';
+import { BurnArgs, ReissueArgs, Signer } from '@waves/signer';
 import {
   App,
   CreateNewAccount,
@@ -502,7 +502,7 @@ describe('Signer integration', function () {
 
   describe('Editing an asset', function () {
     it('Reissue', async function () {
-      const data = {
+      const data: ReissueArgs = {
         quantity: 777,
         assetId: assetSmartId,
         reissuable: false,
@@ -559,7 +559,62 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Burn');
+    it('Burn', async function () {
+      const data: BurnArgs = {
+        amount: 100500,
+        assetId: assetSmartId,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.signer
+          .burn(data)
+          .broadcast()
+          .then(
+            result => {
+              window.result = JSON.stringify(['RESOLVED', result]);
+            },
+            err => {
+              console.log(err);
+              window.result = JSON.stringify(['REJECTED', err]);
+            }
+          );
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 6 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        amount: data.amount,
+        chainId: nodeChainId,
+        fee: 500000,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Set asset script');
     it('Enable sponsorship fee');
     it('Disable sponsorhip fee');
