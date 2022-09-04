@@ -1,7 +1,12 @@
 import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
-import { BurnArgs, ReissueArgs, Signer } from '@waves/signer';
+import {
+  BurnArgs,
+  ReissueArgs,
+  SetAssetScriptArgs,
+  Signer,
+} from '@waves/signer';
 import {
   App,
   CreateNewAccount,
@@ -615,9 +620,64 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Set asset script');
+    it('Set asset script', async function () {
+      const data: SetAssetScriptArgs = {
+        assetId: assetSmartId,
+        script: 'base64:BQQAAAAHJG1hdGNoMAUAAAACdHgGGDRbEA==',
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.signer
+          .setAssetScript(data)
+          .broadcast()
+          .then(
+            result => {
+              window.result = JSON.stringify(['RESOLVED', result]);
+            },
+            err => {
+              console.log(err);
+              window.result = JSON.stringify(['REJECTED', err]);
+            }
+          );
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, result] = await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 15 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        chainId: nodeChainId,
+        fee: 100000000,
+        script: data.script,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Enable sponsorship fee');
-    it('Disable sponsorhip fee');
+    it('Disable sponsorship fee');
   });
 
   describe('Transfers', function () {
