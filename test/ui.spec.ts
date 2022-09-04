@@ -49,21 +49,21 @@ describe('Signer integration', function () {
   let issuer, user1, user2;
 
   let messageWindow: string | null = null;
-  let nodeChainId;
+  let chainId;
 
   async function prepareAccounts(this: mocha.Context) {
-    nodeChainId = await getNetworkByte(this.hostNodeUrl);
+    chainId = await getNetworkByte(this.hostNodeUrl);
 
     issuer = {
-      address: address(ISSUER_SEED, nodeChainId),
+      address: address(ISSUER_SEED, chainId),
       publicKey: publicKey(ISSUER_SEED),
     };
     user1 = {
-      address: address(USER_1_SEED, nodeChainId),
+      address: address(USER_1_SEED, chainId),
       publicKey: publicKey(USER_1_SEED),
     };
     user2 = {
-      address: address(USER_2_SEED, nodeChainId),
+      address: address(USER_2_SEED, chainId),
       publicKey: publicKey(USER_2_SEED),
     };
 
@@ -343,7 +343,7 @@ describe('Signer integration', function () {
         decimals: data.decimals,
         reissuable: data.reissuable,
         fee: 100000000,
-        chainId: nodeChainId,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -389,7 +389,7 @@ describe('Signer integration', function () {
         decimals: data.decimals,
         reissuable: data.reissuable,
         fee: 100000,
-        chainId: nodeChainId,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -437,7 +437,7 @@ describe('Signer integration', function () {
         reissuable: data.reissuable,
         script: data.script,
         fee: 100000000,
-        chainId: nodeChainId,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -486,7 +486,7 @@ describe('Signer integration', function () {
         reissuable: data.reissuable,
         script: data.script,
         fee: 100000,
-        chainId: nodeChainId,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -547,8 +547,8 @@ describe('Signer integration', function () {
         assetId: data.assetId,
         quantity: data.quantity,
         reissuable: data.reissuable,
-        chainId: nodeChainId,
         fee: 500000,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -603,8 +603,8 @@ describe('Signer integration', function () {
         senderPublicKey: issuer.publicKey,
         assetId: data.assetId,
         amount: data.amount,
-        chainId: nodeChainId,
         fee: 500000,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -658,9 +658,9 @@ describe('Signer integration', function () {
         version: 2,
         senderPublicKey: issuer.publicKey,
         assetId: data.assetId,
-        chainId: nodeChainId,
         fee: 100000000,
         script: data.script,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -723,7 +723,7 @@ describe('Signer integration', function () {
         minSponsoredAssetFee: data.minSponsoredAssetFee,
         assetId: data.assetId,
         fee: 100000,
-        chainId: nodeChainId,
+        chainId,
       };
 
       const bytes = makeTxBytes({
@@ -762,7 +762,7 @@ describe('Signer integration', function () {
         minSponsoredAssetFee: null,
         assetId: data.assetId,
         fee: 100000,
-        chainId: nodeChainId,
+        chainId,
       };
 
       const bytes = makeTxBytes({
