@@ -10,8 +10,16 @@ import {
   Windows,
 } from './utils/actions';
 import { ProviderKeeper } from '../src';
-import { address, publicKey } from '@waves/ts-lib-crypto';
+import {
+  address,
+  base58Encode,
+  blake2b,
+  publicKey,
+  verifySignature,
+} from '@waves/ts-lib-crypto';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
+import { IssueArgs } from '@waves/signer/dist/cjs/types';
+import { makeTxBytes } from '@waves/waves-transactions';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
 
 const m = 60000;
@@ -35,20 +43,21 @@ describe('Signer integration', function () {
   let issuer, user1, user2;
 
   let messageWindow: string | null = null;
+  let nodeChainId;
 
   async function prepareAccounts(this: mocha.Context) {
-    const chainId = await getNetworkByte(this.hostNodeUrl);
+    nodeChainId = await getNetworkByte(this.hostNodeUrl);
 
     issuer = {
-      address: address(ISSUER_SEED, chainId),
+      address: address(ISSUER_SEED, nodeChainId),
       publicKey: publicKey(ISSUER_SEED),
     };
     user1 = {
-      address: address(USER_1_SEED, chainId),
+      address: address(USER_1_SEED, nodeChainId),
       publicKey: publicKey(USER_1_SEED),
     };
     user2 = {
-      address: address(USER_2_SEED, chainId),
+      address: address(USER_2_SEED, nodeChainId),
       publicKey: publicKey(USER_2_SEED),
     };
 
@@ -257,6 +266,91 @@ describe('Signer integration', function () {
   });
 
   describe('Asset issue', function () {
+    async function performIssueTransaction(
+      this: mocha.Context,
+      data: IssueArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.signer
+          .issue(data)
+          .broadcast()
+          .then(
+            result => {
+              window.result = JSON.stringify(['RESOLVED', result]);
+            },
+            err => {
+              console.log(err);
+              window.result = JSON.stringify(['REJECTED', err]);
+            }
+          );
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
+    async function getSignTransactionResult(this: mocha.Context) {
+      return JSON.parse(
+        await this.driver.executeScript(() => {
+          const { result } = window;
+          delete window.result;
+          return result;
+        })
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let assetWithMaxValues: string;
+
+    it('Asset with max values', async function () {
+      const data = {
+        name: '16 characters :)',
+        description:
+          'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
+          'Aenean commodo ligula eget dolor. Aenean'.repeat(10),
+        quantity: '9223372036854775807',
+        decimals: 8 as const,
+        reissuable: true,
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const [status, [parsedApproveResult]] =
+        await getSignTransactionResult.call(this);
+
+      expect(status).to.equal('RESOLVED');
+
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        fee: 100000000,
+        chainId: nodeChainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      assetWithMaxValues = parsedApproveResult.assetId;
+    });
+
     it('Asset with min values');
     it('Smart asset');
     it('NFT');
