@@ -6,6 +6,7 @@
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 import { DEFAULT_PASSWORD } from './constants';
+import { expect } from 'chai';
 
 export const App = {
   initVault: async function (
@@ -112,7 +113,7 @@ export const App = {
   },
 };
 
-export const CreateNewAccount = {
+export const Accounts = {
   importAccount: async function (
     this: mocha.Context,
     name: string,
@@ -172,6 +173,51 @@ export const CreateNewAccount = {
       until.elementLocated(By.css('[data-testid="importForm"]')),
       this.wait
     );
+  },
+
+  changeActiveAccount: async function (
+    this: mocha.Context,
+    accountName: string
+  ) {
+    await this.driver
+      .wait(
+        until.elementLocated(By.css('[data-testid="otherAccountsButton"]')),
+        this.wait
+      )
+      .click();
+
+    await this.driver
+      .wait(
+        until.elementIsVisible(
+          this.driver.wait(
+            until.elementLocated(By.css('[data-testid="accountsSearchInput"]')),
+            this.wait
+          )
+        ),
+        this.wait
+      )
+      .sendKeys(accountName);
+
+    await this.driver
+      .wait(
+        until.elementLocated(By.css('[data-testid="accountCard"]')),
+        this.wait
+      )
+      .click();
+
+    expect(
+      await this.driver
+        .wait(
+          until.elementLocated(
+            By.css(
+              '[data-testid="activeAccountCard"] [data-testid="accountName"]'
+            )
+          ),
+          this.wait,
+          'Could not get active account name'
+        )
+        .getText()
+    ).to.equal(accountName);
   },
 };
 

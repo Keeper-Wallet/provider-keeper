@@ -7,6 +7,7 @@ import {
   MassTransferArgs,
   ReissueArgs,
   SetAssetScriptArgs,
+  SetScriptArgs,
   SignedTx,
   Signer,
   SignerBurnTx,
@@ -15,18 +16,13 @@ import {
   SignerMassTransferTx,
   SignerReissueTx,
   SignerSetAssetScriptTx,
+  SignerSetScriptTx,
   SignerSponsorshipTx,
   SignerTransferTx,
   SponsorshipArgs,
   TransferArgs,
 } from '@waves/signer';
-import {
-  App,
-  CreateNewAccount,
-  Network,
-  Settings,
-  Windows,
-} from './utils/actions';
+import { App, Accounts, Network, Settings, Windows } from './utils/actions';
 import { ProviderKeeper } from '../src';
 import {
   address,
@@ -109,11 +105,11 @@ describe('Signer integration', function () {
     await this.driver.switchTo().window(tabAccounts);
     await this.driver.navigate().refresh();
     await Network.switchTo.call(this, 'Custom', this.nodeUrl);
-    await CreateNewAccount.importAccount.call(this, 'user2', USER_2_SEED);
-    await CreateNewAccount.importAccount.call(this, 'user1', USER_1_SEED);
-    await CreateNewAccount.importAccount.call(this, 'issuer', ISSUER_SEED);
+    await Accounts.importAccount.call(this, 'user2', USER_2_SEED);
+    await Accounts.importAccount.call(this, 'user1', USER_1_SEED);
+    await Accounts.importAccount.call(this, 'issuer', ISSUER_SEED);
     await Network.switchTo.call(this, 'Testnet');
-    await CreateNewAccount.importAccount.call(this, 'test', ISSUER_SEED);
+    await Accounts.importAccount.call(this, 'test', ISSUER_SEED);
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
@@ -971,8 +967,107 @@ describe('Signer integration', function () {
     });
   });
 
+  async function changeKeeperAccountAndClose(
+    this: mocha.Context,
+    accountName: string
+  ) {
+    await this.driver.switchTo().newWindow('tab');
+    await App.open.call(this);
+    await Accounts.changeActiveAccount.call(this, accountName);
+    await this.driver.close();
+    await this.driver.switchTo().window(testAppTab);
+  }
+
+  async function waitKeeperAccountChanged(
+    this: mocha.Context,
+    user: { address: string; publicKey: string }
+  ) {
+    // todo this behaviour very tricky, should be removed later
+    await this.driver.wait(async () => {
+      const publicState = (await this.driver.executeAsyncScript(function (
+        ...args
+      ) {
+        const done = args[args.length - 1];
+        window.KeeperWallet.publicState().then(done);
+      })) as WavesKeeper.IPublicStateResponse;
+
+      return (
+        publicState.account &&
+        publicState.account.address == user.address &&
+        publicState.account.publicKey == user.publicKey
+      );
+    }, this.wait);
+  }
+
   describe('Installing the script on the account and calling it', function () {
-    it('Set script');
+    it('Set script', async function () {
+      await changeKeeperAccountAndClose.call(this, 'user1');
+      await waitKeeperAccountChanged.call(this, user1);
+
+      // script source see `test/utils/setScript.ride`
+      const data: SetScriptArgs = {
+        script:
+          'base64:AAIFAAAAAAAAABIIAhIAEgMKAQESBwoFBAIBCB8AAAAAAAAAAwAAAANjdHgBAAAAB2RlcG9zaXQAAAAABAAAAANwbXQDCQAAZgAAAAIJAAGQAAAAAQgFAAAAA2N0eAAAAAhwYXltZW50cwAAAAAAAAAAAAkAAZE' +
+          'AAAACCAUAAAADY3R4AAAACHBheW1lbnRzAAAAAAAAAAAACQAAAgAAAAECAAAAHUF0IGxlYXN0IG9uZSBwYXltZW50IGV4cGVjdGVkBAAAAAdhc3NldElkAwkBAAAACWlzRGVmaW5lZAAAAAEIBQAAAANwbXQAAAAH' +
+          'YXNzZXRJZAkBAAAABXZhbHVlAAAAAQgFAAAAA3BtdAAAAAdhc3NldElkCQAAAgAAAAECAAAAG09ubHkgV0FWRVMgcGF5bWVudCBhY2NlcHRlZAkABEwAAAACCQEAAAAMSW50ZWdlckVudHJ5AAAAAgkABCUAAAABC' +
+          'AUAAAADY3R4AAAABmNhbGxlcggFAAAAA3BtdAAAAAZhbW91bnQFAAAAA25pbAAAAANjdHgBAAAACHdpdGhkcmF3AAAAAQAAAAZhbW91bnQEAAAAB2FkZHJlc3MJAAQlAAAAAQgFAAAAA2N0eAAAAAZjYWxsZXIEAAA' +
+          'AB2N1cnJlbnQJAQAAABN2YWx1ZU9yRXJyb3JNZXNzYWdlAAAAAgkABBoAAAACBQAAAAR0aGlzBQAAAAdhZGRyZXNzAgAAABhZb3UgZG9uJ3QgaGF2ZSBhIGRlcG9zaXQEAAAAA2FtdAMDCQAAZgAAAAIFAAAABmFtb3' +
+          'VudAAAAAAAAAAAAAYJAABmAAAAAgUAAAAGYW1vdW50BQAAAAdjdXJyZW50BQAAAAZhbW91bnQJAAACAAAAAQIAAABEQW1vdW50IHRvIHdpdGhkcmF3IG11c3QgYmUgbW9yZSB0aGFuIDAgYW5kIGxlc3MgdGhhbiBj' +
+          'dXJyZW50IGRlcG9zaXQDCQAAAAAAAAIFAAAABmFtb3VudAUAAAAHY3VycmVudAkABEwAAAACCQEAAAALRGVsZXRlRW50cnkAAAABBQAAAAdhZGRyZXNzBQAAAANuaWwJAARMAAAAAgkBAAAADEludGVnZXJFbnR' +
+          'yeQAAAAIFAAAAB2FkZHJlc3MJAABlAAAAAgUAAAAHY3VycmVudAUAAAAGYW1vdW50CQAETAAAAAIJAQAAAA5TY3JpcHRUcmFuc2ZlcgAAAAMIBQAAAANjdHgAAAAGY2FsbGVyBQAAAAZhbW91bnQFAAAABHVuaXQF' +
+          'AAAAA25pbAAAAANjdHgBAAAAC2FsbEFyZ1R5cGVzAAAABQAAAARib29sAAAAA2JpbgAAAANpbnQAAAADc3RyAAAABGxpc3QEAAAAB2luZGljZXMJAARMAAAAAgAAAAAAAAAAAQkABEwAAAACAAAAAAAAAAACCQAE' +
+          'TAAAAAIAAAAAAAAAAAMJAARMAAAAAgAAAAAAAAAABAkABEwAAAACAAAAAAAAAAAFBQAAAANuaWwKAQAAAAtjb252ZXJ0TGlzdAAAAAIAAAADYWNjAAAABWluZGV4AwkAAGcAAAACBQAAAAVpbmRleAkAAZAAA' +
+          'AABBQAAAARsaXN0BQAAAANhY2MEAAAAA2luZAkAAaQAAAABBQAAAAVpbmRleAkABE0AAAACBQAAAANhY2MEAAAAByRtYXRjaDAJAAGRAAAAAgUAAAAEbGlzdAUAAAAFaW5kZXgDCQAAAQAAAAIFAAAAByRtYXR' +
+          'jaDACAAAAB0Jvb2xlYW4EAAAAAWIFAAAAByRtYXRjaDAJAQAAAAxCb29sZWFuRW50cnkAAAACCQABLAAAAAIFAAAAA2luZAIAAAAFLWJvb2wFAAAAAWIDCQAAAQAAAAIFAAAAByRtYXRjaDACAAAACkJ5dGVWZWN0b' +
+          '3IEAAAAAWIFAAAAByRtYXRjaDAJAQAAAAtCaW5hcnlFbnRyeQAAAAIJAAEsAAAAAgUAAAADaW5kAgAAAAQtYmluBQAAAAFiAwkAAAEAAAACBQAAAAckbWF0Y2gwAgAAAANJbnQEAAAAAWkFAAAAByRtYXRjaDAJAQA' +
+          'AAAxJbnRlZ2VyRW50cnkAAAACCQABLAAAAAIFAAAAA2luZAIAAAAELWludAUAAAABaQMJAAABAAAAAgUAAAAHJG1hdGNoMAIAAAAGU3RyaW5nBAAAAAFzBQAAAAckbWF0Y2gwCQEAAAALU3RyaW5nRW50cnkAAAA' +
+          'CCQABLAAAAAIFAAAAA2luZAIAAAAELXN0cgUAAAABcwkAAAIAAAABAgAAAAtNYXRjaCBlcnJvcgkABE4AAAACCQAETAAAAAIJAQAAAAxCb29sZWFuRW50cnkAAAACAgAAAARib29sBQAAAARib29sCQAETAAAAAIJAQA' +
+          'AAAtCaW5hcnlFbnRyeQAAAAICAAAAA2JpbgUAAAADYmluCQAETAAAAAIJAQAAAAxJbnRlZ2VyRW50cnkAAAACAgAAAANpbnQFAAAAA2ludAkABEwAAAACCQEAAAALU3RyaW5nRW50cnkAAAACAgAAAANzdHIFAAAAA' +
+          '3N0cgUAAAADbmlsCgAAAAACJGwFAAAAB2luZGljZXMKAAAAAAIkcwkAAZAAAAABBQAAAAIkbAoAAAAABSRhY2MwBQAAAANuaWwKAQAAAAUkZjBfMQAAAAIAAAACJGEAAAACJGkDCQAAZwAAAAIFAAAAAiRpBQAAA' +
+          'AIkcwUAAAACJGEJAQAAAAtjb252ZXJ0TGlzdAAAAAIFAAAAAiRhCQABkQAAAAIFAAAAAiRsBQAAAAIkaQoBAAAABSRmMF8yAAAAAgAAAAIkYQAAAAIkaQMJAABnAAAAAgUAAAACJGkFAAAAAiRzBQAAAAIkYQkAAAIAA' +
+          'AABAgAAABNMaXN0IHNpemUgZXhjZWVkcyA1CQEAAAAFJGYwXzIAAAACCQEAAAAFJGYwXzEAAAACCQEAAAAFJGYwXzEAAAACCQEAAAAFJGYwXzEAAAACCQEAAAAFJGYwXzEAAAACCQEAAAAFJGYwXzEAAAA' +
+          'CBQAAAAUkYWNjMAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAgAAAAAAAAAAAwAAAAAAAAAABAAAAAAAAAAABQAAAABWejDo',
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.setScript(data).sign();
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSetScriptTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 13 as const,
+        version: 2,
+        senderPublicKey: user1.publicKey,
+        script: data.script,
+        fee: 300000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(user1.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Invoke script with payment');
     it('Invoke with argument');
     it('Invoke with long arguments and payments list');

@@ -1,0 +1,43 @@
+{-# STDLIB_VERSION 5 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+@Callable(ctx)
+func deposit() = {
+  let pmt = if ctx.payments.size() > 0 then ctx.payments[0] else throw("At least one payment expected")
+  let assetId = if pmt.assetId.isDefined() then pmt.assetId.value() else throw("Only WAVES payment accepted")
+  [ IntegerEntry(ctx.caller.toString(), pmt.amount) ]
+}
+
+@Callable(ctx)
+func withdraw(amount: Int) = {
+  let address = ctx.caller.toString()
+  let current = this.getInteger(address).valueOrErrorMessage("You don't have a deposit")
+  let amt = if amount > 0 || amount > current then amount else throw("Amount to withdraw must be more than 0 and less than current deposit")
+
+  if amount == current then [
+    DeleteEntry(address)
+  ] else [
+    IntegerEntry(address, current - amount),
+    ScriptTransfer(ctx.caller, amount, unit)
+  ]
+}
+
+@Callable(ctx)
+func allArgTypes(bool: Boolean, bin: ByteVector, int: Int, str: String, list: List[Boolean|ByteVector|Int|String]) = {
+  let indices = [1, 2, 3, 4, 5]
+  func convertList(acc: List[BooleanEntry|BinaryEntry|IntegerEntry|StringEntry], index: Int) = {
+    if index >= list.size() then
+      acc
+    else {
+      let ind = index.toString()
+      acc :+ match list[index] {
+        case b: Boolean => BooleanEntry(ind + "-bool", b)
+        case b: ByteVector => BinaryEntry(ind + "-bin", b)
+        case i: Int => IntegerEntry(ind + "-int", i)
+        case s: String => StringEntry(ind + "-str", s)
+      }
+    }
+  }
+  [ BooleanEntry("bool", bool), BinaryEntry("bin", bin), IntegerEntry("int", int), StringEntry("str", str) ] ++ FOLD<5>(indices, [], convertList)
+}
