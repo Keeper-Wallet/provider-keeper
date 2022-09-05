@@ -3,12 +3,14 @@ import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 import {
   BurnArgs,
+  MassTransferArgs,
   ReissueArgs,
   SetAssetScriptArgs,
   SignedTx,
   Signer,
   SignerBurnTx,
   SignerIssueTx,
+  SignerMassTransferTx,
   SignerReissueTx,
   SignerSetAssetScriptTx,
   SignerSponsorshipTx,
@@ -55,7 +57,6 @@ type WithAssetId = { assetId: string };
 describe('Signer integration', function () {
   this.timeout(5 * m);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let issuer, user1, user2;
 
   let testAppTab: string;
@@ -778,7 +779,59 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Mass transfer');
+    it('Mass transfer', async function () {
+      const data: MassTransferArgs = {
+        transfers: [
+          { recipient: user1.address, amount: 10000000 },
+          { recipient: user2.address, amount: 10000000 },
+        ],
+        attachment: base58Encode(
+          stringToBytes(
+            'Far far away, behind the word mountains, far from the countries ' +
+              'Vokalia and Consonantia, there live the blind texts. ' +
+              'Separated they live in.'
+          )
+        ),
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.massTransfer(data).broadcast();
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerMassTransferTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 11 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        transfers: data.transfers,
+        attachment: data.attachment as NonNullable<typeof data.attachment>,
+        fee: 200000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
   });
 
   describe('Record in the account data storage', function () {
