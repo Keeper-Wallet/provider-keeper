@@ -5,7 +5,13 @@ import {
   BurnArgs,
   ReissueArgs,
   SetAssetScriptArgs,
+  SignedTx,
   Signer,
+  SignerBurnTx,
+  SignerIssueTx,
+  SignerReissueTx,
+  SignerSetAssetScriptTx,
+  SignerSponsorshipTx,
   SponsorshipArgs,
 } from '@waves/signer';
 import {
@@ -24,9 +30,10 @@ import {
   verifySignature,
 } from '@waves/ts-lib-crypto';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
-import { IssueArgs } from '@waves/signer/dist/cjs/types';
+import { BroadcastedTx, IssueArgs } from '@waves/signer/dist/cjs/types';
 import { makeTxBytes } from '@waves/waves-transactions';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
+import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
 
 const m = 60000;
 const WAVES = 100000000; // waves token scale
@@ -36,9 +43,11 @@ declare global {
     signer: Signer;
     Signer: typeof Signer;
     ProviderKeeper: typeof ProviderKeeper;
-    result: unknown;
+    result?: Promise<unknown>;
   }
 }
+
+type WithAssetId = { assetId: string };
 
 describe('Signer integration', function () {
   this.timeout(5 * m);
@@ -46,7 +55,7 @@ describe('Signer integration', function () {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let issuer, user1, user2;
 
-  let testAppTab: string | null = null;
+  let testAppTab: string;
   let messageWindow: string | null = null;
   let chainId;
 
@@ -158,14 +167,7 @@ describe('Signer integration', function () {
   describe('Permission request from origin', function () {
     async function performPermissionRequest(this: mocha.Context) {
       await this.driver.executeScript(() => {
-        window.signer.login().then(
-          result => {
-            window.result = JSON.stringify(['RESOLVED', result]);
-          },
-          err => {
-            window.result = JSON.stringify(['REJECTED', err]);
-          }
-        );
+        window.result = window.signer.login();
       });
     }
 
@@ -178,13 +180,12 @@ describe('Signer integration', function () {
     }
 
     async function getPermissionRequestResult(this: mocha.Context) {
-      return JSON.parse(
-        await this.driver.executeScript(() => {
-          const { result } = window;
-          delete window.result;
-          return result;
-        })
-      );
+      return this.driver.executeAsyncScript(function (...args) {
+        const done = args[args.length - 1];
+        const { result } = window;
+        result?.then(done).catch(done);
+        window.result = Promise.resolve();
+      });
     }
 
     async function changeKeeperNetworkAndClose(
@@ -205,12 +206,10 @@ describe('Signer integration', function () {
       await rejectMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getPermissionRequestResult.call(this);
+      const result = await getPermissionRequestResult.call(this);
 
-      expect(status).to.equal('REJECTED');
-
-      expect(result).to.deep.equal({
-        code: 1004,
+      expect(result).to.deep.contain({
+        code: ERRORS.ENSURE_PROVIDER,
         type: 'provider',
       });
     });
@@ -220,11 +219,12 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getPermissionRequestResult.call(this);
+      const result = await getPermissionRequestResult.call(this);
 
-      expect(status).to.equal('RESOLVED');
-      expect(result.address).to.equal(issuer.address);
-      expect(result.publicKey).to.equal(issuer.publicKey);
+      expect(result).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
     });
 
     it('Keeper has no accounts', async function () {
@@ -232,12 +232,10 @@ describe('Signer integration', function () {
 
       await performPermissionRequest.call(this);
 
-      const [status, result] = await getPermissionRequestResult.call(this);
+      const result = await getPermissionRequestResult.call(this);
 
-      expect(status).to.equal('REJECTED');
-
-      expect(result).to.deep.equal({
-        code: 1004,
+      expect(result).to.deep.contain({
+        code: ERRORS.ENSURE_PROVIDER,
         type: 'provider',
       });
     });
@@ -247,12 +245,10 @@ describe('Signer integration', function () {
 
       await performPermissionRequest.call(this);
 
-      const [status, result] = await getPermissionRequestResult.call(this);
+      const result = await getPermissionRequestResult.call(this);
 
-      expect(status).to.equal('REJECTED');
-
-      expect(result).to.deep.equal({
-        code: 1004,
+      expect(result).to.deep.contain({
+        code: ERRORS.ENSURE_PROVIDER,
         type: 'provider',
       });
     });
@@ -262,11 +258,12 @@ describe('Signer integration', function () {
 
       await performPermissionRequest.call(this);
 
-      const [status, result] = await getPermissionRequestResult.call(this);
+      const result = await getPermissionRequestResult.call(this);
 
-      expect(status).to.equal('RESOLVED');
-      expect(result.address).to.equal(issuer.address);
-      expect(result.publicKey).to.equal(issuer.publicKey);
+      expect(result).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
     });
   });
 
@@ -278,13 +275,12 @@ describe('Signer integration', function () {
   let nftId: string;
 
   async function getSignTransactionResult(this: mocha.Context) {
-    return JSON.parse(
-      await this.driver.executeScript(() => {
-        const { result } = window;
-        delete window.result;
-        return result;
-      })
-    );
+    return this.driver.executeAsyncScript(function (...args) {
+      const done = args[args.length - 1];
+      const { result } = window;
+      result?.then(done).catch(done);
+      delete window.result;
+    });
   }
 
   describe('Asset issue', function () {
@@ -294,18 +290,7 @@ describe('Signer integration', function () {
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.signer
-          .issue(data)
-          .broadcast()
-          .then(
-            result => {
-              window.result = JSON.stringify(['RESOLVED', result]);
-            },
-            err => {
-              console.log(err);
-              window.result = JSON.stringify(['REJECTED', err]);
-            }
-          );
+        window.result = window.signer.issue(data).broadcast();
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -327,9 +312,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -373,9 +358,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -420,9 +405,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -469,9 +454,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -514,18 +499,7 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.signer
-          .reissue(data)
-          .broadcast()
-          .then(
-            result => {
-              window.result = JSON.stringify(['RESOLVED', result]);
-            },
-            err => {
-              console.log(err);
-              window.result = JSON.stringify(['REJECTED', err]);
-            }
-          );
+        window.result = window.signer.reissue(data).broadcast();
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -534,9 +508,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerReissueTx>>
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -571,18 +545,7 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.signer
-          .burn(data)
-          .broadcast()
-          .then(
-            result => {
-              window.result = JSON.stringify(['RESOLVED', result]);
-            },
-            err => {
-              console.log(err);
-              window.result = JSON.stringify(['REJECTED', err]);
-            }
-          );
+        window.result = window.signer.burn(data).broadcast();
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -591,9 +554,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerBurnTx>>
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -627,18 +590,7 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.signer
-          .setAssetScript(data)
-          .broadcast()
-          .then(
-            result => {
-              window.result = JSON.stringify(['RESOLVED', result]);
-            },
-            err => {
-              console.log(err);
-              window.result = JSON.stringify(['REJECTED', err]);
-            }
-          );
+        window.result = window.signer.setAssetScript(data).broadcast();
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -647,9 +599,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSetAssetScriptTx>>
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -681,18 +633,7 @@ describe('Signer integration', function () {
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.signer
-          .sponsorship(data)
-          .broadcast()
-          .then(
-            result => {
-              window.result = JSON.stringify(['RESOLVED', result]);
-            },
-            err => {
-              console.log(err);
-              window.result = JSON.stringify(['REJECTED', err]);
-            }
-          );
+        window.result = window.signer.sponsorship(data).broadcast();
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -710,9 +651,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSponsorshipTx>>
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
@@ -749,9 +690,9 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const [status, result] = await getSignTransactionResult.call(this);
-
-      expect(status).to.equal('RESOLVED');
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSponsorshipTx>>
+      ];
 
       const [parsedApproveResult] = result;
       const expectedApproveResult = {
