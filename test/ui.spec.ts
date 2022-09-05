@@ -1175,7 +1175,93 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Invoke with long arguments and payments list');
+    it('Invoke with long arguments and payments list', async function () {
+      const binLong =
+        'base64:' +
+        btoa(
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          new Uint8Array(Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat())
+        );
+
+      const data: InvokeArgs = {
+        dApp: user1.address,
+        call: {
+          function: 'allArgTypes',
+          args: [
+            { type: 'boolean', value: true },
+            { type: 'binary', value: binLong },
+            { type: 'integer', value: '-9223372036854775808' },
+            {
+              type: 'string',
+              value:
+                'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
+                'Aenean commodo ligula eget dolor. Aenean'.repeat(3),
+            },
+            {
+              type: 'list',
+              value: [
+                { type: 'boolean', value: true },
+                { type: 'binary', value: binLong },
+                { type: 'integer', value: '-9223372036854775808' },
+                {
+                  type: 'string',
+                  value:
+                    'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
+                    'Aenean commodo ligula eget dolor. Aenean'.repeat(3),
+                },
+              ],
+            },
+          ],
+        },
+        payment: [
+          { assetId: null, amount: 27000000 },
+          { assetId: assetWithMaxValuesId, amount: 27000000 },
+          { assetId: assetSmartId, amount: 27000000 },
+          { assetId: null, amount: 200000 },
+          { assetId: assetWithMaxValuesId, amount: 150000 },
+          { assetId: assetSmartId, amount: 12222 },
+          { assetId: null, amount: 1212 },
+          { assetId: assetWithMaxValuesId, amount: 3434 },
+          { assetId: assetSmartId, amount: 5656 },
+          { assetId: null, amount: 500000000 },
+        ],
+      };
+
+      await performInvokeTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerInvokeTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 16 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        dApp: data.dApp,
+        call: data.call,
+        payment: data.payment as NonNullable<typeof data.payment>,
+        fee: 500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Remove script');
   });
 
