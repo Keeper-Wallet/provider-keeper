@@ -905,8 +905,70 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Remove entry from Data storage');
-    it('Write MAX values to Data storage');
+    it.skip('(unsupported) Remove entry from Data storage');
+
+    it('Write MAX values to Data storage', async function () {
+      const strValueMax =
+        'Sed ut perspiciatis unde omnis iste natus error ' +
+        'sit voluptatem accusantium doloremque laudantium, totam rem aperiam, ' +
+        'eaque ipsa quae ab illo inventore\n'.repeat(217);
+      const binValueMax = 'base64:' + btoa(strValueMax);
+      const data: DataArgs = {
+        data: [
+          {
+            key: 'bool-entry',
+            value: true,
+            type: 'boolean',
+          },
+          {
+            key: 'str-entry',
+            value: strValueMax,
+            type: 'string',
+          },
+          {
+            key: 'bin-entry',
+            value: binValueMax,
+            type: 'binary',
+          },
+          {
+            key: 'int-entry',
+            value: '9223372036854775807',
+            type: 'integer',
+          },
+        ],
+      };
+
+      await performDataTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerDataTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 12 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        data: data.data,
+        fee: 1500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
   });
 
   describe('Installing the script on the account and calling it', function () {
