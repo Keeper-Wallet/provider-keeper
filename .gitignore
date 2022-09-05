@@ -1,6 +1,5 @@
 .idea
 .nyc_output
-.parcel-cache
 coverage
 dist
 keeper-wallet
