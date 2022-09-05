@@ -1002,6 +1002,20 @@ describe('Signer integration', function () {
   }
 
   describe('Installing the script on the account and calling it', function () {
+    async function performSetScriptTransaction(
+      this: mocha.Context,
+      data: SetScriptArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.setScript(data).broadcast();
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
     it('Set script', async function () {
       await changeKeeperAccountAndClose.call(this, 'user1');
       await waitKeeperAccountChanged.call(this, user1);
@@ -1031,14 +1045,7 @@ describe('Signer integration', function () {
           'CBQAAAAUkYWNjMAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAgAAAAAAAAAAAwAAAAAAAAAABAAAAAAAAAAABQAAAABWejDo',
       };
 
-      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
-        window.result = window.signer.setScript(data).sign();
-      }, data);
-
-      [messageWindow] = await waitForNewWindows(1);
-      await this.driver.switchTo().window(messageWindow);
-      await this.driver.navigate().refresh();
+      await performSetScriptTransaction.call(this, data);
 
       await approveMessage.call(this);
       await closeMessage.call(this);
@@ -1262,7 +1269,45 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it('Remove script');
+    it('Remove script', async function () {
+      await changeKeeperAccountAndClose.call(this, 'user1');
+      await waitKeeperAccountChanged.call(this, user1);
+
+      const data: SetScriptArgs = {
+        script: null,
+      };
+
+      await performSetScriptTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSetScriptTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 13 as const,
+        version: 2,
+        senderPublicKey: user1.publicKey,
+        script: data.script,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(user1.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
   });
 
   describe('Leasing', function () {
