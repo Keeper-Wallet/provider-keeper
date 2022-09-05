@@ -1,4 +1,6 @@
 # ProviderKeeper
+[![npm](https://img.shields.io/npm/v/@waves/provider-keeper?color=blue&label=%40waves%2Fprovider-keeper&logo=npm)](https://www.npmjs.com/package/@waves/provider-keeper)
+
 
 - [Overview](#overview)
 - [Getting Started](#getting-started)
