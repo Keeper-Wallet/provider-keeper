@@ -12,7 +12,9 @@ import {
   SignerReissueTx,
   SignerSetAssetScriptTx,
   SignerSponsorshipTx,
+  SignerTransferTx,
   SponsorshipArgs,
+  TransferArgs,
 } from '@waves/signer';
 import {
   App,
@@ -27,6 +29,7 @@ import {
   base58Encode,
   blake2b,
   publicKey,
+  stringToBytes,
   verifySignature,
 } from '@waves/ts-lib-crypto';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
@@ -36,7 +39,7 @@ import { faucet, getNetworkByte } from './utils/nodeInteraction';
 import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
 
 const m = 60000;
-const WAVES = 100000000; // waves token scale
+const WAVES = Math.pow(10, 8); // waves token scale
 
 declare global {
   interface Window {
@@ -720,7 +723,61 @@ describe('Signer integration', function () {
   });
 
   describe('Transfers', function () {
-    it('Transfer');
+    it('Transfer', async function () {
+      const data: TransferArgs = {
+        amount: '10050000000000',
+        assetId: assetWithMaxValuesId,
+        recipient: user1.address,
+        attachment: base58Encode(
+          stringToBytes(
+            'Far far away, behind the word mountains, far from the countries ' +
+              'Vokalia and Consonantia, there live the blind texts. ' +
+              'Separated they live in.'
+          )
+        ),
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.transfer(data).broadcast();
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerTransferTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 4 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        recipient: data.recipient,
+        amount: data.amount,
+        attachment: data.attachment as NonNullable<typeof data.attachment>,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Mass transfer');
   });
 
