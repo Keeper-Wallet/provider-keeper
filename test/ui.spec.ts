@@ -3,12 +3,14 @@ import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 import {
   BurnArgs,
+  DataArgs,
   MassTransferArgs,
   ReissueArgs,
   SetAssetScriptArgs,
   SignedTx,
   Signer,
   SignerBurnTx,
+  SignerDataTx,
   SignerIssueTx,
   SignerMassTransferTx,
   SignerReissueTx,
@@ -834,8 +836,75 @@ describe('Signer integration', function () {
     });
   });
 
+  async function performDataTransaction(this: mocha.Context, data: DataArgs) {
+    const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+    await this.driver.executeScript(data => {
+      window.result = window.signer.data(data).broadcast();
+    }, data);
+    [messageWindow] = await waitForNewWindows(1);
+    await this.driver.switchTo().window(messageWindow);
+    await this.driver.navigate().refresh();
+  }
+
   describe('Record in the account data storage', function () {
-    it('Write to Data storage');
+    it('Write to Data storage', async function () {
+      const data: DataArgs = {
+        data: [
+          {
+            key: 'bool-entry',
+            value: false,
+            type: 'boolean',
+          },
+          {
+            key: 'str-entry',
+            value: 'Some string',
+            type: 'string',
+          },
+          {
+            key: 'binary',
+            value: 'base64:AbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCd',
+            type: 'binary',
+          },
+          {
+            key: 'integer',
+            value: 20,
+            type: 'integer',
+          },
+        ],
+      };
+
+      await performDataTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerDataTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 12 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        data: data.data,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
     it('Remove entry from Data storage');
     it('Write MAX values to Data storage');
   });
