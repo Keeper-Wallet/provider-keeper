@@ -9,10 +9,7 @@ import {
   UserData,
 } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
-import { base64Encode, stringToBytes } from '@waves/ts-lib-crypto';
 import { keeperTxFactory, signerTxFactory } from './adapter';
-import { calculateFee } from './utils';
-import { TRANSACTION_TYPE } from '@waves/ts-types';
 
 export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
@@ -110,7 +107,7 @@ export class ProviderKeeper implements Provider {
       .then(api =>
         api.signCustomData({
           version: 1,
-          binary: 'base64:' + base64Encode(stringToBytes(String(data))),
+          binary: 'base64:' + btoa(String(data)),
         })
       )
       .then(data => data.signature);
@@ -131,22 +128,18 @@ export class ProviderKeeper implements Provider {
   public async sign<T extends Array<SignerTx>>(
     toSign: T
   ): Promise<SignedTx<T>> {
-    const toSignWithFee = await Promise.all(
-      toSign.map(tx => this._txWithFee(tx))
-    );
-
     const apiPromise = this._ensureApi();
 
-    if (toSignWithFee.length == 1) {
+    if (toSign.length == 1) {
       return apiPromise
-        .then(api => api.signTransaction(keeperTxFactory(toSignWithFee[0])))
+        .then(api => api.signTransaction(keeperTxFactory(toSign[0])))
         .then(data => [signerTxFactory(data)]) as Promise<SignedTx<T>>;
     }
 
     return apiPromise
       .then(api =>
         api.signTransactionPackage(
-          toSignWithFee.map(tx =>
+          toSign.map(tx =>
             keeperTxFactory(tx)
           ) as WavesKeeper.TSignTransactionPackageData
         )
@@ -179,23 +172,5 @@ export class ProviderKeeper implements Provider {
     }
 
     return api;
-  }
-
-  private _publicKeyPromise(): Promise<string | undefined> {
-    return this.user?.publicKey
-      ? Promise.resolve(this.user.publicKey)
-      : this._apiPromise
-          .then(api => api.publicState())
-          .then(state => state.account?.publicKey);
-  }
-
-  private async _txWithFee(tx: SignerTx): Promise<SignerTx> {
-    return tx.type === TRANSACTION_TYPE.INVOKE_SCRIPT && !tx.fee
-      ? calculateFee(this._options.NODE_URL, {
-          ...tx,
-          payment: tx.payment ?? [],
-          senderPublicKey: await this._publicKeyPromise(),
-        })
-      : Promise.resolve(tx);
   }
 }

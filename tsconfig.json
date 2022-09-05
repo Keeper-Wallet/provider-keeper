@@ -1,16 +1,21 @@
 {
   "include": ["src/**/*"],
   "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true,
     "lib": ["esnext", "dom"],
-    "declaration": false,
     "module": "commonjs",
     "moduleResolution": "node",
     "noErrorTruncation": true,
     "noImplicitAny": false,
     "outDir": "./dist",
+    "pretty": true,
+    "resolveJsonModule": true,
     "sourceMap": false,
     "strict": true,
-    "target": "es6",
+    "target": "esnext",
     "types": ["@waves/waveskeeper-types"]
   }
 }

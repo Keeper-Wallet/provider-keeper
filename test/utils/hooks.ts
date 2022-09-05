@@ -9,6 +9,7 @@ import {
   TestContainers,
 } from 'testcontainers';
 import * as fs from 'fs';
+import * as packageJson from '../../package.json';
 
 declare module 'mocha' {
   interface Context {
@@ -25,14 +26,10 @@ interface GlobalFixturesContext {
 }
 
 export async function mochaGlobalSetup(this: GlobalFixturesContext) {
-  const rootDir = path.resolve(__dirname, '..', '..', '..');
-  const wavesKeeperDir = path.resolve(rootDir, 'dist');
-  const testAppDir = path.resolve(rootDir, 'test-app', 'dist');
+  const rootDir = path.resolve(__dirname, '..', '..');
+  const keeperWalletDir = path.resolve(rootDir, 'keeper-wallet');
 
-  if (
-    !fs.existsSync(wavesKeeperDir) ||
-    fs.readdirSync(wavesKeeperDir).length === 0
-  ) {
+  if (!fs.existsSync(path.resolve(keeperWalletDir, 'manifest.json'))) {
     throw new Error(
       `
       You should build or download latest Keeper Wallet for e2e tests.
@@ -41,22 +38,22 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     );
   }
 
-  if (!fs.existsSync(testAppDir) || fs.readdirSync(testAppDir).length === 0) {
+  if (!fs.existsSync(path.resolve(rootDir, packageJson.unpkg))) {
     throw new Error(
       `
-      You should build test application first.
+      You should build provider first.
       See more at .github/workflows/tests.yml
       `
     );
   }
 
-  this.testApp = httpServer.createServer({ root: testAppDir });
+  this.testApp = httpServer.createServer({ root: rootDir });
   this.testApp.listen(8081);
 
   await TestContainers.exposeHostPorts(8081);
 
   this.selenium = await new GenericContainer('selenium/standalone-chrome')
-    .withBindMount(path.resolve(wavesKeeperDir), '/app/waves_keeper', 'ro')
+    .withBindMount(path.resolve(keeperWalletDir), '/app/keeper-wallet', 'ro')
     .withExposedPorts(
       {
         container: 4444,
@@ -85,7 +82,7 @@ export const mochaHooks = () => ({
       .usingServer(`http://localhost:4444/wd/hub`)
       .setChromeOptions(
         new chrome.Options().addArguments(
-          `--load-extension=/app/waves_keeper`,
+          `--load-extension=/app/keeper-wallet`,
           '--disable-dev-shm-usage'
         )
       )

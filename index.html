@@ -4,8 +4,15 @@
     <meta charset="UTF-8" />
     <title>ProviderKeeper</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="node_modules/@waves/signer/dist/signer.min.js"></script>
+    <script src="dist/provider-keeper.umd.js"></script>
   </head>
   <body style="height: 100%">
+    <script>
+      window.Signer = window.signer.Signer;
+      window.ProviderKeeper = window.providerKeeper.ProviderKeeper;
+      window.result = Promise.resolve();
+    </script>
     <main
       style="
         display: flex;
