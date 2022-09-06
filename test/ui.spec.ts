@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 import {
+  AliasArgs,
   BurnArgs,
   CancelLeaseArgs,
   DataArgs,
@@ -13,6 +14,7 @@ import {
   SetScriptArgs,
   SignedTx,
   Signer,
+  SignerAliasTx,
   SignerBurnTx,
   SignerCancelLeaseTx,
   SignerDataTx,
@@ -1414,6 +1416,48 @@ describe('Signer integration', function () {
   });
 
   describe('Aliases', function () {
-    it('Create alias');
+    it('Create alias', async function () {
+      const data: AliasArgs = {
+        alias: 'test_' + Date.now(),
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.alias(data).broadcast();
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerAliasTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 10 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        alias: data.alias,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
   });
 });
