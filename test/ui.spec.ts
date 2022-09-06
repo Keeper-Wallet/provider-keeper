@@ -30,6 +30,7 @@ import {
   SponsorshipArgs,
   TransferArgs,
   TypedData,
+  UserData,
 } from '@waves/signer';
 import { Accounts, App, Network, Settings, Windows } from './utils/actions';
 import { ProviderKeeper } from '../src';
@@ -226,6 +227,14 @@ describe('Signer integration', function () {
       });
     });
 
+    async function getCurrentProviderUser(
+      this: mocha.Context
+    ): Promise<UserData> {
+      return this.driver.executeScript(
+        () => window.signer.currentProvider?.user
+      );
+    }
+
     it('Approved', async function () {
       await waitPermissionRequest.call(this);
       await approveMessage.call(this);
@@ -234,6 +243,13 @@ describe('Signer integration', function () {
       const result = await getPermissionRequestResult.call(this);
 
       expect(result).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
+
+      const currentUser = await getCurrentProviderUser.call(this);
+
+      expect(currentUser).to.deep.equal({
         address: issuer.address,
         publicKey: issuer.publicKey,
       });
@@ -273,6 +289,13 @@ describe('Signer integration', function () {
       const result = await getPermissionRequestResult.call(this);
 
       expect(result).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
+
+      const currentUser = await getCurrentProviderUser.call(this);
+
+      expect(currentUser).to.deep.equal({
         address: issuer.address,
         publicKey: issuer.publicKey,
       });
