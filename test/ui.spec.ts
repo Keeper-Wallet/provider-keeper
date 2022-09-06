@@ -5,6 +5,7 @@ import {
   BurnArgs,
   DataArgs,
   InvokeArgs,
+  LeaseArgs,
   MassTransferArgs,
   ReissueArgs,
   SetAssetScriptArgs,
@@ -15,6 +16,7 @@ import {
   SignerDataTx,
   SignerInvokeTx,
   SignerIssueTx,
+  SignerLeaseTx,
   SignerMassTransferTx,
   SignerReissueTx,
   SignerSetAssetScriptTx,
@@ -24,7 +26,7 @@ import {
   SponsorshipArgs,
   TransferArgs,
 } from '@waves/signer';
-import { App, Accounts, Network, Settings, Windows } from './utils/actions';
+import { Accounts, App, Network, Settings, Windows } from './utils/actions';
 import { ProviderKeeper } from '../src';
 import {
   address,
@@ -1311,7 +1313,60 @@ describe('Signer integration', function () {
   });
 
   describe('Leasing', function () {
-    it('Lease');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let leaseId: string;
+
+    it('Lease', async function () {
+      await changeKeeperAccountAndClose.call(this, 'issuer');
+      await waitKeeperAccountChanged.call(this, issuer);
+
+      const data: LeaseArgs = {
+        amount: 1000,
+        recipient: user2.address,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.lease(data).broadcast();
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getSignTransactionResult.call(this)) as [
+        SignedTx<SignerLeaseTx>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 8 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        amount: data.amount,
+        recipient: data.recipient,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      leaseId = parsedApproveResult.id;
+    });
+
     it('Cancel lease');
   });
 
