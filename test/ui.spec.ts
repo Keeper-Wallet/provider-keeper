@@ -255,6 +255,18 @@ describe('Signer integration', function () {
       });
     });
 
+    it('Logged out', async function () {
+      await this.driver.executeAsyncScript((...args) => {
+        const done = args[args.length - 1];
+
+        window.signer.logout().then(done).catch(done);
+      });
+
+      const currentUser = await getCurrentProviderUser.call(this);
+
+      expect(currentUser).to.be.null;
+    });
+
     it('Keeper has no accounts', async function () {
       await changeKeeperNetworkAndClose.call(this, 'Mainnet');
 
