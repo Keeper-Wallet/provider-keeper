@@ -300,7 +300,9 @@ describe('Signer integration', function () {
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.issue(data).broadcast();
+        window.result = window.signer
+          .issue(data)
+          .broadcast({ confirmations: 1 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -509,7 +511,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.reissue(data).broadcast();
+        window.result = window.signer
+          .reissue(data)
+          .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -555,7 +559,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.burn(data).broadcast();
+        window.result = window.signer
+          .burn(data)
+          .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -600,7 +606,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.setAssetScript(data).broadcast();
+        window.result = window.signer
+          .setAssetScript(data)
+          .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -643,7 +651,9 @@ describe('Signer integration', function () {
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.sponsorship(data).broadcast();
+        window.result = window.signer
+          .sponsorship(data)
+          .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -746,7 +756,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.transfer(data).broadcast();
+        window.result = window.signer
+          .transfer(data)
+          .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -802,7 +814,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.massTransfer(data).broadcast();
+        window.result = window.signer
+          .massTransfer(data)
+          .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -843,7 +857,7 @@ describe('Signer integration', function () {
   async function performDataTransaction(this: mocha.Context, data: DataArgs) {
     const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
     await this.driver.executeScript(data => {
-      window.result = window.signer.data(data).broadcast();
+      window.result = window.signer.data(data).broadcast({ confirmations: 0 });
     }, data);
     [messageWindow] = await waitForNewWindows(1);
     await this.driver.switchTo().window(messageWindow);
@@ -1014,7 +1028,9 @@ describe('Signer integration', function () {
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.setScript(data).broadcast();
+        window.result = window.signer
+          .setScript(data)
+          .broadcast({ confirmations: 0 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -1089,7 +1105,9 @@ describe('Signer integration', function () {
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.invoke(data).broadcast();
+        window.result = window.signer
+          .invoke(data)
+          .broadcast({ confirmations: 1 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -1330,7 +1348,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.lease(data).broadcast();
+        window.result = window.signer
+          .lease(data)
+          .broadcast({ confirmations: 1 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -1377,7 +1397,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.cancelLease(data).broadcast();
+        window.result = window.signer
+          .cancelLease(data)
+          .broadcast({ confirmations: 0 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -1423,7 +1445,9 @@ describe('Signer integration', function () {
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
       await this.driver.executeScript(data => {
-        window.result = window.signer.alias(data).broadcast();
+        window.result = window.signer
+          .alias(data)
+          .broadcast({ confirmations: 0 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
