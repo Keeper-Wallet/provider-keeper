@@ -29,6 +29,7 @@ import {
   SignerTransferTx,
   SponsorshipArgs,
   TransferArgs,
+  TypedData,
 } from '@waves/signer';
 import { Accounts, App, Network, Settings, Windows } from './utils/actions';
 import { ProviderKeeper } from '../src';
@@ -42,9 +43,10 @@ import {
 } from '@waves/ts-lib-crypto';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
 import { BroadcastedTx, IssueArgs } from '@waves/signer/dist/cjs/types';
-import { makeTxBytes } from '@waves/waves-transactions';
+import { makeTxBytes, serializeCustomData } from '@waves/waves-transactions';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
 import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
+import { ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
 
 const m = 60000;
 const WAVES = Math.pow(10, 8); // waves token scale
@@ -277,10 +279,7 @@ describe('Signer integration', function () {
     });
   });
 
-  let assetWithMaxValuesId: string;
-  let assetSmartId: string;
-
-  async function getSignTransactionResult(this: mocha.Context) {
+  async function getApproveResult(this: mocha.Context) {
     return this.driver.executeAsyncScript(function (...args) {
       const done = args[args.length - 1];
       const { result } = window;
@@ -288,6 +287,82 @@ describe('Signer integration', function () {
       delete window.result;
     });
   }
+
+  describe('Custom data', async function () {
+    it('signMessage', async function () {
+      const data = 'test-message-to-sign';
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.signMessage(data);
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const signature = (await getApproveResult.call(this)) as string;
+
+      expect(
+        verifySignature(
+          issuer.publicKey,
+          serializeCustomData({
+            version: 1,
+            binary: 'base64:' + btoa(data),
+          }),
+          signature
+        )
+      ).to.be.true;
+    });
+
+    it('signTypedData', async function () {
+      const data: TypedData[] = [
+        {
+          key: 'stringValue',
+          type: 'string' as const,
+          value: 'Lorem ipsum dolor sit amet',
+        },
+        {
+          key: 'longMaxValue',
+          type: 'integer' as const,
+          value: '9223372036854775807',
+        },
+        { key: 'flagValue', type: 'boolean' as const, value: true },
+        { key: 'base64', type: 'binary' as const, value: 'base64:BQbtKNoM' },
+      ];
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.signTypedData(data);
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const signature = (await getApproveResult.call(this)) as string;
+
+      expect(
+        verifySignature(
+          issuer.publicKey,
+          serializeCustomData({
+            version: 2,
+            data: data as ICustomDataV2['data'],
+          }),
+          signature
+        )
+      ).to.be.true;
+    });
+  });
+
+  let assetWithMaxValuesId: string;
+  let assetSmartId: string;
 
   describe('Asset issue', function () {
     async function performIssueTransaction(
@@ -320,7 +395,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
       ];
 
@@ -366,7 +441,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
       ];
 
@@ -411,7 +486,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
       ];
 
@@ -460,7 +535,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
       ];
 
@@ -514,7 +589,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerReissueTx>>
       ];
 
@@ -562,7 +637,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerBurnTx>>
       ];
 
@@ -609,7 +684,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerSetAssetScriptTx>>
       ];
 
@@ -663,7 +738,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerSponsorshipTx>>
       ];
 
@@ -702,7 +777,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerSponsorshipTx>>
       ];
 
@@ -759,7 +834,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerTransferTx>>
       ];
 
@@ -817,7 +892,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerMassTransferTx>>
       ];
 
@@ -888,7 +963,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerDataTx>>
       ];
 
@@ -953,7 +1028,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerDataTx>>
       ];
 
@@ -1064,7 +1139,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerSetScriptTx>>
       ];
 
@@ -1125,7 +1200,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerInvokeTx>>
       ];
 
@@ -1169,7 +1244,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerInvokeTx>>
       ];
 
@@ -1256,7 +1331,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerInvokeTx>>
       ];
 
@@ -1298,7 +1373,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerSetScriptTx>>
       ];
 
@@ -1352,7 +1427,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         SignedTx<SignerLeaseTx>
       ];
 
@@ -1401,7 +1476,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerCancelLeaseTx>>
       ];
 
@@ -1449,7 +1524,7 @@ describe('Signer integration', function () {
       await approveMessage.call(this);
       await closeMessage.call(this);
 
-      const result = (await getSignTransactionResult.call(this)) as [
+      const result = (await getApproveResult.call(this)) as [
         BroadcastedTx<SignedTx<SignerAliasTx>>
       ];
 
