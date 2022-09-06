@@ -1237,7 +1237,7 @@ describe('Signer integration', function () {
           { assetId: null, amount: 1212 },
           { assetId: assetWithMaxValuesId, amount: 3434 },
           { assetId: assetSmartId, amount: 5656 },
-          { assetId: null, amount: 500000000 },
+          { assetId: null, amount: 50000000 },
         ],
       };
 
