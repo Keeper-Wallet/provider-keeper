@@ -278,11 +278,7 @@ describe('Signer integration', function () {
   });
 
   let assetWithMaxValuesId: string;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let assetWithMinValuesId: string;
   let assetSmartId: string;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let nftId: string;
 
   async function getSignTransactionResult(this: mocha.Context) {
     return this.driver.executeAsyncScript(function (...args) {
@@ -399,8 +395,6 @@ describe('Signer integration', function () {
       expect(
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
-
-      assetWithMinValuesId = parsedApproveResult.assetId;
     });
 
     it('Smart asset', async function () {
@@ -496,8 +490,6 @@ describe('Signer integration', function () {
       expect(
         verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
       ).to.be.true;
-
-      nftId = parsedApproveResult.assetId;
     });
   });
 
