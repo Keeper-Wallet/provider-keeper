@@ -5,8 +5,10 @@ import * as path from 'path';
 import * as httpServer from 'http-server';
 import {
   GenericContainer,
+  Network,
   StartedTestContainer,
   TestContainers,
+  Wait,
 } from 'testcontainers';
 import * as fs from 'fs';
 import * as packageJson from '../../package.json';
@@ -16,12 +18,15 @@ declare module 'mocha' {
     driver: WebDriver;
     extensionUrl: string;
     testAppUrl: string;
+    nodeUrl: string;
+    hostNodeUrl: string;
     wait: number;
   }
 }
 
 interface GlobalFixturesContext {
   selenium: StartedTestContainer;
+  node: StartedTestContainer;
   testApp: httpServer.HttpServer;
 }
 
@@ -47,6 +52,25 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     );
   }
 
+  const host = await new Network().start();
+
+  this.node = await new GenericContainer('wavesplatform/waves-private-node')
+    .withHealthCheck({
+      test: 'curl -f http://localhost:6869 || exit 1',
+      interval: 1000,
+      timeout: 3000,
+      retries: 20,
+      startPeriod: 3000,
+    })
+    .withWaitStrategy(Wait.forHealthCheck())
+    .withExposedPorts({
+      container: 6869,
+      host: 6869,
+    })
+    .withNetworkMode(host.getName())
+    .withNetworkAliases('waves-private-node')
+    .start();
+
   this.testApp = httpServer.createServer({ root: rootDir });
   this.testApp.listen(8081);
 
@@ -64,11 +88,13 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
         host: 5900,
       }
     )
+    .withNetworkMode(host.getName())
     .start();
 }
 
 export async function mochaGlobalTeardown(this: GlobalFixturesContext) {
   await this.selenium.stop();
+  await this.node.stop();
   this.testApp.close();
 }
 
@@ -83,7 +109,8 @@ export const mochaHooks = () => ({
       .setChromeOptions(
         new chrome.Options().addArguments(
           `--load-extension=/app/keeper-wallet`,
-          '--disable-dev-shm-usage'
+          '--disable-dev-shm-usage',
+          '--disable-web-security'
         )
       )
       .build();
@@ -103,6 +130,8 @@ export const mochaHooks = () => ({
     }
 
     this.testAppUrl = 'http://host.testcontainers.internal:8081';
+    this.nodeUrl = 'http://waves-private-node:6869';
+    this.hostNodeUrl = 'http://localhost:6869';
   },
 
   afterAll(this: mocha.Context, done: mocha.Done) {

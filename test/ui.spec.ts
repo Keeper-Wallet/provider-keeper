@@ -2,78 +2,127 @@ import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 import {
-  ALIAS,
-  BURN,
-  CANCEL_LEASE,
-  DATA,
-  INVOKE_DEFAULT_CALL,
-  INVOKE_LIST_ARGS_NO_PAYMENTS,
-  INVOKE_NATIVE_ARGS_NO_PAYMENTS,
-  INVOKE_NO_ARGS_MANY_PAYMENTS,
-  INVOKE_NO_ARGS_SINGLE_PAYMENTS,
-  ISSUE,
-  LEASE,
-  MASS_TRANSFER,
-  REISSUE,
-  SET_ASSET_SCRIPT,
-  SET_SCRIPT,
-  SPONSORSHIP,
-  TRANSFER,
-} from './utils/transactions';
-import { Signer, SignerTx, UserData } from '@waves/signer';
-import { App, CreateNewAccount, Network, Settings } from './utils/actions';
+  AliasArgs,
+  BurnArgs,
+  CancelLeaseArgs,
+  DataArgs,
+  InvokeArgs,
+  LeaseArgs,
+  MassTransferArgs,
+  ReissueArgs,
+  SetAssetScriptArgs,
+  SetScriptArgs,
+  SignedTx,
+  Signer,
+  SignerAliasTx,
+  SignerBurnTx,
+  SignerCancelLeaseTx,
+  SignerDataTx,
+  SignerInvokeTx,
+  SignerIssueTx,
+  SignerLeaseTx,
+  SignerMassTransferTx,
+  SignerReissueTx,
+  SignerSetAssetScriptTx,
+  SignerSetScriptTx,
+  SignerSponsorshipTx,
+  SignerTransferTx,
+  SponsorshipArgs,
+  TransferArgs,
+  TypedData,
+  UserData,
+} from '@waves/signer';
+import { Accounts, App, Network, Settings, Windows } from './utils/actions';
 import { ProviderKeeper } from '../src';
-import { ERRORS, SignerError } from '@waves/signer/dist/cjs/SignerError';
+import {
+  address,
+  base58Encode,
+  blake2b,
+  publicKey,
+  stringToBytes,
+  verifySignature,
+} from '@waves/ts-lib-crypto';
+import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
+import { BroadcastedTx, IssueArgs } from '@waves/signer/dist/cjs/types';
+import { makeTxBytes, serializeCustomData } from '@waves/waves-transactions';
+import { faucet, getNetworkByte } from './utils/nodeInteraction';
+import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
+import { ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
+import { SignerError } from '@waves/signer/dist/es/SignerError';
+import { SET_SCRIPT_COMPILED } from './utils/setScriptCompiled';
 
 const m = 60000;
+const WAVES = Math.pow(10, 8); // waves token scale
 
 declare global {
   interface Window {
     signer: Signer;
     Signer: typeof Signer;
     ProviderKeeper: typeof ProviderKeeper;
-    result: Promise<unknown>;
+    result?: Promise<unknown>;
   }
 }
 
+type WithAssetId = { assetId: string };
+
 describe('Signer integration', function () {
   this.timeout(5 * m);
-  let tabKeeper, tabAccounts, tabTestApp;
+
+  let issuer, user1, user2;
+
+  let testAppTab: string;
+  let messageWindow: string | null = null;
+  let chainId;
+
+  async function prepareAccounts(this: mocha.Context) {
+    chainId = await getNetworkByte(this.hostNodeUrl);
+
+    issuer = {
+      address: address(ISSUER_SEED, chainId),
+      publicKey: publicKey(ISSUER_SEED),
+    };
+    user1 = {
+      address: address(USER_1_SEED, chainId),
+      publicKey: publicKey(USER_1_SEED),
+    };
+    user2 = {
+      address: address(USER_2_SEED, chainId),
+      publicKey: publicKey(USER_2_SEED),
+    };
+
+    await faucet({
+      recipient: issuer.address,
+      amount: 10 * WAVES,
+      nodeUrl: this.hostNodeUrl,
+    });
+  }
 
   before(async function () {
+    await prepareAccounts.call(this);
     await App.initVault.call(this);
-    await Network.switchTo.call(this, 'Testnet');
-    tabKeeper = await this.driver.getWindowHandle();
+
+    const tabKeeper = await this.driver.getWindowHandle();
+    const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
     await this.driver
       .wait(
-        until.elementLocated(By.css('[data-testid="importForm"]')),
+        until.elementLocated(By.css('[data-testid="addAccountBtn"]')),
         this.wait
       )
-      .findElement(By.css('[data-testid="addAccountBtn"]'))
       .click();
-    await this.driver.wait(
-      async () => (await this.driver.getAllWindowHandles()).length === 2,
-      this.wait
-    );
-    for (const handle of await this.driver.getAllWindowHandles()) {
-      if (handle !== tabKeeper) {
-        tabAccounts = handle;
-        await this.driver.switchTo().window(tabAccounts);
-        await this.driver.navigate().refresh();
-        break;
-      }
-    }
-    await CreateNewAccount.importAccount.call(
-      this,
-      'rich',
-      'waves private node seed with waves tokens'
-    );
-    await this.driver.close();
+    const [tabAccounts] = await waitForNewWindows(1);
+
     await this.driver.switchTo().window(tabKeeper);
     await Settings.setMaxSessionTimeout.call(this);
+    await this.driver.close();
 
-    // prepare browse keeper and test-app tabs
-    await App.open.call(this);
+    await this.driver.switchTo().window(tabAccounts);
+    await this.driver.navigate().refresh();
+    await Network.switchTo.call(this, 'Custom', this.nodeUrl);
+    await Accounts.importAccount.call(this, 'user2', USER_2_SEED);
+    await Accounts.importAccount.call(this, 'user1', USER_1_SEED);
+    await Accounts.importAccount.call(this, 'issuer', ISSUER_SEED);
+    await Network.switchTo.call(this, 'Testnet');
+    await Accounts.importAccount.call(this, 'test', ISSUER_SEED);
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
@@ -82,8 +131,13 @@ describe('Signer integration', function () {
         NODE_URL: nodeUrl,
       });
       window.signer.setProvider(new window.ProviderKeeper());
-    }, 'https://nodes-testnet.wavesnodes.com');
-    tabTestApp = await this.driver.getWindowHandle();
+    }, this.nodeUrl);
+    testAppTab = await this.driver.getWindowHandle();
+
+    await this.driver.switchTo().window(tabAccounts);
+    await this.driver.close();
+
+    await this.driver.switchTo().window(testAppTab);
   });
 
   it('Current provider is ProviderKeeper', async function () {
@@ -94,279 +148,1442 @@ describe('Signer integration', function () {
     ).to.be.true;
   });
 
-  function windowResult(this: mocha.Context): unknown {
+  async function approveMessage(this: mocha.Context, wait = this.wait) {
+    await this.driver
+      .wait(until.elementLocated(By.css('#approve')), wait)
+      .click();
+
+    await this.driver.wait(
+      until.elementLocated(By.css('.tx-approve-icon')),
+      this.wait
+    );
+  }
+
+  async function rejectMessage(this: mocha.Context, wait = this.wait) {
+    await this.driver
+      .wait(until.elementLocated(By.css('#reject')), wait)
+      .click();
+
+    await this.driver.wait(
+      until.elementLocated(By.css('.tx-reject-icon')),
+      this.wait
+    );
+  }
+
+  async function closeMessage(this: mocha.Context) {
+    await this.driver.findElement(By.css('#close')).click();
+    expect(messageWindow).not.to.be.null;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await Windows.waitForWindowToClose.call(this, messageWindow!);
+    messageWindow = null;
+    await this.driver.switchTo().window(testAppTab);
+  }
+
+  describe('Permission request from origin', function () {
+    async function performPermissionRequest(this: mocha.Context) {
+      await this.driver.executeScript(() => {
+        window.result = window.signer.login();
+      });
+    }
+
+    async function waitPermissionRequest(this: mocha.Context) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await performPermissionRequest.call(this);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
+    async function getPermissionRequestResult(this: mocha.Context) {
+      return this.driver.executeAsyncScript(function (...args) {
+        const done = args[args.length - 1];
+        const { result } = window;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        result!.then(done).catch(err =>
+          done({
+            code: err.code,
+            message: err.message,
+            type: err.type,
+          } as SignerError)
+        );
+        delete window.result;
+      });
+    }
+
+    async function changeKeeperNetworkAndClose(
+      this: mocha.Context,
+      network: 'Mainnet' | 'Stagenet' | 'Testnet' | 'Custom'
+    ) {
+      await this.driver.switchTo().newWindow('tab');
+      await App.open.call(this);
+      await Network.switchTo.call(this, network);
+      await this.driver.close();
+      await this.driver.switchTo().window(testAppTab);
+    }
+
+    it('Rejected', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Custom');
+
+      await waitPermissionRequest.call(this);
+      await rejectMessage.call(this);
+      await closeMessage.call(this);
+
+      const err = (await getPermissionRequestResult.call(this)) as SignerError;
+
+      expect(err.message).matches(/User denied message/);
+      expect(err).to.deep.contain({
+        code: ERRORS.ENSURE_PROVIDER,
+        type: 'provider',
+      });
+    });
+
+    async function getCurrentProviderUser(
+      this: mocha.Context
+    ): Promise<UserData> {
+      return this.driver.executeScript(
+        () => window.signer.currentProvider?.user
+      );
+    }
+
+    it('Approved', async function () {
+      await waitPermissionRequest.call(this);
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = await getPermissionRequestResult.call(this);
+
+      expect(result).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
+
+      const currentUser = await getCurrentProviderUser.call(this);
+
+      expect(currentUser).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
+    });
+
+    it('Logged out', async function () {
+      const result = await this.driver.executeAsyncScript((...args) => {
+        const done = args[args.length - 1];
+
+        window.signer
+          .logout()
+          .then(() => done('RESOLVED'))
+          .catch(() => done('REJECTED'));
+      });
+
+      expect(result).to.equal('RESOLVED');
+
+      const currentUser = await getCurrentProviderUser.call(this);
+
+      expect(currentUser).to.be.null;
+    });
+
+    it('Keeper has no accounts', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Mainnet');
+
+      await performPermissionRequest.call(this);
+
+      const err = (await getPermissionRequestResult.call(this)) as SignerError;
+
+      expect(err.message).matches(/Add Keeper Wallet account/);
+      expect(err).to.deep.contain({
+        code: ERRORS.ENSURE_PROVIDER,
+        type: 'provider',
+      });
+    });
+
+    it('Keeper network mismatch', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Testnet');
+
+      await performPermissionRequest.call(this);
+
+      const err = (await getPermissionRequestResult.call(this)) as SignerError;
+
+      expect(err.message).matches(
+        /Invalid connect options. Signer connect \(.+ \d+\) not equals keeper connect \(.+ \d+\)/
+      );
+      expect(err).to.deep.contain({
+        code: ERRORS.ENSURE_PROVIDER,
+        type: 'provider',
+      });
+    });
+
+    it('Already approved', async function () {
+      await changeKeeperNetworkAndClose.call(this, 'Custom');
+
+      await performPermissionRequest.call(this);
+
+      const result = await getPermissionRequestResult.call(this);
+
+      expect(result).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
+
+      const currentUser = await getCurrentProviderUser.call(this);
+
+      expect(currentUser).to.deep.equal({
+        address: issuer.address,
+        publicKey: issuer.publicKey,
+      });
+    });
+  });
+
+  async function getApproveResult(this: mocha.Context) {
     return this.driver.executeAsyncScript(function (...args) {
       const done = args[args.length - 1];
-      window.result.then(done).catch(done);
+      const { result } = window;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      result!.then(done).catch(done);
+      delete window.result;
     });
   }
 
-  it('auth tx', async function () {
-    await this.driver.switchTo().window(tabTestApp);
+  describe('Custom data', async function () {
+    it('signMessage', async function () {
+      const data = 'test-message-to-sign';
 
-    await this.driver.executeScript(() => {
-      window.result = window.signer.login();
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.signMessage(data);
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const signature = (await getApproveResult.call(this)) as string;
+
+      expect(
+        verifySignature(
+          issuer.publicKey,
+          serializeCustomData({
+            version: 1,
+            binary: 'base64:' + btoa(data),
+          }),
+          signature
+        )
+      ).to.be.true;
     });
 
-    await this.driver.switchTo().window(tabKeeper);
-    // site permission request
-    await this.driver.wait(
-      until.elementLocated(
-        By.xpath("//div[contains(@class, 'originAuth-transaction')]")
-      )
-    );
-    const acceptBtn = await this.driver.findElement(
-      By.css('.app button[type=submit]')
-    );
-    await acceptBtn.click();
-    // close window
-    const closeBtn = await this.driver.wait(
-      until.elementLocated(By.css('[data-testid="closeTransaction"]'))
-    );
-    await closeBtn.click();
-
-    await this.driver.switchTo().window(tabTestApp);
-
-    const userData = (await windowResult.call(this)) as UserData;
-    expect(userData.address).to.exist;
-    expect(userData.publicKey).to.exist;
-  });
-
-  it('Error when Keeper Wallet is on the wrong network', async function () {
-    await this.driver.switchTo().window(tabKeeper);
-    await Network.switchTo.call(this, 'Mainnet');
-
-    await this.driver.switchTo().window(tabTestApp);
-    const error: SignerError = await this.driver.executeAsyncScript(function (
-      ...args
-    ) {
-      const done = args[args.length - 1];
-      window.signer.login().then(done).catch(done);
-    });
-    expect(error.code).to.be.equal(ERRORS.ENSURE_PROVIDER);
-    expect(error.type).to.be.equal('provider');
-
-    await this.driver.switchTo().window(tabKeeper);
-    await Network.switchTo.call(this, 'Testnet');
-  });
-
-  const signedTxShouldBeValid = async function (
-    this: mocha.Context,
-    method: string,
-    tx: SignerTx | SignerTx[],
-    formSelector: By
-  ) {
-    await this.driver.switchTo().window(tabTestApp);
-    await this.driver.executeScript(
-      function (tx, method) {
-        window.result = window.signer[method](tx).sign();
-      },
-      tx,
-      method
-    );
-
-    // tx request
-    await this.driver.switchTo().window(tabKeeper);
-    await this.driver.wait(until.elementLocated(formSelector));
-    const acceptBtn = await this.driver.findElement(
-      By.css('.app button[type=submit]')
-    );
-    await acceptBtn.click();
-    // close window
-    const closeBtn = await this.driver.wait(
-      until.elementLocated(By.css('[data-testid="closeTransaction"]'))
-    );
-    await closeBtn.click();
-
-    await this.driver.switchTo().window(tabTestApp);
-    const signed = (await windowResult.call(this)) as SignerTx[];
-
-    tx = !Array.isArray(tx) ? [tx] : tx;
-    expect(signed.length).to.be.equal(tx.length);
-    signed.forEach((signedTx, idx) => {
-      const commonFields = [
-        'id',
-        'type',
-        'chainId',
-        'senderPublicKey',
-        'timestamp',
-        'proofs',
-        'version',
+    it('signTypedData', async function () {
+      const data: TypedData[] = [
+        {
+          key: 'stringValue',
+          type: 'string' as const,
+          value: 'Lorem ipsum dolor sit amet',
+        },
+        {
+          key: 'longMaxValue',
+          type: 'integer' as const,
+          value: '9223372036854775807',
+        },
+        { key: 'flagValue', type: 'boolean' as const, value: true },
+        { key: 'base64', type: 'binary' as const, value: 'base64:BQbtKNoM' },
       ];
-      expect(signedTx).to.include.all.keys(
-        ...commonFields,
-        ...Object.keys(tx[idx])
-      );
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer.signTypedData(data);
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const signature = (await getApproveResult.call(this)) as string;
+
+      expect(
+        verifySignature(
+          issuer.publicKey,
+          serializeCustomData({
+            version: 2,
+            data: data as ICustomDataV2['data'],
+          }),
+          signature
+        )
+      ).to.be.true;
     });
-  };
-
-  it('issue tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'issue',
-      ISSUE,
-      By.xpath("//div[contains(@class, 'issue-transaction')]")
-    );
   });
 
-  it('transfer tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'transfer',
-      TRANSFER,
-      By.xpath("//div[contains(@class, 'transfer-transaction')]")
-    );
-  });
+  let assetWithMaxValuesId: string;
+  let assetSmartId: string;
 
-  it('reissue tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'reissue',
-      REISSUE,
-      By.xpath("//div[contains(@class, 'reissue-transaction')]")
-    );
-  });
+  describe('Asset issue', function () {
+    async function performIssueTransaction(
+      this: mocha.Context,
+      data: IssueArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .issue(data)
+          .broadcast({ confirmations: 1 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
 
-  it('burn tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'burn',
-      BURN,
-      By.xpath("//div[contains(@class, 'burn-transaction')]")
-    );
-  });
+    it('Asset with max values', async function () {
+      const data = {
+        name: '16 characters :)',
+        description:
+          'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
+          'Aenean commodo ligula eget dolor. Aenean'.repeat(10),
+        quantity: '9223372036854775807',
+        decimals: 8 as const,
+        reissuable: true,
+      };
+      await performIssueTransaction.call(this, data);
 
-  it('lease tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'lease',
-      LEASE,
-      By.xpath("//div[contains(@class, 'lease-transaction')]")
-    );
-  });
+      await approveMessage.call(this);
+      await closeMessage.call(this);
 
-  it('cancel lease tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'cancelLease',
-      CANCEL_LEASE,
-      By.xpath("//div[contains(@class, 'cancelLease-transaction')]")
-    );
-  });
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
 
-  it('alias tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'alias',
-      ALIAS,
-      By.xpath("//div[contains(@class, 'alias-transaction')]")
-    );
-  });
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        fee: 100000000,
+        chainId,
+      };
 
-  it('mass transfer tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'massTransfer',
-      MASS_TRANSFER,
-      By.xpath("//div[contains(@class, 'massTransfer-transaction')]")
-    );
-  });
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
 
-  it('data tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'data',
-      DATA,
-      By.xpath("//div[contains(@class, 'data-transaction')]")
-    );
-  });
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
 
-  it('set script tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'setScript',
-      SET_SCRIPT,
-      By.xpath("//div[contains(@class, 'setScript-transaction')]")
-    );
-  });
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
 
-  it('sponsorship tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'sponsorship',
-      SPONSORSHIP,
-      By.xpath("//div[contains(@class, 'sponsorship-transaction')]")
-    );
-  });
-
-  it('set asset script tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'setAssetScript',
-      SET_ASSET_SCRIPT,
-      By.xpath("//div[contains(@class, 'assetScript-transaction')]")
-    );
-  });
-
-  it('package tx', async function () {
-    await signedTxShouldBeValid.call(
-      this,
-      'batch',
-      [ISSUE, TRANSFER, REISSUE, BURN, LEASE, CANCEL_LEASE, ALIAS],
-      By.xpath("//div[contains(@class, 'package-transaction')]")
-    );
-    await signedTxShouldBeValid.call(
-      this,
-      'batch',
-      [MASS_TRANSFER, DATA, SET_SCRIPT, SPONSORSHIP, SET_ASSET_SCRIPT],
-      By.xpath("//div[contains(@class, 'package-transaction')]")
-    );
-  });
-
-  describe('invoke tx', function () {
-    it('default call', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_DEFAULT_CALL,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+      assetWithMaxValuesId = parsedApproveResult.assetId;
     });
 
-    it('with no args but single payment', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_NO_ARGS_SINGLE_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('Asset with min values', async function () {
+      const data = {
+        name: 'Four',
+        description: '',
+        quantity: 1,
+        decimals: 0 as const,
+        reissuable: false,
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
     });
 
-    it('with no args but many payments', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_NO_ARGS_MANY_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('Smart asset', async function () {
+      const data = {
+        name: 'Smart Asset',
+        description: 'Asset with script',
+        quantity: 100000000000,
+        decimals: 8 as const,
+        reissuable: true,
+        script: 'base64:BQbtKNoM',
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        script: data.script,
+        fee: 100000000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      assetSmartId = parsedApproveResult.assetId;
     });
 
-    it('with native args and no payments', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_NATIVE_ARGS_NO_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
-      );
+    it('NFT', async function () {
+      const data = {
+        name: 'Non-fungible',
+        description:
+          'NFT is a non-reissuable asset with quantity 1 and decimals 0',
+        quantity: 1,
+        decimals: 0 as const,
+        reissuable: false,
+        script: 'base64:BQbtKNoM',
+      };
+      await performIssueTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerIssueTx>> & WithAssetId
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 3 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        name: data.name,
+        description: data.description,
+        quantity: data.quantity,
+        decimals: data.decimals,
+        reissuable: data.reissuable,
+        script: data.script,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+  });
+
+  describe('Editing an asset', function () {
+    it('Reissue', async function () {
+      const data: ReissueArgs = {
+        quantity: 777,
+        assetId: assetSmartId,
+        reissuable: false,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .reissue(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerReissueTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 5 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        quantity: data.quantity,
+        reissuable: data.reissuable,
+        fee: 500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
     });
 
-    it('with list args and no payments', async function () {
-      await signedTxShouldBeValid.call(
-        this,
-        'invoke',
-        INVOKE_LIST_ARGS_NO_PAYMENTS,
-        By.xpath("//div[contains(@class, 'scriptInvocation-transaction')]")
+    it('Burn', async function () {
+      const data: BurnArgs = {
+        amount: 100500,
+        assetId: assetSmartId,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .burn(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerBurnTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 6 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        amount: data.amount,
+        fee: 500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Set asset script', async function () {
+      const data: SetAssetScriptArgs = {
+        assetId: assetSmartId,
+        script: 'base64:BQQAAAAHJG1hdGNoMAUAAAACdHgGGDRbEA==',
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .setAssetScript(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSetAssetScriptTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 15 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        fee: 100000000,
+        script: data.script,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    async function performSponsorshipTransaction(
+      this: mocha.Context,
+      data: SponsorshipArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .sponsorship(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
+    it('Enable sponsorship fee', async function () {
+      const data: SponsorshipArgs = {
+        minSponsoredAssetFee: 10000000,
+        assetId: assetWithMaxValuesId,
+      };
+
+      await performSponsorshipTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSponsorshipTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 14 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        minSponsoredAssetFee: data.minSponsoredAssetFee,
+        assetId: data.assetId,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Disable sponsorship fee', async function () {
+      const data: SponsorshipArgs = {
+        minSponsoredAssetFee: 0,
+        assetId: assetWithMaxValuesId,
+      };
+
+      await performSponsorshipTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSponsorshipTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 14 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        minSponsoredAssetFee: null,
+        assetId: data.assetId,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+  });
+
+  describe('Transfers', function () {
+    it('Transfer', async function () {
+      const data: TransferArgs = {
+        amount: '10050000000000',
+        assetId: assetWithMaxValuesId,
+        recipient: user1.address,
+        attachment: base58Encode(
+          stringToBytes(
+            'Far far away, behind the word mountains, far from the countries ' +
+              'Vokalia and Consonantia, there live the blind texts. ' +
+              'Separated they live in.'
+          )
+        ),
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .transfer(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerTransferTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 4 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        assetId: data.assetId,
+        recipient: data.recipient,
+        amount: data.amount,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        attachment: data.attachment!,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Mass transfer', async function () {
+      const data: MassTransferArgs = {
+        transfers: [
+          { recipient: user1.address, amount: 10000000 },
+          { recipient: user2.address, amount: 10000000 },
+        ],
+        attachment: base58Encode(
+          stringToBytes(
+            'Far far away, behind the word mountains, far from the countries ' +
+              'Vokalia and Consonantia, there live the blind texts. ' +
+              'Separated they live in.'
+          )
+        ),
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .massTransfer(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerMassTransferTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 11 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        transfers: data.transfers,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        attachment: data.attachment!,
+        fee: 200000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+  });
+
+  async function performDataTransaction(this: mocha.Context, data: DataArgs) {
+    const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+    await this.driver.executeScript(data => {
+      window.result = window.signer.data(data).broadcast({ confirmations: 0 });
+    }, data);
+    [messageWindow] = await waitForNewWindows(1);
+    await this.driver.switchTo().window(messageWindow);
+    await this.driver.navigate().refresh();
+  }
+
+  describe('Record in the account data storage', function () {
+    it('Write to Data storage', async function () {
+      const data: DataArgs = {
+        data: [
+          {
+            key: 'bool-entry',
+            value: false,
+            type: 'boolean',
+          },
+          {
+            key: 'str-entry',
+            value: 'Some string',
+            type: 'string',
+          },
+          {
+            key: 'binary',
+            value: 'base64:AbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCdAbCd',
+            type: 'binary',
+          },
+          {
+            key: 'integer',
+            value: 20,
+            type: 'integer',
+          },
+        ],
+      };
+
+      await performDataTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerDataTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 12 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        data: data.data,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it.skip('(unsupported by Signer) Remove entry from Data storage');
+
+    it('Write MAX values to Data storage', async function () {
+      const strValueMax =
+        'Sed ut perspiciatis unde omnis iste natus error ' +
+        'sit voluptatem accusantium doloremque laudantium, totam rem aperiam, ' +
+        'eaque ipsa quae ab illo inventore\n'.repeat(217);
+      const binValueMax = 'base64:' + btoa(strValueMax);
+      const data: DataArgs = {
+        data: [
+          {
+            key: 'bool-entry',
+            value: true,
+            type: 'boolean',
+          },
+          {
+            key: 'str-entry',
+            value: strValueMax,
+            type: 'string',
+          },
+          {
+            key: 'bin-entry',
+            value: binValueMax,
+            type: 'binary',
+          },
+          {
+            key: 'int-entry',
+            value: '9223372036854775807',
+            type: 'integer',
+          },
+        ],
+      };
+
+      await performDataTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerDataTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 12 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        data: data.data,
+        fee: 1500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+  });
+
+  async function changeKeeperAccountAndClose(
+    this: mocha.Context,
+    accountName: string
+  ) {
+    await this.driver.switchTo().newWindow('tab');
+    await App.open.call(this);
+    await Accounts.changeActiveAccount.call(this, accountName);
+    await this.driver.close();
+    await this.driver.switchTo().window(testAppTab);
+  }
+
+  async function waitKeeperAccountChanged(
+    this: mocha.Context,
+    user: { address: string; publicKey: string }
+  ) {
+    // todo this behaviour very tricky, should be removed later
+    await this.driver.wait(async () => {
+      const publicState = (await this.driver.executeAsyncScript(function (
+        ...args
+      ) {
+        const done = args[args.length - 1];
+        window.KeeperWallet.publicState().then(done);
+      })) as WavesKeeper.IPublicStateResponse;
+
+      return (
+        publicState.account &&
+        publicState.account.address == user.address &&
+        publicState.account.publicKey == user.publicKey
       );
+    }, this.wait);
+  }
+
+  describe('Installing the script on the account and calling it', function () {
+    async function performSetScriptTransaction(
+      this: mocha.Context,
+      data: SetScriptArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .setScript(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
+    it('Set script', async function () {
+      await changeKeeperAccountAndClose.call(this, 'user1');
+      await waitKeeperAccountChanged.call(this, user1);
+
+      await performSetScriptTransaction.call(this, SET_SCRIPT_COMPILED);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSetScriptTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 13 as const,
+        version: 2,
+        senderPublicKey: user1.publicKey,
+        script: SET_SCRIPT_COMPILED.script,
+        fee: 300000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(user1.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    async function performInvokeTransaction(
+      this: mocha.Context,
+      data: InvokeArgs
+    ) {
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .invoke(data)
+          .broadcast({ confirmations: 1 });
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+    }
+
+    it('Invoke script with payment', async function () {
+      await changeKeeperAccountAndClose.call(this, 'issuer');
+      await waitKeeperAccountChanged.call(this, issuer);
+
+      const data: InvokeArgs = {
+        dApp: user1.address,
+        call: {
+          function: 'deposit',
+          args: [],
+        },
+        payment: [{ assetId: null, amount: 200000000 }],
+      };
+
+      await performInvokeTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerInvokeTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 16 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        dApp: data.dApp,
+        call: data.call,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        payment: data.payment!,
+        fee: 500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Invoke with argument', async function () {
+      const data: InvokeArgs = {
+        dApp: user1.address,
+        call: {
+          function: 'withdraw',
+          args: [{ type: 'integer', value: 100 }],
+        },
+        payment: [],
+      };
+
+      await performInvokeTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerInvokeTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 16 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        dApp: data.dApp,
+        call: data.call,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        payment: data.payment!,
+        fee: 500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Invoke with long arguments and payments list', async function () {
+      const binLong =
+        'base64:' +
+        btoa(
+          new Uint8Array(
+            Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat()
+          ).toString()
+        );
+
+      const data: InvokeArgs = {
+        dApp: user1.address,
+        call: {
+          function: 'allArgTypes',
+          args: [
+            { type: 'boolean', value: true },
+            { type: 'binary', value: binLong },
+            { type: 'integer', value: '-9223372036854775808' },
+            {
+              type: 'string',
+              value:
+                'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
+                'Aenean commodo ligula eget dolor. Aenean'.repeat(3),
+            },
+            {
+              type: 'list',
+              value: [
+                { type: 'boolean', value: true },
+                { type: 'binary', value: binLong },
+                { type: 'integer', value: '-9223372036854775808' },
+                {
+                  type: 'string',
+                  value:
+                    'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
+                    'Aenean commodo ligula eget dolor. Aenean'.repeat(3),
+                },
+              ],
+            },
+          ],
+        },
+        payment: [
+          { assetId: null, amount: 27000000 },
+          { assetId: assetWithMaxValuesId, amount: 27000000 },
+          { assetId: assetSmartId, amount: 27000000 },
+          { assetId: null, amount: 200000 },
+          { assetId: assetWithMaxValuesId, amount: 150000 },
+          { assetId: assetSmartId, amount: 12222 },
+          { assetId: null, amount: 1212 },
+          { assetId: assetWithMaxValuesId, amount: 3434 },
+          { assetId: assetSmartId, amount: 5656 },
+          { assetId: null, amount: 50000000 },
+        ],
+      };
+
+      await performInvokeTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerInvokeTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 16 as const,
+        version: 2,
+        senderPublicKey: issuer.publicKey,
+        dApp: data.dApp,
+        call: data.call,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        payment: data.payment!,
+        fee: 500000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+
+    it('Remove script', async function () {
+      await changeKeeperAccountAndClose.call(this, 'user1');
+      await waitKeeperAccountChanged.call(this, user1);
+
+      const data: SetScriptArgs = {
+        script: null,
+      };
+
+      await performSetScriptTransaction.call(this, data);
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerSetScriptTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 13 as const,
+        version: 2,
+        senderPublicKey: user1.publicKey,
+        script: data.script,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(user1.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+  });
+
+  describe('Leasing', function () {
+    let leaseId: string;
+
+    it('Lease', async function () {
+      await changeKeeperAccountAndClose.call(this, 'issuer');
+      await waitKeeperAccountChanged.call(this, issuer);
+
+      const data: LeaseArgs = {
+        amount: 1000,
+        recipient: user2.address,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .lease(data)
+          .broadcast({ confirmations: 1 });
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        SignedTx<SignerLeaseTx>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 8 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        amount: data.amount,
+        recipient: data.recipient,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+
+      leaseId = parsedApproveResult.id;
+    });
+
+    it('Cancel lease', async function () {
+      const data: CancelLeaseArgs = {
+        leaseId,
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .cancelLease(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerCancelLeaseTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 9 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        leaseId: data.leaseId,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
+    });
+  });
+
+  describe('Aliases', function () {
+    it('Create alias', async function () {
+      const data: AliasArgs = {
+        alias: 'test_' + Date.now(),
+      };
+
+      const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
+      await this.driver.executeScript(data => {
+        window.result = window.signer
+          .alias(data)
+          .broadcast({ confirmations: 0 });
+      }, data);
+
+      [messageWindow] = await waitForNewWindows(1);
+      await this.driver.switchTo().window(messageWindow);
+      await this.driver.navigate().refresh();
+
+      await approveMessage.call(this);
+      await closeMessage.call(this);
+
+      const result = (await getApproveResult.call(this)) as [
+        BroadcastedTx<SignedTx<SignerAliasTx>>
+      ];
+
+      const [parsedApproveResult] = result;
+      const expectedApproveResult = {
+        type: 10 as const,
+        version: 3,
+        senderPublicKey: issuer.publicKey,
+        alias: data.alias,
+        fee: 100000,
+        chainId,
+      };
+
+      const bytes = makeTxBytes({
+        ...expectedApproveResult,
+        timestamp: parsedApproveResult.timestamp,
+      });
+
+      expect(parsedApproveResult).to.deep.contain(expectedApproveResult);
+      expect(parsedApproveResult.id).to.equal(base58Encode(blake2b(bytes)));
+
+      expect(
+        verifySignature(issuer.publicKey, bytes, parsedApproveResult.proofs[0])
+      ).to.be.true;
     });
   });
 });
