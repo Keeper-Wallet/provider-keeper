@@ -1,4 +1,4 @@
-import { PRIVATE_GENERATOR_SEED } from './constants';
+import { DEFAULT_MINER_SEED } from './constants';
 import { broadcast, transfer } from '@waves/waves-transactions';
 import { base58Decode } from '@waves/ts-lib-crypto';
 import { create } from '@waves/node-api-js';
@@ -13,7 +13,7 @@ export async function faucet({
   nodeUrl: string;
 }) {
   return broadcast(
-    transfer({ amount, recipient }, PRIVATE_GENERATOR_SEED),
+    transfer({ amount, recipient }, DEFAULT_MINER_SEED),
     nodeUrl
   );
 }
