@@ -196,8 +196,9 @@ describe('Signer integration', function () {
       return this.driver.executeAsyncScript(function (...args) {
         const done = args[args.length - 1];
         const { result } = window;
-        result?.then(done).catch(done);
-        window.result = Promise.resolve();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        result!.then(done).catch(done);
+        delete window.result;
       });
     }
 
@@ -323,7 +324,8 @@ describe('Signer integration', function () {
     return this.driver.executeAsyncScript(function (...args) {
       const done = args[args.length - 1];
       const { result } = window;
-      result?.then(done).catch(done);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      result!.then(done).catch(done);
       delete window.result;
     });
   }
