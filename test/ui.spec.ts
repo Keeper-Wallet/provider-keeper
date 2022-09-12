@@ -256,11 +256,16 @@ describe('Signer integration', function () {
     });
 
     it('Logged out', async function () {
-      await this.driver.executeAsyncScript((...args) => {
+      const result = await this.driver.executeAsyncScript((...args) => {
         const done = args[args.length - 1];
 
-        window.signer.logout().then(done).catch(done);
+        window.signer
+          .logout()
+          .then(() => done('RESOLVED'))
+          .catch(() => done('REJECTED'));
       });
+
+      expect(result).to.equal('RESOLVED');
 
       const currentUser = await getCurrentProviderUser.call(this);
 
