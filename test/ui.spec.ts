@@ -888,7 +888,8 @@ describe('Signer integration', function () {
         assetId: data.assetId,
         recipient: data.recipient,
         amount: data.amount,
-        attachment: data.attachment as NonNullable<typeof data.attachment>,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        attachment: data.attachment!,
         fee: 100000,
         chainId,
       };
@@ -944,7 +945,8 @@ describe('Signer integration', function () {
         version: 2,
         senderPublicKey: issuer.publicKey,
         transfers: data.transfers,
-        attachment: data.attachment as NonNullable<typeof data.attachment>,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        attachment: data.attachment!,
         fee: 200000,
         chainId,
       };
@@ -1253,7 +1255,8 @@ describe('Signer integration', function () {
         senderPublicKey: issuer.publicKey,
         dApp: data.dApp,
         call: data.call,
-        payment: data.payment as NonNullable<typeof data.payment>,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        payment: data.payment!,
         fee: 500000,
         chainId,
       };
@@ -1297,7 +1300,8 @@ describe('Signer integration', function () {
         senderPublicKey: issuer.publicKey,
         dApp: data.dApp,
         call: data.call,
-        payment: data.payment as NonNullable<typeof data.payment>,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        payment: data.payment!,
         fee: 500000,
         chainId,
       };
@@ -1384,7 +1388,8 @@ describe('Signer integration', function () {
         senderPublicKey: issuer.publicKey,
         dApp: data.dApp,
         call: data.call,
-        payment: data.payment as NonNullable<typeof data.payment>,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        payment: data.payment!,
         fee: 500000,
         chainId,
       };
