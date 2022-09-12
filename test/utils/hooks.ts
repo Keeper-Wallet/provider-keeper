@@ -59,7 +59,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
       test: 'curl -f http://localhost:6869 || exit 1',
       interval: 1000,
       timeout: 3000,
-      retries: 10,
+      retries: 20,
       startPeriod: 3000,
     })
     .withWaitStrategy(Wait.forHealthCheck())
