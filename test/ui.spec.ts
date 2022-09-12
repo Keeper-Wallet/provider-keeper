@@ -49,6 +49,7 @@ import { faucet, getNetworkByte } from './utils/nodeInteraction';
 import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
 import { ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
 import { SignerError } from '@waves/signer/dist/es/SignerError';
+import { SET_SCRIPT_COMPILED } from './utils/setScriptCompiled';
 
 const m = 60000;
 const WAVES = Math.pow(10, 8); // waves token scale
@@ -198,15 +199,13 @@ describe('Signer integration', function () {
         const done = args[args.length - 1];
         const { result } = window;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        result!
-          .then(done)
-          .catch(err =>
-            done({
-              code: err.code,
-              message: err.message,
-              type: err.type,
-            } as SignerError)
-          );
+        result!.then(done).catch(err =>
+          done({
+            code: err.code,
+            message: err.message,
+            type: err.type,
+          } as SignerError)
+        );
         delete window.result;
       });
     }
@@ -1167,32 +1166,7 @@ describe('Signer integration', function () {
       await changeKeeperAccountAndClose.call(this, 'user1');
       await waitKeeperAccountChanged.call(this, user1);
 
-      // script source see `test/utils/setScript.ride`
-      const data: SetScriptArgs = {
-        script:
-          'base64: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',
-      };
-
-      await performSetScriptTransaction.call(this, data);
+      await performSetScriptTransaction.call(this, SET_SCRIPT_COMPILED);
 
       await approveMessage.call(this);
       await closeMessage.call(this);
@@ -1206,7 +1180,7 @@ describe('Signer integration', function () {
         type: 13 as const,
         version: 2,
         senderPublicKey: user1.publicKey,
-        script: data.script,
+        script: SET_SCRIPT_COMPILED.script,
         fee: 300000,
         chainId,
       };
