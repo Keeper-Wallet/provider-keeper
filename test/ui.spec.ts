@@ -48,6 +48,7 @@ import { makeTxBytes, serializeCustomData } from '@waves/waves-transactions';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
 import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
 import { ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
+import { SignerError } from '@waves/signer/dist/es/SignerError';
 
 const m = 60000;
 const WAVES = Math.pow(10, 8); // waves token scale
@@ -197,7 +198,15 @@ describe('Signer integration', function () {
         const done = args[args.length - 1];
         const { result } = window;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        result!.then(done).catch(done);
+        result!
+          .then(done)
+          .catch(err =>
+            done({
+              code: err.code,
+              message: err.message,
+              type: err.type,
+            } as SignerError)
+          );
         delete window.result;
       });
     }
@@ -220,9 +229,10 @@ describe('Signer integration', function () {
       await rejectMessage.call(this);
       await closeMessage.call(this);
 
-      const result = await getPermissionRequestResult.call(this);
+      const err = (await getPermissionRequestResult.call(this)) as SignerError;
 
-      expect(result).to.deep.contain({
+      expect(err.message).matches(/User denied message/);
+      expect(err).to.deep.contain({
         code: ERRORS.ENSURE_PROVIDER,
         type: 'provider',
       });
@@ -278,9 +288,10 @@ describe('Signer integration', function () {
 
       await performPermissionRequest.call(this);
 
-      const result = await getPermissionRequestResult.call(this);
+      const err = (await getPermissionRequestResult.call(this)) as SignerError;
 
-      expect(result).to.deep.contain({
+      expect(err.message).matches(/Add Keeper Wallet account/);
+      expect(err).to.deep.contain({
         code: ERRORS.ENSURE_PROVIDER,
         type: 'provider',
       });
@@ -291,9 +302,12 @@ describe('Signer integration', function () {
 
       await performPermissionRequest.call(this);
 
-      const result = await getPermissionRequestResult.call(this);
+      const err = (await getPermissionRequestResult.call(this)) as SignerError;
 
-      expect(result).to.deep.contain({
+      expect(err.message).matches(
+        /Invalid connect options. Signer connect \(.+ \d+\) not equals keeper connect \(.+ \d+\)/
+      );
+      expect(err).to.deep.contain({
         code: ERRORS.ENSURE_PROVIDER,
         type: 'provider',
       });
