@@ -1034,7 +1034,7 @@ describe('Signer integration', function () {
       ).to.be.true;
     });
 
-    it.skip('(unsupported) Remove entry from Data storage');
+    it.skip('(unsupported by Signer) Remove entry from Data storage');
 
     it('Write MAX values to Data storage', async function () {
       const strValueMax =
