@@ -1323,9 +1323,9 @@ describe('Signer integration', function () {
       const binLong =
         'base64:' +
         btoa(
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          new Uint8Array(Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat())
+          new Uint8Array(
+            Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat()
+          ).toString()
         );
 
       const data: InvokeArgs = {
