@@ -13,7 +13,12 @@ export default defineConfig({
           format: 'cjs',
         },
       ],
-      external: [/node_modules/],
+      external: [
+        /@waves\/ts-types/,
+        /@waves\/waveskeeper-types/,
+        /@waves\/marshall/,
+        /typed-ts-events/,
+      ],
     },
     minify: false,
   },
