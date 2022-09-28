@@ -775,7 +775,7 @@ describe('Signer integration', function () {
       await this.driver.executeScript(data => {
         window.result = window.signer
           .sponsorship(data)
-          .broadcast({ confirmations: 0 });
+          .broadcast({ confirmations: 1 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -1154,7 +1154,7 @@ describe('Signer integration', function () {
       await this.driver.executeScript(data => {
         window.result = window.signer
           .setScript(data)
-          .broadcast({ confirmations: 0 });
+          .broadcast({ confirmations: 1 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
