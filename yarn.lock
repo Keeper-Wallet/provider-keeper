@@ -454,10 +454,10 @@
     "@types/long" "^4.0.0"
     protobufjs "^6.8.8"
 
-"@waves/signer@^1.1.0-beta":
-  version "1.1.0-beta"
-  resolved "https://registry.yarnpkg.com/@waves/signer/-/signer-1.1.0-beta.tgz#49881d0b1ad7753ff5a770d77190cfbf9c7b0c54"
-  integrity sha512-+3etpCSaaY5evyLlGkA9Cg/5TsWOzLZPnKenHtOTKDpgN9N5IQ1DWSOT5AHcLF4xmZnpr8bVFDwnOWxqBo6CnA==
+"@waves/signer@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@waves/signer/-/signer-1.1.0.tgz#f993ac751529218255a12c8caa0bf900dae2e36f"
+  integrity sha512-LlsKKmuWAMJjkKCeiP9iLmHl6htH6Q75SiGbl1a1J+GFPKNnLP2gESZop9JS7CrrcJvTzsoqaXD1Ql79jFAcXQ==
   dependencies:
     "@types/ramda" "^0.27.32"
     "@waves/client-logs" "^1.0.0"
