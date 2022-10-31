@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*"],
+  "include": ["src"],
   "compilerOptions": {
     "declaration": true,
     "declarationDir": "./dist/types",
@@ -15,6 +15,9 @@
     "sourceMap": false,
     "strict": true,
     "target": "esnext",
-    "types": ["@waves/waveskeeper-types"]
+    "types": ["@waves/waveskeeper-types", "long"]
+  },
+  "ts-node": {
+    "transpileOnly": true
   }
 }

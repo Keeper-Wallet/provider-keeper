@@ -33,7 +33,7 @@
     "coverage": "c8 mocha --exit",
     "eslint": "eslint --ext .ts,.js --max-warnings 0 .",
     "prettier": "prettier . --check",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc -p tsconfig.test.json"
   },
   "mocha": {
     "extension": [
