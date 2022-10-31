@@ -8,7 +8,6 @@ import {
   Network,
   StartedTestContainer,
   TestContainers,
-  Wait,
 } from 'testcontainers';
 import * as fs from 'fs';
 import * as packageJson from '../../package.json';
@@ -55,14 +54,6 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   const host = await new Network().start();
 
   this.node = await new GenericContainer('wavesplatform/waves-private-node')
-    .withHealthCheck({
-      test: 'curl -f http://localhost:6869 || exit 1',
-      interval: 1000,
-      timeout: 3000,
-      retries: 20,
-      startPeriod: 3000,
-    })
-    .withWaitStrategy(Wait.forHealthCheck())
     .withExposedPorts({
       container: 6869,
       host: 6869,
@@ -70,6 +61,33 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     .withNetworkMode(host.getName())
     .withNetworkAliases('waves-private-node')
     .start();
+
+  const healthCheck = (
+    resolve: (...args: unknown[]) => unknown,
+    reject: (...args: unknown[]) => unknown,
+    attempt = 0,
+    retries = 15,
+    interval = 1000
+  ) => {
+    if (attempt > retries) {
+      (this.node?.stop() ?? Promise.resolve()).then(() =>
+        reject(new Error('Waves private node is not ready'))
+      );
+    }
+
+    fetch(
+      new URL(
+        '/blocks/headers/last',
+        `http://${this.node.getHost()}:${this.node.getMappedPort(6869)}`
+      )
+    )
+      .then(() => resolve())
+      .catch(() =>
+        setTimeout(() => healthCheck(resolve, reject, ++attempt), interval)
+      );
+  };
+
+  await new Promise(healthCheck);
 
   this.testApp = httpServer.createServer({ root: rootDir });
   this.testApp.listen(8081);
