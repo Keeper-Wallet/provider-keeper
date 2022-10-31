@@ -239,7 +239,7 @@ export function keeperTxFactory(
   tx: SignerInvokeTx
 ): WavesKeeper.TScriptInvocationTxData;
 export function keeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData;
-export function keeperTxFactory(tx) {
+export function keeperTxFactory(tx: SignerTx) {
   switch (tx.type) {
     case TRANSACTION_TYPE.ISSUE:
       return issueAdapter(tx);

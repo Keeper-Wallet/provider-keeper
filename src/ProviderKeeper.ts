@@ -168,7 +168,13 @@ export class ProviderKeeper implements Provider {
   }
 }
 
-const poll = (resolve, reject, attempt = 0, retries = 30, interval = 100) => {
+const poll = (
+  resolve: (result: boolean) => void,
+  reject: (...args: unknown[]) => void,
+  attempt = 0,
+  retries = 30,
+  interval = 100
+) => {
   if (attempt > retries) return resolve(false);
 
   if (typeof WavesKeeper !== 'undefined') {
@@ -176,7 +182,7 @@ const poll = (resolve, reject, attempt = 0, retries = 30, interval = 100) => {
   } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
 };
 
-const _isKeeperInstalled = new Promise(poll) as Promise<boolean>;
+const _isKeeperInstalled = new Promise(poll);
 
 export async function isKeeperInstalled() {
   return _isKeeperInstalled;
