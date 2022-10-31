@@ -24,23 +24,11 @@ export class ProviderKeeper implements Provider {
     new EventEmitter<AuthEvents>();
 
   constructor() {
-    const poll = (
-      resolve,
-      reject,
-      attempt = 0,
-      retries = 10,
-      interval = 100
-    ) => {
-      if (attempt > retries) {
-        return reject(new Error('WavesKeeper is not installed.'));
-      }
-
-      if (window.WavesKeeper) {
-        return window.WavesKeeper.initialPromise.then(api => resolve(api));
-      } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
-    };
-
-    this._apiPromise = new Promise(poll);
+    this._apiPromise = isKeeperInstalled().then(isInstalled => {
+      return isInstalled
+        ? window.WavesKeeper.initialPromise.then(api => Promise.resolve(api))
+        : Promise.reject(new Error('WavesKeeper is not installed.'));
+    });
 
     this._apiPromise.catch(() => {
       // avoid unhandled rejection
@@ -178,4 +166,18 @@ export class ProviderKeeper implements Provider {
 
     return api;
   }
+}
+
+const poll = (resolve, reject, attempt = 0, retries = 30, interval = 100) => {
+  if (attempt > retries) return resolve(false);
+
+  if (typeof WavesKeeper !== 'undefined') {
+    return resolve(true);
+  } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
+};
+
+const _isKeeperInstalled = new Promise(poll) as Promise<boolean>;
+
+export async function isKeeperInstalled() {
+  return _isKeeperInstalled;
 }
