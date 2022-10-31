@@ -33,7 +33,7 @@ import {
   UserData,
 } from '@waves/signer';
 import { Accounts, App, Network, Settings, Windows } from './utils/actions';
-import { ProviderKeeper } from '../src';
+import type { ProviderKeeper, isKeeperInstalled } from '../src/ProviderKeeper';
 import {
   address,
   base58Encode,
@@ -59,6 +59,7 @@ declare global {
     signer: Signer;
     Signer: typeof Signer;
     ProviderKeeper: typeof ProviderKeeper;
+    isKeeperInstalled: typeof isKeeperInstalled;
     result?: Promise<unknown>;
   }
 }
@@ -139,6 +140,18 @@ describe('Signer integration', function () {
 
     await this.driver.switchTo().window(testAppTab);
   });
+
+  it('KeeperWallet is installed', async function () {
+    expect(
+      await this.driver.executeAsyncScript(function (...args) {
+        const done = args[args.length - 1];
+
+        window.isKeeperInstalled().then(done).catch(done);
+      })
+    ).to.be.true;
+  });
+
+  it.skip('(mock with vitest) Keeper Wallet is not installed');
 
   it('Current provider is ProviderKeeper', async function () {
     expect(
