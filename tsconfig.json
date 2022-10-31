@@ -9,7 +9,6 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noErrorTruncation": true,
-    "noImplicitAny": false,
     "outDir": "./dist",
     "pretty": true,
     "resolveJsonModule": true,
