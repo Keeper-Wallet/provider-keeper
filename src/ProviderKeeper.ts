@@ -117,10 +117,9 @@ export class ProviderKeeper implements Provider {
       .then(data => data.signature);
   }
 
-  public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-  public async sign<T extends Array<SignerTx>>(
-    toSign: T
-  ): Promise<SignedTx<T>> {
+  sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
+  sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
+  public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>> {
     const apiPromise = this._ensureApi();
 
     if (toSign.length == 1) {

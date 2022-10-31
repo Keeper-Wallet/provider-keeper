@@ -207,38 +207,6 @@ function invokeScriptAdapter(
   return { type: TRANSACTION_TYPE.INVOKE_SCRIPT, data };
 }
 
-export function keeperTxFactory(tx: SignerIssueTx): WavesKeeper.TIssueTxData;
-export function keeperTxFactory(
-  tx: SignerTransferTx
-): WavesKeeper.TTransferTxData;
-export function keeperTxFactory(
-  tx: SignerReissueTx
-): WavesKeeper.TReissueTxData;
-export function keeperTxFactory(tx: SignerBurnTx): WavesKeeper.TBurnTxData;
-export function keeperTxFactory(tx: SignerLeaseTx): WavesKeeper.TLeaseTxData;
-export function keeperTxFactory(
-  tx: SignerCancelLeaseTx
-): WavesKeeper.TLeaseCancelTxData;
-export function keeperTxFactory(
-  tx: SignerAliasTx
-): WavesKeeper.TCreateAliasTxData;
-export function keeperTxFactory(
-  tx: SignerMassTransferTx
-): WavesKeeper.TMassTransferTxData;
-export function keeperTxFactory(tx: SignerDataTx): WavesKeeper.TDataTxData;
-export function keeperTxFactory(
-  tx: SignerSetScriptTx
-): WavesKeeper.TSetScriptTxData;
-export function keeperTxFactory(
-  tx: SignerSponsorshipTx
-): WavesKeeper.TSponsoredFeeTxData;
-export function keeperTxFactory(
-  tx: SignerSetAssetScriptTx
-): WavesKeeper.TSetAssetScriptTxData;
-export function keeperTxFactory(
-  tx: SignerInvokeTx
-): WavesKeeper.TScriptInvocationTxData;
-export function keeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData;
 export function keeperTxFactory(tx: SignerTx) {
   switch (tx.type) {
     case TRANSACTION_TYPE.ISSUE:
