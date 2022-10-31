@@ -38,20 +38,7 @@ import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 
 describe('Adapter', () => {
   describe('converting tx from Signer to Keeper', () => {
-    function feeShouldBeValid(tx: SignerIssueTx);
-    function feeShouldBeValid(tx: SignerTransferTx);
-    function feeShouldBeValid(tx: SignerReissueTx);
-    function feeShouldBeValid(tx: SignerBurnTx);
-    function feeShouldBeValid(tx: SignerLeaseTx);
-    function feeShouldBeValid(tx: SignerCancelLeaseTx);
-    function feeShouldBeValid(tx: SignerAliasTx);
-    function feeShouldBeValid(tx: SignerMassTransferTx);
-    function feeShouldBeValid(tx: SignerDataTx);
-    function feeShouldBeValid(tx: SignerSetScriptTx);
-    function feeShouldBeValid(tx: SignerSponsorshipTx);
-    function feeShouldBeValid(tx: SignerSetAssetScriptTx);
-    function feeShouldBeValid(tx: SignerInvokeTx);
-    function feeShouldBeValid(tx) {
+    function feeShouldBeValid(tx: SignerTx) {
       const amount = 123456790;
       const assetId = '7sP5abE9nGRwZxkgaEXgkQDZ3ERBcm9PLHixaUE5SYoT';
 
