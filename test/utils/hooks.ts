@@ -26,7 +26,7 @@ declare module 'mocha' {
 interface GlobalFixturesContext {
   selenium: StartedTestContainer;
   node: StartedTestContainer;
-  testApp: httpServer.HttpServer;
+  testApp: ReturnType<typeof httpServer.createServer>;
 }
 
 export async function mochaGlobalSetup(this: GlobalFixturesContext) {
