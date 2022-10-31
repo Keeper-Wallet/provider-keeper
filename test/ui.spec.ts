@@ -65,15 +65,16 @@ declare global {
 }
 
 type WithAssetId = { assetId: string };
+type Account = { address: string; publicKey: string };
 
 describe('Signer integration', function () {
   this.timeout(5 * m);
 
-  let issuer, user1, user2;
+  let issuer: Account, user1: Account, user2: Account;
 
   let testAppTab: string;
   let messageWindow: string | null = null;
-  let chainId;
+  let chainId: number;
 
   async function prepareAccounts(this: mocha.Context) {
     chainId = await getNetworkByte(this.hostNodeUrl);
@@ -127,7 +128,7 @@ describe('Signer integration', function () {
 
     await this.driver.switchTo().newWindow('tab');
     await this.driver.get(this.testAppUrl);
-    await this.driver.executeScript(function (nodeUrl) {
+    await this.driver.executeScript(function (nodeUrl: string) {
       window.signer = new window.Signer({
         NODE_URL: nodeUrl,
       });
@@ -143,7 +144,7 @@ describe('Signer integration', function () {
 
   it('KeeperWallet is installed', async function () {
     expect(
-      await this.driver.executeAsyncScript(function (...args) {
+      await this.driver.executeAsyncScript(function (...args: never[]) {
         const done = args[args.length - 1];
 
         window.isKeeperInstalled().then(done).catch(done);
@@ -208,7 +209,8 @@ describe('Signer integration', function () {
     }
 
     async function getPermissionRequestResult(this: mocha.Context) {
-      return this.driver.executeAsyncScript(function (...args) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return this.driver.executeAsyncScript(function (...args: any[]) {
         const done = args[args.length - 1];
         const { result } = window;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -279,14 +281,17 @@ describe('Signer integration', function () {
     });
 
     it('Logged out', async function () {
-      const result = await this.driver.executeAsyncScript((...args) => {
-        const done = args[args.length - 1];
+      const result = await this.driver.executeAsyncScript(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (...args: any[]) => {
+          const done = args[args.length - 1];
 
-        window.signer
-          .logout()
-          .then(() => done('RESOLVED'))
-          .catch(() => done('REJECTED'));
-      });
+          window.signer
+            .logout()
+            .then(() => done('RESOLVED'))
+            .catch(() => done('REJECTED'));
+        }
+      );
 
       expect(result).to.equal('RESOLVED');
 
@@ -347,7 +352,7 @@ describe('Signer integration', function () {
   });
 
   async function getApproveResult(this: mocha.Context) {
-    return this.driver.executeAsyncScript(function (...args) {
+    return this.driver.executeAsyncScript(function (...args: never[]) {
       const done = args[args.length - 1];
       const { result } = window;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -361,7 +366,7 @@ describe('Signer integration', function () {
       const data = 'test-message-to-sign';
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: string) => {
         window.result = window.signer.signMessage(data);
       }, data);
 
@@ -403,7 +408,7 @@ describe('Signer integration', function () {
       ];
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: TypedData[]) => {
         window.result = window.signer.signTypedData(data);
       }, data);
 
@@ -438,7 +443,7 @@ describe('Signer integration', function () {
       data: IssueArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: IssueArgs) => {
         window.result = window.signer
           .issue(data)
           .broadcast({ confirmations: 1 });
@@ -645,7 +650,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: ReissueArgs) => {
         window.result = window.signer
           .reissue(data)
           .broadcast({ confirmations: 0 });
@@ -693,7 +698,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: BurnArgs) => {
         window.result = window.signer
           .burn(data)
           .broadcast({ confirmations: 0 });
@@ -740,7 +745,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: SetAssetScriptArgs) => {
         window.result = window.signer
           .setAssetScript(data)
           .broadcast({ confirmations: 0 });
@@ -785,7 +790,7 @@ describe('Signer integration', function () {
       data: SponsorshipArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: SponsorshipArgs) => {
         window.result = window.signer
           .sponsorship(data)
           .broadcast({ confirmations: 1 });
@@ -890,7 +895,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: TransferArgs) => {
         window.result = window.signer
           .transfer(data)
           .broadcast({ confirmations: 0 });
@@ -949,7 +954,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: MassTransferArgs) => {
         window.result = window.signer
           .massTransfer(data)
           .broadcast({ confirmations: 0 });
@@ -993,7 +998,7 @@ describe('Signer integration', function () {
 
   async function performDataTransaction(this: mocha.Context, data: DataArgs) {
     const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-    await this.driver.executeScript(data => {
+    await this.driver.executeScript((data: DataArgs) => {
       window.result = window.signer.data(data).broadcast({ confirmations: 0 });
     }, data);
     [messageWindow] = await waitForNewWindows(1);
@@ -1144,7 +1149,7 @@ describe('Signer integration', function () {
     // todo this behaviour very tricky, should be removed later
     await this.driver.wait(async () => {
       const publicState = (await this.driver.executeAsyncScript(function (
-        ...args
+        ...args: never[]
       ) {
         const done = args[args.length - 1];
         window.KeeperWallet.publicState().then(done);
@@ -1164,7 +1169,7 @@ describe('Signer integration', function () {
       data: SetScriptArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: SetScriptArgs) => {
         window.result = window.signer
           .setScript(data)
           .broadcast({ confirmations: 1 });
@@ -1216,7 +1221,7 @@ describe('Signer integration', function () {
       data: InvokeArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: InvokeArgs) => {
         window.result = window.signer
           .invoke(data)
           .broadcast({ confirmations: 1 });
@@ -1462,7 +1467,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: LeaseArgs) => {
         window.result = window.signer
           .lease(data)
           .broadcast({ confirmations: 1 });
@@ -1511,7 +1516,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: CancelLeaseArgs) => {
         window.result = window.signer
           .cancelLease(data)
           .broadcast({ confirmations: 0 });
@@ -1559,7 +1564,7 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript(data => {
+      await this.driver.executeScript((data: AliasArgs) => {
         window.result = window.signer
           .alias(data)
           .broadcast({ confirmations: 0 });
