@@ -59,11 +59,11 @@ You can also check if the Keeper Wallet is installed.
 ```js
 import { isKeeperInstalled } from '@waves/provider-keeper';
 
-isKeeperInstalled.then(isInstalled => {
-  if (!isInstalled) {
-    // Some logic in case KeeperWallet is not installed
-  }
-});
+const isInstalled = await isKeeperInstalled();
+
+if (!isInstalled) {
+  // Some logic in case KeeperWallet is not installed
+}
 ```
 
 ### Basic example
