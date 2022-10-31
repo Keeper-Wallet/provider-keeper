@@ -22,20 +22,13 @@ export class ProviderKeeper implements Provider {
   };
   private readonly _emitter: EventEmitter<AuthEvents> =
     new EventEmitter<AuthEvents>();
-  private readonly _maxRetries = 10;
 
   constructor() {
-    const poll = (resolve, reject, attempt = 0) => {
-      if (attempt > this._maxRetries) {
-        return reject(new Error('WavesKeeper is not installed.'));
-      }
-
-      if (window.WavesKeeper) {
-        return window.WavesKeeper.initialPromise.then(api => resolve(api));
-      } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
-    };
-
-    this._apiPromise = new Promise(poll);
+    this._apiPromise = isKeeperInstalled().then(isInstalled => {
+      return isInstalled
+        ? window.WavesKeeper.initialPromise.then(api => Promise.resolve(api))
+        : Promise.reject(new Error('WavesKeeper is not installed.'));
+    });
 
     this._apiPromise.catch(() => {
       // avoid unhandled rejection
@@ -124,10 +117,9 @@ export class ProviderKeeper implements Provider {
       .then(data => data.signature);
   }
 
-  public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-  public async sign<T extends Array<SignerTx>>(
-    toSign: T
-  ): Promise<SignedTx<T>> {
+  sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
+  sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
+  public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>> {
     const apiPromise = this._ensureApi();
 
     if (toSign.length == 1) {
@@ -173,4 +165,24 @@ export class ProviderKeeper implements Provider {
 
     return api;
   }
+}
+
+const poll = (
+  resolve: (result: boolean) => void,
+  reject: (...args: unknown[]) => void,
+  attempt = 0,
+  retries = 30,
+  interval = 100
+) => {
+  if (attempt > retries) return resolve(false);
+
+  if (typeof WavesKeeper !== 'undefined') {
+    return resolve(true);
+  } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
+};
+
+const _isKeeperInstalled = new Promise(poll);
+
+export async function isKeeperInstalled() {
+  return _isKeeperInstalled;
 }

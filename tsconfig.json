@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*"],
+  "include": ["src"],
   "compilerOptions": {
     "declaration": true,
     "declarationDir": "./dist/types",
@@ -9,13 +9,15 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noErrorTruncation": true,
-    "noImplicitAny": false,
     "outDir": "./dist",
     "pretty": true,
     "resolveJsonModule": true,
     "sourceMap": false,
     "strict": true,
     "target": "esnext",
-    "types": ["@waves/waveskeeper-types"]
+    "types": ["@waves/waveskeeper-types", "long"]
+  },
+  "ts-node": {
+    "transpileOnly": true
   }
 }

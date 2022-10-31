@@ -210,6 +210,13 @@
   resolved "https://registry.npmjs.org/@types/chai/-/chai-4.3.3.tgz"
   integrity sha512-hC7OMnszpxhZPduX+m+nrx+uFoLkWOMiR4oa/AZF3MuSETYTZmFfJAHqZEM8MVlvfG7BEUcgvtwoCTxBp6hm3g==
 
+"@types/connect@*":
+  version "3.4.35"
+  resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.35.tgz#5fcf6ae445e4021d1fc2219a4873cc73a3bb2ad1"
+  integrity sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/docker-modem@*":
   version "3.0.2"
   resolved "https://registry.npmjs.org/@types/docker-modem/-/docker-modem-3.0.2.tgz"
@@ -233,6 +240,13 @@
   dependencies:
     "@types/minimatch" "*"
     "@types/node" "*"
+
+"@types/http-server@^0.12.1":
+  version "0.12.1"
+  resolved "https://registry.yarnpkg.com/@types/http-server/-/http-server-0.12.1.tgz#025f916420673f5ebc5ea48987aeae27776f02ac"
+  integrity sha512-OJ8zs0o8JuHo92KCCsLq4BqkHPi1+Aj2yoPQXJ18LPUxOA1lqKfgBLtHNAQTwwPzeBqyo+HDkWD91MkfOGvNJg==
+  dependencies:
+    "@types/connect" "*"
 
 "@types/istanbul-lib-coverage@^2.0.1":
   version "2.0.4"

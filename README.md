@@ -54,6 +54,18 @@ Add library initialization to your app.
   signer.setProvider(keeper);
   ```
 
+You can also check if the Keeper Wallet is installed.
+
+```js
+import { isKeeperInstalled } from '@waves/provider-keeper';
+
+isKeeperInstalled.then(isInstalled => {
+  if (!isInstalled) {
+    // Some logic in case KeeperWallet is not installed
+  }
+});
+```
+
 ### Basic example
 
 Now your application is ready to work with Waves Platform. Let's test it by implementing basic functionality.
