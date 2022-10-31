@@ -22,17 +22,22 @@ export class ProviderKeeper implements Provider {
   };
   private readonly _emitter: EventEmitter<AuthEvents> =
     new EventEmitter<AuthEvents>();
-  private readonly _maxRetries = 10;
 
   constructor() {
-    const poll = (resolve, reject, attempt = 0) => {
-      if (attempt > this._maxRetries) {
+    const poll = (
+      resolve,
+      reject,
+      attempt = 0,
+      retries = 10,
+      interval = 100
+    ) => {
+      if (attempt > retries) {
         return reject(new Error('WavesKeeper is not installed.'));
       }
 
       if (window.WavesKeeper) {
         return window.WavesKeeper.initialPromise.then(api => resolve(api));
-      } else setTimeout(() => poll(resolve, reject, ++attempt), 100);
+      } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
     };
 
     this._apiPromise = new Promise(poll);
