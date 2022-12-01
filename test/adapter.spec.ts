@@ -1,4 +1,4 @@
-import { keeperTxFactory, signerTxFactory } from '../src/adapter';
+import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 import {
   SignedTx,
   SignerAliasTx,
@@ -17,8 +17,10 @@ import {
   SignerTx,
   SignerTxToSignedTx,
 } from '@waves/signer';
-import { expect } from 'chai';
 import { TRANSACTION_TYPE, TransactionMap } from '@waves/ts-types';
+import { expect } from 'chai';
+
+import { keeperTxFactory, signerTxFactory } from '../src/adapter';
 import {
   ALIAS,
   BURN,
@@ -34,7 +36,6 @@ import {
   SPONSORSHIP,
   TRANSFER,
 } from './utils/transactions';
-import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 
 describe('Adapter', () => {
   describe('converting tx from Signer to Keeper', () => {

@@ -1,15 +1,16 @@
-import { Builder, By, until, WebDriver } from 'selenium-webdriver';
-import * as chrome from 'selenium-webdriver/chrome';
+import * as fs from 'fs';
+import * as httpServer from 'http-server';
 import * as mocha from 'mocha';
 import * as path from 'path';
-import * as httpServer from 'http-server';
+import { Builder, By, until, WebDriver } from 'selenium-webdriver';
+import * as chrome from 'selenium-webdriver/chrome';
 import {
   GenericContainer,
   Network,
   StartedTestContainer,
   TestContainers,
 } from 'testcontainers';
-import * as fs from 'fs';
+
 import * as packageJson from '../../package.json';
 
 declare module 'mocha' {

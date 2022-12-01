@@ -1,7 +1,8 @@
-import { DEFAULT_MINER_SEED } from './constants';
-import { broadcast, transfer } from '@waves/waves-transactions';
-import { base58Decode } from '@waves/ts-lib-crypto';
 import { create } from '@waves/node-api-js';
+import { base58Decode } from '@waves/ts-lib-crypto';
+import { broadcast, transfer } from '@waves/waves-transactions';
+
+import { DEFAULT_MINER_SEED } from './constants';
 
 export async function faucet({
   recipient,
