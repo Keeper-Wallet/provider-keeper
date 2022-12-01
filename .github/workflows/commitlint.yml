@@ -1,0 +1,17 @@
+name: Commitlint
+on: [pull_request]
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: styfle/cancel-workflow-action@0.11.0
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v3
+        with:
+          cache: yarn
+          node-version-file: .nvmrc
+      - run: yarn --frozen-lockfile
+      - run: yarn commitlint --verbose --from=remotes/origin/$GITHUB_BASE_REF
