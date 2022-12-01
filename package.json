@@ -54,6 +54,8 @@
     "@waves/signer": "1.x"
   },
   "devDependencies": {
+    "@commitlint/cli": "^17.3.0",
+    "@commitlint/config-conventional": "^17.3.0",
     "@types/chai": "^4.3.3",
     "@types/http-server": "^0.12.1",
     "@types/mocha": "^9.1.1",
