@@ -1,0 +1,52 @@
+name: Release
+on:
+  push:
+    branches:
+      - master
+      - beta
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: styfle/cancel-workflow-action@0.11.0
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: yarn
+          node-version-file: .nvmrc
+      - run: yarn --frozen-lockfile
+      - run: yarn run build
+      - run: yarn semantic-release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+    outputs:
+      new-release-published: ${{ steps.semantic-release.outputs.new-release-published }}
+      new-release-version: ${{ steps.semantic-release.outputs.new-release-version }}
+
+  report-merge:
+    needs: release
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: styfle/cancel-workflow-action@0.11.0
+      - uses: actions/checkout@v3
+      - uses: Keeper-Wallet/jira-action@v1
+        with:
+          hooks-url: ${{ secrets.HOOKS_URL }}
+          hook-merge: ${{ secrets.HOOK_MERGE }}
+
+  report-release:
+    needs: [release, report-merge]
+    if: needs.release.outputs.new-release-published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: styfle/cancel-workflow-action@0.11.0
+      - uses: actions/checkout@v3
+      - uses: Keeper-Wallet/jira-action@v1
+        with:
+          component: provider
+          hooks-url: ${{ secrets.HOOKS_URL }}
+          hook-release: ${{ secrets.HOOK_RELEASE }}
+          release-version: v${{ needs.release.outputs.new-release-version }}
