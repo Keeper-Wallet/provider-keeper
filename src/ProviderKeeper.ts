@@ -101,10 +101,10 @@ export class ProviderKeeper implements Provider {
       .then(api =>
         api.signCustomData({
           version: 1,
-          binary: `base64:${  btoa(String(data))}`,
+          binary: `base64:${btoa(String(data))}`,
         })
       )
-      .then(data => data.signature);
+      .then(result => result.signature);
   }
 
   public signTypedData(data: TypedData[]): Promise<string> {
@@ -115,7 +115,7 @@ export class ProviderKeeper implements Provider {
           data: data as WavesKeeper.TTypedData[],
         })
       )
-      .then(data => data.signature);
+      .then(result => result.signature);
   }
 
   sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
@@ -123,7 +123,7 @@ export class ProviderKeeper implements Provider {
   public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>> {
     const apiPromise = this._ensureApi();
 
-    if (toSign.length == 1) {
+    if (toSign.length === 1) {
       return apiPromise
         .then(api => api.signTransaction(keeperTxFactory(toSign[0])))
         .then(data => [signerTxFactory(data)]) as Promise<SignedTx<T>>;

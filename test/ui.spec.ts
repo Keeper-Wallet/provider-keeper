@@ -46,7 +46,7 @@ import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 
-import type { isKeeperInstalled,ProviderKeeper } from '../src/ProviderKeeper';
+import type { isKeeperInstalled, ProviderKeeper } from '../src/ProviderKeeper';
 import { Accounts, App, Network, Settings, Windows } from './utils/actions';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
@@ -367,8 +367,8 @@ describe('Signer integration', function () {
       const data = 'test-message-to-sign';
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: string) => {
-        window.result = window.signer.signMessage(data);
+      await this.driver.executeScript((message: string) => {
+        window.result = window.signer.signMessage(message);
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -385,7 +385,7 @@ describe('Signer integration', function () {
           issuer.publicKey,
           serializeCustomData({
             version: 1,
-            binary: `base64:${  btoa(data)}`,
+            binary: `base64:${btoa(data)}`,
           }),
           signature
         )
@@ -409,8 +409,8 @@ describe('Signer integration', function () {
       ];
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: TypedData[]) => {
-        window.result = window.signer.signTypedData(data);
+      await this.driver.executeScript((message: TypedData[]) => {
+        window.result = window.signer.signTypedData(message);
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -444,10 +444,8 @@ describe('Signer integration', function () {
       data: IssueArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: IssueArgs) => {
-        window.result = window.signer
-          .issue(data)
-          .broadcast({ confirmations: 1 });
+      await this.driver.executeScript((tx: IssueArgs) => {
+        window.result = window.signer.issue(tx).broadcast({ confirmations: 1 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -457,9 +455,9 @@ describe('Signer integration', function () {
     it('Asset with max values', async function () {
       const data = {
         name: '16 characters :)',
-        description:
-          `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${ 
-          'Aenean commodo ligula eget dolor. Aenean'.repeat(10)}`,
+        description: `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${'Aenean commodo ligula eget dolor. Aenean'.repeat(
+          10
+        )}`,
         quantity: '9223372036854775807',
         decimals: 8 as const,
         reissuable: true,
@@ -651,9 +649,9 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: ReissueArgs) => {
+      await this.driver.executeScript((tx: ReissueArgs) => {
         window.result = window.signer
-          .reissue(data)
+          .reissue(tx)
           .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
@@ -699,10 +697,8 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: BurnArgs) => {
-        window.result = window.signer
-          .burn(data)
-          .broadcast({ confirmations: 0 });
+      await this.driver.executeScript((tx: BurnArgs) => {
+        window.result = window.signer.burn(tx).broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
       await this.driver.switchTo().window(messageWindow);
@@ -746,9 +742,9 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: SetAssetScriptArgs) => {
+      await this.driver.executeScript((tx: SetAssetScriptArgs) => {
         window.result = window.signer
-          .setAssetScript(data)
+          .setAssetScript(tx)
           .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
@@ -791,9 +787,9 @@ describe('Signer integration', function () {
       data: SponsorshipArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: SponsorshipArgs) => {
+      await this.driver.executeScript((tx: SponsorshipArgs) => {
         window.result = window.signer
-          .sponsorship(data)
+          .sponsorship(tx)
           .broadcast({ confirmations: 1 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
@@ -896,9 +892,9 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: TransferArgs) => {
+      await this.driver.executeScript((tx: TransferArgs) => {
         window.result = window.signer
-          .transfer(data)
+          .transfer(tx)
           .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
@@ -955,9 +951,9 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: MassTransferArgs) => {
+      await this.driver.executeScript((tx: MassTransferArgs) => {
         window.result = window.signer
-          .massTransfer(data)
+          .massTransfer(tx)
           .broadcast({ confirmations: 0 });
       }, data);
       [messageWindow] = await waitForNewWindows(1);
@@ -999,8 +995,8 @@ describe('Signer integration', function () {
 
   async function performDataTransaction(this: mocha.Context, data: DataArgs) {
     const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-    await this.driver.executeScript((data: DataArgs) => {
-      window.result = window.signer.data(data).broadcast({ confirmations: 0 });
+    await this.driver.executeScript((tx: DataArgs) => {
+      window.result = window.signer.data(tx).broadcast({ confirmations: 0 });
     }, data);
     [messageWindow] = await waitForNewWindows(1);
     await this.driver.switchTo().window(messageWindow);
@@ -1071,9 +1067,10 @@ describe('Signer integration', function () {
     it('Write MAX values to Data storage', async function () {
       const strValueMax =
         `Sed ut perspiciatis unde omnis iste natus error ` +
-        `sit voluptatem accusantium doloremque laudantium, totam rem aperiam, ${ 
-        'eaque ipsa quae ab illo inventore\n'.repeat(217)}`;
-      const binValueMax = `base64:${  btoa(strValueMax)}`;
+        `sit voluptatem accusantium doloremque laudantium, totam rem aperiam, ${'eaque ipsa quae ab illo inventore\n'.repeat(
+          217
+        )}`;
+      const binValueMax = `base64:${btoa(strValueMax)}`;
       const data: DataArgs = {
         data: [
           {
@@ -1158,8 +1155,8 @@ describe('Signer integration', function () {
 
       return (
         publicState.account &&
-        publicState.account.address == user.address &&
-        publicState.account.publicKey == user.publicKey
+        publicState.account.address === user.address &&
+        publicState.account.publicKey === user.publicKey
       );
     }, this.wait);
   }
@@ -1170,9 +1167,9 @@ describe('Signer integration', function () {
       data: SetScriptArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: SetScriptArgs) => {
+      await this.driver.executeScript((tx: SetScriptArgs) => {
         window.result = window.signer
-          .setScript(data)
+          .setScript(tx)
           .broadcast({ confirmations: 1 });
       }, data);
 
@@ -1222,9 +1219,9 @@ describe('Signer integration', function () {
       data: InvokeArgs
     ) {
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: InvokeArgs) => {
+      await this.driver.executeScript((tx: InvokeArgs) => {
         window.result = window.signer
-          .invoke(data)
+          .invoke(tx)
           .broadcast({ confirmations: 1 });
       }, data);
 
@@ -1327,13 +1324,11 @@ describe('Signer integration', function () {
     });
 
     it('Invoke with long arguments and payments list', async function () {
-      const binLong =
-        `base64:${ 
-        btoa(
-          new Uint8Array(
-            Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat()
-          ).toString()
-        )}`;
+      const binLong = `base64:${btoa(
+        new Uint8Array(
+          Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat()
+        ).toString()
+      )}`;
 
       const data: InvokeArgs = {
         dApp: user1.address,
@@ -1345,9 +1340,9 @@ describe('Signer integration', function () {
             { type: 'integer', value: '-9223372036854775808' },
             {
               type: 'string',
-              value:
-                `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${ 
-                'Aenean commodo ligula eget dolor. Aenean'.repeat(3)}`,
+              value: `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${'Aenean commodo ligula eget dolor. Aenean'.repeat(
+                3
+              )}`,
             },
             {
               type: 'list',
@@ -1357,9 +1352,9 @@ describe('Signer integration', function () {
                 { type: 'integer', value: '-9223372036854775808' },
                 {
                   type: 'string',
-                  value:
-                    `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${ 
-                    'Aenean commodo ligula eget dolor. Aenean'.repeat(3)}`,
+                  value: `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${'Aenean commodo ligula eget dolor. Aenean'.repeat(
+                    3
+                  )}`,
                 },
               ],
             },
@@ -1468,10 +1463,8 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: LeaseArgs) => {
-        window.result = window.signer
-          .lease(data)
-          .broadcast({ confirmations: 1 });
+      await this.driver.executeScript((tx: LeaseArgs) => {
+        window.result = window.signer.lease(tx).broadcast({ confirmations: 1 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
@@ -1517,9 +1510,9 @@ describe('Signer integration', function () {
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: CancelLeaseArgs) => {
+      await this.driver.executeScript((tx: CancelLeaseArgs) => {
         window.result = window.signer
-          .cancelLease(data)
+          .cancelLease(tx)
           .broadcast({ confirmations: 0 });
       }, data);
 
@@ -1561,14 +1554,12 @@ describe('Signer integration', function () {
   describe('Aliases', function () {
     it('Create alias', async function () {
       const data: AliasArgs = {
-        alias: `test_${  Date.now()}`,
+        alias: `test_${Date.now()}`,
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);
-      await this.driver.executeScript((data: AliasArgs) => {
-        window.result = window.signer
-          .alias(data)
-          .broadcast({ confirmations: 0 });
+      await this.driver.executeScript((tx: AliasArgs) => {
+        window.result = window.signer.alias(tx).broadcast({ confirmations: 0 });
       }, data);
 
       [messageWindow] = await waitForNewWindows(1);
