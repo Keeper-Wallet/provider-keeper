@@ -1,3 +1,4 @@
+import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 import {
   SignedTx,
   SignerAliasTx,
@@ -16,7 +17,6 @@ import {
   SignerTx,
 } from '@waves/signer';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
-import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 import create from 'parse-json-bignumber';
 
 const { parse } = create();
@@ -156,7 +156,7 @@ function dataAdapter(tx: SignerDataTx): WavesKeeper.TDataTxData {
   const { data } = tx;
   const dataTx: WavesKeeper.IDataTx = {
     ...defaultsFactory(tx),
-    data: data as Array<WavesKeeper.TData>,
+    data: data as WavesKeeper.TData[],
   };
   return { type: TRANSACTION_TYPE.DATA, data: dataTx };
 }
@@ -200,7 +200,7 @@ function invokeScriptAdapter(
   const data: WavesKeeper.IScriptInvocationTx = {
     ...defaultsFactory(tx),
     dApp: addressFactory(dApp),
-    payment: (payment ?? []) as Array<WavesKeeper.TMoney>,
+    payment: (payment ?? []) as WavesKeeper.TMoney[],
     ...(call ? { call: call as WavesKeeper.ICall } : {}),
     ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
   };

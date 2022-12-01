@@ -38,39 +38,39 @@ export const ISSUE: SignerIssueTx = {
   quantity: longMax,
   reissuable: true,
   description: 'Full description of ShortToken',
-  script: script,
+  script,
 };
 
 export const TRANSFER: SignerTransferTx = {
   type: TRANSACTION_TYPE.TRANSFER,
   recipient,
-  assetId: assetId,
-  amount: amount,
-  attachment: attachment,
+  assetId,
+  amount,
+  attachment,
 };
 
 export const REISSUE: SignerReissueTx = {
   type: TRANSACTION_TYPE.REISSUE,
-  assetId: assetId,
+  assetId,
   quantity: amount,
   reissuable: true,
 };
 
 export const BURN: SignerBurnTx = {
   type: TRANSACTION_TYPE.BURN,
-  assetId: assetId,
-  amount: amount,
+  assetId,
+  amount,
 };
 
 export const LEASE: SignerLeaseTx = {
   type: TRANSACTION_TYPE.LEASE,
-  recipient: recipient,
-  amount: amount,
+  recipient,
+  amount,
 };
 
 export const CANCEL_LEASE: SignerCancelLeaseTx = {
   type: TRANSACTION_TYPE.CANCEL_LEASE,
-  leaseId: leaseId,
+  leaseId,
 };
 
 export const ALIAS: SignerAliasTx = {
@@ -80,7 +80,7 @@ export const ALIAS: SignerAliasTx = {
 
 export const MASS_TRANSFER: SignerMassTransferTx = {
   type: TRANSACTION_TYPE.MASS_TRANSFER,
-  assetId: assetId,
+  assetId,
   transfers: [
     {
       amount: 1,
@@ -91,7 +91,7 @@ export const MASS_TRANSFER: SignerMassTransferTx = {
       recipient: 'merry',
     },
   ],
-  attachment: attachment,
+  attachment,
 };
 
 export const DATA: SignerDataTx = {
@@ -106,24 +106,24 @@ export const DATA: SignerDataTx = {
 
 export const SET_SCRIPT: SignerSetScriptTx = {
   type: TRANSACTION_TYPE.SET_SCRIPT,
-  script: script,
+  script,
 };
 
 export const SPONSORSHIP: SignerSponsorshipTx = {
   type: TRANSACTION_TYPE.SPONSORSHIP,
-  assetId: assetId,
+  assetId,
   minSponsoredAssetFee: amount,
 };
 
 export const SET_ASSET_SCRIPT: SignerSetAssetScriptTx = {
   type: TRANSACTION_TYPE.SET_ASSET_SCRIPT,
-  assetId: assetId,
-  script: script,
+  assetId,
+  script,
 };
 
 export const INVOKE: SignerInvokeTx = {
   type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-  dApp: dApp,
+  dApp,
   call: {
     function: 'someFunctionToCall',
     args: [
@@ -139,7 +139,7 @@ export const INVOKE: SignerInvokeTx = {
       amount: 1,
     },
     {
-      assetId: assetId,
+      assetId,
       amount: 1,
     },
   ],
@@ -147,7 +147,7 @@ export const INVOKE: SignerInvokeTx = {
 
 export const INVOKE_DEFAULT_CALL: SignerInvokeTx = {
   type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-  dApp: dApp,
+  dApp,
   fee: dAppMinFee,
   call: {
     function: 'default',
@@ -158,7 +158,7 @@ export const INVOKE_DEFAULT_CALL: SignerInvokeTx = {
 
 export const INVOKE_NO_ARGS_SINGLE_PAYMENTS: SignerInvokeTx = {
   type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-  dApp: dApp,
+  dApp,
   fee: dAppMinFee,
   payment: [
     {
@@ -174,7 +174,7 @@ export const INVOKE_NO_ARGS_SINGLE_PAYMENTS: SignerInvokeTx = {
 
 export const INVOKE_NO_ARGS_MANY_PAYMENTS: SignerInvokeTx = {
   type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-  dApp: dApp,
+  dApp,
   fee: dAppMinFee,
   payment: [
     {
@@ -226,7 +226,7 @@ export const INVOKE_NO_ARGS_MANY_PAYMENTS: SignerInvokeTx = {
 
 export const INVOKE_NATIVE_ARGS_NO_PAYMENTS: SignerInvokeTx = {
   type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-  dApp: dApp,
+  dApp,
   fee: dAppMinFee,
   call: {
     function: 'callWithNativeArgsAndNoPayments',
@@ -242,7 +242,7 @@ export const INVOKE_NATIVE_ARGS_NO_PAYMENTS: SignerInvokeTx = {
 
 export const INVOKE_LIST_ARGS_NO_PAYMENTS: SignerInvokeTx = {
   type: TRANSACTION_TYPE.INVOKE_SCRIPT,
-  dApp: dApp,
+  dApp,
   fee: dAppMinFee,
   call: {
     function: 'callWithListArgsAndNoPayments',

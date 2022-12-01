@@ -1,6 +1,3 @@
-import { expect } from 'chai';
-import * as mocha from 'mocha';
-import { By, until } from 'selenium-webdriver';
 import {
   AliasArgs,
   BurnArgs,
@@ -32,8 +29,9 @@ import {
   TypedData,
   UserData,
 } from '@waves/signer';
-import { Accounts, App, Network, Settings, Windows } from './utils/actions';
-import type { ProviderKeeper, isKeeperInstalled } from '../src/ProviderKeeper';
+import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
+import { BroadcastedTx, IssueArgs } from '@waves/signer/dist/cjs/types';
+import { SignerError } from '@waves/signer/dist/es/SignerError';
 import {
   address,
   base58Encode,
@@ -42,13 +40,16 @@ import {
   stringToBytes,
   verifySignature,
 } from '@waves/ts-lib-crypto';
-import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
-import { BroadcastedTx, IssueArgs } from '@waves/signer/dist/cjs/types';
 import { makeTxBytes, serializeCustomData } from '@waves/waves-transactions';
-import { faucet, getNetworkByte } from './utils/nodeInteraction';
-import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
 import { ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
-import { SignerError } from '@waves/signer/dist/es/SignerError';
+import { expect } from 'chai';
+import * as mocha from 'mocha';
+import { By, until } from 'selenium-webdriver';
+
+import type { isKeeperInstalled,ProviderKeeper } from '../src/ProviderKeeper';
+import { Accounts, App, Network, Settings, Windows } from './utils/actions';
+import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
+import { faucet, getNetworkByte } from './utils/nodeInteraction';
 import { SET_SCRIPT_COMPILED } from './utils/setScriptCompiled';
 
 const m = 60000;
@@ -384,7 +385,7 @@ describe('Signer integration', function () {
           issuer.publicKey,
           serializeCustomData({
             version: 1,
-            binary: 'base64:' + btoa(data),
+            binary: `base64:${  btoa(data)}`,
           }),
           signature
         )
@@ -457,8 +458,8 @@ describe('Signer integration', function () {
       const data = {
         name: '16 characters :)',
         description:
-          'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
-          'Aenean commodo ligula eget dolor. Aenean'.repeat(10),
+          `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${ 
+          'Aenean commodo ligula eget dolor. Aenean'.repeat(10)}`,
         quantity: '9223372036854775807',
         decimals: 8 as const,
         reissuable: true,
@@ -1069,10 +1070,10 @@ describe('Signer integration', function () {
 
     it('Write MAX values to Data storage', async function () {
       const strValueMax =
-        'Sed ut perspiciatis unde omnis iste natus error ' +
-        'sit voluptatem accusantium doloremque laudantium, totam rem aperiam, ' +
-        'eaque ipsa quae ab illo inventore\n'.repeat(217);
-      const binValueMax = 'base64:' + btoa(strValueMax);
+        `Sed ut perspiciatis unde omnis iste natus error ` +
+        `sit voluptatem accusantium doloremque laudantium, totam rem aperiam, ${ 
+        'eaque ipsa quae ab illo inventore\n'.repeat(217)}`;
+      const binValueMax = `base64:${  btoa(strValueMax)}`;
       const data: DataArgs = {
         data: [
           {
@@ -1327,12 +1328,12 @@ describe('Signer integration', function () {
 
     it('Invoke with long arguments and payments list', async function () {
       const binLong =
-        'base64:' +
+        `base64:${ 
         btoa(
           new Uint8Array(
             Array(100).fill([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).flat()
           ).toString()
-        );
+        )}`;
 
       const data: InvokeArgs = {
         dApp: user1.address,
@@ -1345,8 +1346,8 @@ describe('Signer integration', function () {
             {
               type: 'string',
               value:
-                'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
-                'Aenean commodo ligula eget dolor. Aenean'.repeat(3),
+                `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${ 
+                'Aenean commodo ligula eget dolor. Aenean'.repeat(3)}`,
             },
             {
               type: 'list',
@@ -1357,8 +1358,8 @@ describe('Signer integration', function () {
                 {
                   type: 'string',
                   value:
-                    'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ' +
-                    'Aenean commodo ligula eget dolor. Aenean'.repeat(3),
+                    `Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ${ 
+                    'Aenean commodo ligula eget dolor. Aenean'.repeat(3)}`,
                 },
               ],
             },
@@ -1560,7 +1561,7 @@ describe('Signer integration', function () {
   describe('Aliases', function () {
     it('Create alias', async function () {
       const data: AliasArgs = {
-        alias: 'test_' + Date.now(),
+        alias: `test_${  Date.now()}`,
       };
 
       const { waitForNewWindows } = await Windows.captureNewWindows.call(this);

@@ -3,16 +3,14 @@
  *
  * NOTE: Each of them needs to bind `this` from test.
  */
+import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
+
 import { DEFAULT_PASSWORD } from './constants';
-import { expect } from 'chai';
 
 export const App = {
-  initVault: async function (
-    this: mocha.Context,
-    password: string = DEFAULT_PASSWORD
-  ) {
+  async initVault(this: mocha.Context, password: string = DEFAULT_PASSWORD) {
     await App.open.call(this);
 
     const tabKeeper = await this.driver.getWindowHandle();
@@ -76,7 +74,7 @@ export const App = {
     await this.driver.switchTo().window(tabKeeper);
   },
 
-  resetVault: async function (this: mocha.Context) {
+  async resetVault(this: mocha.Context) {
     await App.open.call(this);
 
     await this.driver
@@ -102,7 +100,7 @@ export const App = {
       .click();
   },
 
-  open: async function (this: mocha.Context) {
+  async open(this: mocha.Context) {
     await this.driver.get(this.extensionUrl);
     await this.driver.wait(
       until.elementIsVisible(
@@ -114,11 +112,7 @@ export const App = {
 };
 
 export const Accounts = {
-  importAccount: async function (
-    this: mocha.Context,
-    name: string,
-    seed: string
-  ) {
+  async importAccount(this: mocha.Context, name: string, seed: string) {
     await this.driver
       .wait(
         until.elementIsVisible(
@@ -175,10 +169,7 @@ export const Accounts = {
     );
   },
 
-  changeActiveAccount: async function (
-    this: mocha.Context,
-    accountName: string
-  ) {
+  async changeActiveAccount(this: mocha.Context, accountName: string) {
     await this.driver
       .wait(
         until.elementLocated(By.css('[data-testid="otherAccountsButton"]')),
@@ -222,7 +213,7 @@ export const Accounts = {
 };
 
 export const Settings = {
-  rootSettings: async function (this: mocha.Context) {
+  async rootSettings(this: mocha.Context) {
     await this.driver
       .wait(
         until.elementLocated(
@@ -232,14 +223,14 @@ export const Settings = {
       )
       .click();
   },
-  generalSettings: async function (this: mocha.Context) {
+  async generalSettings(this: mocha.Context) {
     await Settings.rootSettings.call(this);
     await this.driver
       .wait(until.elementLocated(By.css('button#settingsGeneral')), this.wait)
       .click();
   },
 
-  setSessionTimeout: async function (this: mocha.Context, index: number) {
+  async setSessionTimeout(this: mocha.Context, index: number) {
     // refresh timeout by focus window
     await this.driver.executeScript(() => {
       window.focus();
@@ -267,14 +258,14 @@ export const Settings = {
       .click();
   },
 
-  setMaxSessionTimeout: async function (this: mocha.Context) {
+  async setMaxSessionTimeout(this: mocha.Context) {
     const LAST = -1;
     await Settings.setSessionTimeout.call(this, LAST);
   },
 };
 
 export const Network = {
-  switchTo: async function (
+  async switchTo(
     this: mocha.Context,
     network: 'Mainnet' | 'Stagenet' | 'Testnet' | 'Custom',
     nodeUrl?: string

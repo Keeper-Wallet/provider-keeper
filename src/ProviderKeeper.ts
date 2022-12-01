@@ -9,6 +9,7 @@ import {
   UserData,
 } from '@waves/signer';
 import { EventEmitter } from 'typed-ts-events';
+
 import { keeperTxFactory, signerTxFactory } from './adapter';
 
 export class ProviderKeeper implements Provider {
@@ -100,13 +101,13 @@ export class ProviderKeeper implements Provider {
       .then(api =>
         api.signCustomData({
           version: 1,
-          binary: 'base64:' + btoa(String(data)),
+          binary: `base64:${  btoa(String(data))}`,
         })
       )
       .then(data => data.signature);
   }
 
-  public signTypedData(data: Array<TypedData>): Promise<string> {
+  public signTypedData(data: TypedData[]): Promise<string> {
     return this._ensureApi()
       .then(api =>
         api.signCustomData({
@@ -118,7 +119,7 @@ export class ProviderKeeper implements Provider {
   }
 
   sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-  sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
+  sign<T extends SignerTx[]>(toSign: T): Promise<SignedTx<T>>;
   public async sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>> {
     const apiPromise = this._ensureApi();
 
