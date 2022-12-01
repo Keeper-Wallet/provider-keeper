@@ -1,0 +1,18 @@
+{
+  "root": true,
+  "extends": "@faergeek",
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "extends": "@faergeek/eslint-config/typescript"
+    },
+    {
+      "files": ["test/**/*"],
+      "extends": "@faergeek/eslint-config/node",
+      "rules": {
+        "@typescript-eslint/no-var-requires": "off",
+        "func-names": "off"
+      }
+    }
+  ]
+}
