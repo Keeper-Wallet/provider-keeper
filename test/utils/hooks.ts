@@ -96,7 +96,13 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
   await TestContainers.exposeHostPorts(8081);
 
   this.selenium = await new GenericContainer('selenium/standalone-chrome')
-    .withBindMount(path.resolve(keeperWalletDir), '/app/keeper-wallet', 'ro')
+    .withBindMounts([
+      {
+        source: path.resolve(keeperWalletDir),
+        target: '/app/keeper-wallet',
+        mode: 'ro',
+      },
+    ])
     .withExposedPorts(
       {
         container: 4444,
