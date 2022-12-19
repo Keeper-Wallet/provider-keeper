@@ -42,24 +42,15 @@ export const App = {
       this.wait
     );
     await this.driver
-      .wait(
-        until.elementLocated(By.css('.app input#first[type=password]')),
-        this.wait
-      )
+      .wait(until.elementLocated(By.css('#first')), this.wait)
       .sendKeys(password);
-    await this.driver
-      .findElement(By.css('.app input#second[type=password]'))
-      .sendKeys(password);
-    await this.driver
-      .findElement(By.css('.app input#termsAccepted[type=checkbox]'))
-      .click();
-    await this.driver
-      .findElement(By.css('.app input#conditionsAccepted[type=checkbox]'))
-      .click();
+    await this.driver.findElement(By.css('#second')).sendKeys(password);
+    await this.driver.findElement(By.css('#termsAccepted')).click();
+    await this.driver.findElement(By.css('#conditionsAccepted')).click();
     await this.driver
       .wait(
         until.elementIsEnabled(
-          this.driver.findElement(By.css('.app button[type=submit]'))
+          this.driver.findElement(By.css('button[type=submit]'))
         ),
         this.wait
       )
@@ -80,7 +71,7 @@ export const App = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, 'menu-settingsIcon')]")
+          By.xpath("//div[contains(@class, 'settingsIcon@menu')]")
         ),
         this.wait
       )
@@ -89,7 +80,7 @@ export const App = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, 'settings-deleteAccounts')]")
+          By.xpath("//div[contains(@class, 'deleteAccounts@settings')]")
         ),
         this.wait
       )
@@ -102,12 +93,6 @@ export const App = {
 
   async open(this: mocha.Context) {
     await this.driver.get(this.extensionUrl);
-    await this.driver.wait(
-      until.elementIsVisible(
-        this.driver.wait(until.elementLocated(By.css('.app')), this.wait)
-      ),
-      this.wait
-    );
   },
 };
 
@@ -217,7 +202,7 @@ export const Settings = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, 'menu-settingsIcon')]")
+          By.xpath("//div[contains(@class, 'settingsIcon@menu')]")
         ),
         this.wait
       )
@@ -241,7 +226,7 @@ export const Settings = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath("//div[contains(@class, 'Select-module-trigger')]")
+          By.xpath("//div[contains(@class, 'trigger@Select-module')]")
         ),
         this.wait
       )
@@ -251,7 +236,7 @@ export const Settings = {
     await this.driver
       .wait(
         until.elementLocated(
-          By.xpath(`//div[contains(@class, 'Select-module-item')][${position}]`)
+          By.xpath(`//div[contains(@class, 'item@Select-module')][${position}]`)
         ),
         this.wait
       )
@@ -275,7 +260,7 @@ export const Network = {
         until.elementIsVisible(
           this.driver.wait(
             until.elementLocated(
-              By.xpath("//i[contains(@class, 'network-networkIcon')]")
+              By.xpath("//i[contains(@class, 'networkIcon@network')]")
             ),
             this.wait
           )
@@ -290,8 +275,8 @@ export const Network = {
           this.driver.wait(
             until.elementLocated(
               By.xpath(
-                `//div[contains(@class, 'network-chooseNetwork')][text()='${network}']` +
-                  "//i[contains(@class, 'network-networkIcon')]"
+                `//div[contains(@class, 'chooseNetwork@network')][text()='${network}']` +
+                  "//i[contains(@class, 'networkIcon@network')]"
               )
             ),
             this.wait
@@ -323,14 +308,16 @@ export const Network = {
     }
 
     await this.driver.wait(
-      until.elementLocated(By.xpath("//div[contains(@class, 'intro-intro')]")),
+      until.elementLocated(
+        By.xpath("//div[contains(@class, 'root@loadingScreen-module')]")
+      ),
       this.wait
     );
 
     await this.driver.wait(
       until.elementLocated(
         By.xpath(
-          `//span[contains(@class, 'network-networkBottom')][text()='${network}']`
+          `//span[contains(@class, 'networkBottom@network')][text()='${network}']`
         )
       ),
       this.wait
