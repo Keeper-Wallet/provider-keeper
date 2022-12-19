@@ -4,15 +4,9 @@ export default defineConfig({
   build: {
     lib: {
       entry: './src/index.ts',
-      name: 'providerKeeper',
+      formats: ['cjs'],
     },
     rollupOptions: {
-      output: [
-        {
-          entryFileNames: 'provider-keeper.cjs.js',
-          format: 'cjs',
-        },
-      ],
       external: [
         /@waves\/ts-types/,
         /@waves\/waveskeeper-types/,
