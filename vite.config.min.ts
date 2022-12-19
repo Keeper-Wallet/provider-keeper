@@ -4,16 +4,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: './src/index.ts',
+      formats: ['umd'],
       name: 'providerKeeper',
-    },
-    rollupOptions: {
-      output: [
-        {
-          entryFileNames: 'provider-keeper.umd.js',
-          format: 'umd',
-          exports: 'named',
-        },
-      ],
     },
     emptyOutDir: false,
   },

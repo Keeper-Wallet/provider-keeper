@@ -11,7 +11,7 @@
     "blockchain"
   ],
   "author": "smelnikov@web3tech.ru",
-  "main": "dist/provider-keeper.cjs.js",
+  "main": "dist/provider-keeper.js",
   "unpkg": "dist/provider-keeper.umd.js",
   "types": "dist/types/index.d.ts",
   "files": [

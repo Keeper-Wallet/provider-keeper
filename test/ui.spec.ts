@@ -46,7 +46,7 @@ import { expect } from 'chai';
 import * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 
-import type { isKeeperInstalled, ProviderKeeper } from '../src/ProviderKeeper';
+import type { isKeeperInstalled, ProviderKeeper } from '../src/index';
 import { Accounts, App, Network, Settings, Windows } from './utils/actions';
 import { ISSUER_SEED, USER_1_SEED, USER_2_SEED } from './utils/constants';
 import { faucet, getNetworkByte } from './utils/nodeInteraction';
