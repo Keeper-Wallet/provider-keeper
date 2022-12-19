@@ -70,7 +70,7 @@
     "chai": "^4.3.6",
     "chromedriver": "^108.0.0",
     "codecov": "^3.8.3",
-    "eslint": "8.29.0",
+    "eslint": "8.30.0",
     "http-server": "^14.1.1",
     "mocha": "^10.0.0",
     "parse-json-bignumber": "^1.0.0",
