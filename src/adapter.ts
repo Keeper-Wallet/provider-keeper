@@ -1,4 +1,4 @@
-import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
+import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives.js';
 import create from '@waves/parse-json-bignumber';
 import {
   SignedTx,
