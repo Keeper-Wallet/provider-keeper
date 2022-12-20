@@ -1,6 +1,6 @@
 import { base58 } from '@scure/base';
 import create from '@waves/parse-json-bignumber';
-import {
+import type {
   SignedTx,
   SignerAliasTx,
   SignerBurnTx,
