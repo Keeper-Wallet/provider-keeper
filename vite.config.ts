@@ -4,8 +4,10 @@ export default defineConfig({
   build: {
     lib: {
       entry: './src/index.ts',
-      formats: ['cjs'],
+      formats: ['es'],
+      fileName: 'index',
     },
+    sourcemap: true,
     rollupOptions: {
       external: [
         /@waves\/ts-types/,

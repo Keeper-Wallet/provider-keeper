@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as httpServer from 'http-server';
 import * as mocha from 'mocha';
 import * as path from 'path';
 import { Builder, By, until, WebDriver } from 'selenium-webdriver';
@@ -10,8 +9,7 @@ import {
   StartedTestContainer,
   TestContainers,
 } from 'testcontainers';
-
-import * as packageJson from '../../package.json';
+import { createServer, ViteDevServer } from 'vite';
 
 declare module 'mocha' {
   interface Context {
@@ -27,7 +25,7 @@ declare module 'mocha' {
 interface GlobalFixturesContext {
   selenium: StartedTestContainer;
   node: StartedTestContainer;
-  testApp: ReturnType<typeof httpServer.createServer>;
+  testApp: ViteDevServer;
 }
 
 export async function mochaGlobalSetup(this: GlobalFixturesContext) {
@@ -38,15 +36,6 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
     throw new Error(
       `
       You should build or download latest Keeper Wallet for e2e tests.
-      See more at .github/workflows/tests.yml
-      `
-    );
-  }
-
-  if (!fs.existsSync(path.resolve(rootDir, packageJson.unpkg))) {
-    throw new Error(
-      `
-      You should build provider first.
       See more at .github/workflows/tests.yml
       `
     );
@@ -90,8 +79,8 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
 
   await new Promise(healthCheck);
 
-  this.testApp = httpServer.createServer({ root: rootDir });
-  this.testApp.listen(8081);
+  this.testApp = await createServer({ server: { port: 8081 } });
+  await this.testApp.listen();
 
   await TestContainers.exposeHostPorts(8081);
 
@@ -120,7 +109,7 @@ export async function mochaGlobalSetup(this: GlobalFixturesContext) {
 export async function mochaGlobalTeardown(this: GlobalFixturesContext) {
   await this.selenium.stop();
   await this.node.stop();
-  this.testApp.close();
+  await this.testApp.close();
 }
 
 export const mochaHooks = () => ({

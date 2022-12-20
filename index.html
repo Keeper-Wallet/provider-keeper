@@ -4,16 +4,17 @@
     <meta charset="UTF-8" />
     <title>ProviderKeeper</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="node_modules/@waves/signer/dist/signer.min.js"></script>
-    <script src="dist/provider-keeper.umd.js"></script>
-  </head>
-  <body style="height: 100%">
-    <script>
-      window.Signer = window.signer.Signer;
-      window.ProviderKeeper = window.providerKeeper.ProviderKeeper;
-      window.isKeeperInstalled = window.providerKeeper.isKeeperInstalled;
+    <script type="module">
+      import { Signer } from '@waves/signer';
+      import { ProviderKeeper, isKeeperInstalled } from './src';
+
+      window.Signer = Signer;
+      window.ProviderKeeper = ProviderKeeper;
+      window.isKeeperInstalled = isKeeperInstalled;
       window.result = Promise.resolve();
     </script>
+  </head>
+  <body style="height: 100%">
     <main
       style="
         display: flex;

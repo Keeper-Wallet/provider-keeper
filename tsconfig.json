@@ -2,22 +2,18 @@
   "include": ["src"],
   "compilerOptions": {
     "declaration": true,
-    "declarationDir": "./dist/types",
+    "declarationMap": true,
     "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "lib": ["esnext", "dom"],
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "noErrorTruncation": true,
     "outDir": "./dist",
     "pretty": true,
     "resolveJsonModule": true,
-    "sourceMap": false,
     "strict": true,
     "target": "esnext",
     "types": ["@waves/waveskeeper-types", "long"]
-  },
-  "ts-node": {
-    "transpileOnly": true
   }
 }
