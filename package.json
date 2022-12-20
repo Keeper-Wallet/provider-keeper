@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@waves/marshall": "^0.15.0-beta.1",
+    "@waves/parse-json-bignumber": "^1.0.3",
     "@waves/ts-types": "^1.0.0",
     "@waves/waveskeeper-types": "^0.2.7",
     "typed-ts-events": "^1.2.1"
@@ -80,7 +81,6 @@
     "esbuild-register": "^3.4.2",
     "eslint": "8.30.0",
     "mocha": "^10.0.0",
-    "parse-json-bignumber": "^1.0.0",
     "prettier": "^2.7.1",
     "selenium-webdriver": "^4.0.0-rc-1",
     "semantic-release": "^19.0.5",
