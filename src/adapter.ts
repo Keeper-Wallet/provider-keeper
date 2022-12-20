@@ -1,4 +1,4 @@
-import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives.js';
+import { base58 } from '@scure/base';
 import create from '@waves/parse-json-bignumber';
 import {
   SignedTx,
@@ -76,7 +76,7 @@ function transferAdapter(tx: SignerTransferTx): WavesKeeper.TTransferTxData {
     amount: moneyFactory(amount, assetId),
     recipient: addressFactory(recipient),
     ...(attachment
-      ? { attachment: Array.from(BASE58_STRING(attachment)) }
+      ? { attachment: Array.from(base58.decode(attachment)) }
       : {}),
     ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
   };
@@ -146,7 +146,7 @@ function massTransferAdapter(
       amount: transfer.amount,
     })),
     ...(attachment
-      ? { attachment: Array.from(BASE58_STRING(attachment)) }
+      ? { attachment: Array.from(base58.decode(attachment)) }
       : {}),
   };
   return { type: TRANSACTION_TYPE.MASS_TRANSFER, data };
