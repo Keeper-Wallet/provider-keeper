@@ -4175,6 +4175,11 @@ minizlib@^2.1.1, minizlib@^2.1.2:
     minipass "^3.0.0"
     yallist "^4.0.0"
 
+mitt@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.0.tgz#69ef9bd5c80ff6f57473e8d89326d01c414be0bd"
+  integrity sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==
+
 mkdirp-classic@^0.5.2:
   version "0.5.3"
   resolved "https://registry.yarnpkg.com/mkdirp-classic/-/mkdirp-classic-0.5.3.tgz#fa10c9115cc6d8865be221ba47ee9bed78601113"
@@ -5975,7 +5980,7 @@ type-fest@^1.0.2:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-1.4.0.tgz#e9fb813fe3bf1744ec359d55d1affefa76f14be1"
   integrity sha512-yGSza74xk0UG8k+pLh5oeoYirvIiWo5t0/o3zHHAO2tRDiZcxWP7fywNlXhqb6/r6sWvwi+RsyQMWhVLe4BVuA==
 
-typed-ts-events@^1.1.1, typed-ts-events@^1.2.1:
+typed-ts-events@^1.1.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/typed-ts-events/-/typed-ts-events-1.2.1.tgz#46faea14f937cbe3d0c5158d8ef4cc60497fdbbe"
   integrity sha512-+Fy9cqWA/Kv1QX0k6m5ZflGcG2jQSZQGr+jLGXYUM22yihhkHs243LEXvY4cs54lAVyj5gokm0TbgkmL4qDsTg==

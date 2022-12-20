@@ -8,7 +8,7 @@ import {
   TypedData,
   UserData,
 } from '@waves/signer';
-import { EventEmitter } from 'typed-ts-events';
+import mitt from 'mitt';
 
 import { keeperTxFactory, signerTxFactory } from './adapter';
 
@@ -21,8 +21,7 @@ export class ProviderKeeper implements Provider {
     NETWORK_BYTE: 'W'.charCodeAt(0),
     NODE_URL: 'https://nodes.wavesnodes.com',
   };
-  private readonly _emitter: EventEmitter<AuthEvents> =
-    new EventEmitter<AuthEvents>();
+  private readonly _emitter = mitt<AuthEvents>();
 
   constructor() {
     this._apiPromise = isKeeperInstalled().then(isInstalled => {
@@ -53,7 +52,12 @@ export class ProviderKeeper implements Provider {
     event: EVENT,
     handler: Handler<AuthEvents[EVENT]>
   ): Provider {
-    this._emitter.once(event, handler);
+    const wrappedHandler: Handler<AuthEvents[EVENT]> = (...args) => {
+      handler(...args);
+      this._emitter.off(event, wrappedHandler);
+    };
+
+    this._emitter.on(event, wrappedHandler);
 
     return this;
   }
@@ -85,14 +89,14 @@ export class ProviderKeeper implements Provider {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           publicKey: state.account!.publicKey,
         };
-        this._emitter.trigger('login', this.user);
+        this._emitter.emit('login', this.user);
         return this.user;
       });
   }
 
   public logout(): Promise<void> {
     this.user = null;
-    this._emitter.trigger('logout', void 0);
+    this._emitter.emit('logout', void 0);
     return Promise.resolve();
   }
 
