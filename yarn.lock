@@ -1152,7 +1152,7 @@
     node-fetch "^2.6.7"
     typed-ts-events "^1.1.1"
 
-"@waves/parse-json-bignumber@^1.0.1":
+"@waves/parse-json-bignumber@^1.0.1", "@waves/parse-json-bignumber@^1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@waves/parse-json-bignumber/-/parse-json-bignumber-1.0.3.tgz#9d68519abef080019e86433f3840996ebaa48eb3"
   integrity sha512-zBHIQUjjMYMQXNQcwJwzNShUZnoTM6JfVJDwa0eDGUVk+JAKVGiXxv/k29Ng9TsIDi97hwVravlPPwfZcy4XXQ==
@@ -4768,11 +4768,6 @@ parse-conflict-json@^2.0.1, parse-conflict-json@^2.0.2:
     json-parse-even-better-errors "^2.3.1"
     just-diff "^5.0.1"
     just-diff-apply "^5.2.0"
-
-parse-json-bignumber@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/parse-json-bignumber/-/parse-json-bignumber-1.0.0.tgz#a3701586c97192d27b45178e9f4c3b7f6f202c0b"
-  integrity sha512-iUBAXzuCH4NQG5hTe/6nCCe1+u4HBF2yCrrbtOjUAk1qaEVaEOFaR/TXoZuG1FhNWmIIDOrw03V9PQ+/TBpIYA==
 
 parse-json@^4.0.0:
   version "4.0.0"

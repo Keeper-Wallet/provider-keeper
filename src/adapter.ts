@@ -1,4 +1,5 @@
 import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
+import create from '@waves/parse-json-bignumber';
 import {
   SignedTx,
   SignerAliasTx,
@@ -17,7 +18,6 @@ import {
   SignerTx,
 } from '@waves/signer';
 import { TRANSACTION_TYPE } from '@waves/ts-types';
-import create from 'parse-json-bignumber';
 
 const { parse } = create();
 
