@@ -10,10 +10,12 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       external: [
-        /@waves\/ts-types/,
-        /@waves\/waveskeeper-types/,
-        /@waves\/marshall/,
-        /typed-ts-events/,
+        '@scure/base',
+        '@waves/parse-json-bignumber',
+        '@waves/signer',
+        '@waves/ts-types',
+        '@waves/waveskeeper-types',
+        'mitt',
       ],
     },
     minify: false,
