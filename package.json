@@ -78,7 +78,7 @@
     "@waves/waves-transactions": "^4.2.10",
     "c8": "^7.9.0",
     "chai": "^4.3.6",
-    "chromedriver": "^108.0.0",
+    "chromedriver": "^109.0.0",
     "codecov": "^3.8.3",
     "esbuild": "^0.16.10",
     "esbuild-register": "^3.4.2",
