@@ -35,7 +35,7 @@ function moneyFactory(
 ): WavesKeeper.IMoneyCoins {
   return {
     coins: amount,
-    assetId: assetId ?? 'WAVES',
+    assetId: assetId || 'WAVES',
   };
 }
 
@@ -60,10 +60,10 @@ function issueAdapter(tx: SignerIssueTx): WavesKeeper.TIssueTxData {
   const data: WavesKeeper.IIssueTx = {
     ...defaultsFactory(tx),
     name,
-    description: description ?? '',
+    description: description || '',
     quantity,
     precision: decimals,
-    reissuable: reissuable ?? false,
+    reissuable: reissuable || false,
     ...(script ? { script } : {}),
   };
   return { type: TRANSACTION_TYPE.ISSUE, data };
@@ -176,7 +176,7 @@ function sponsorshipAdapter(
   const { assetId, minSponsoredAssetFee } = tx;
   const data: WavesKeeper.ISponsoredFeeTx = {
     ...defaultsFactory(tx),
-    minSponsoredAssetFee: moneyFactory(minSponsoredAssetFee ?? 0, assetId),
+    minSponsoredAssetFee: moneyFactory(minSponsoredAssetFee || 0, assetId),
   };
   return { type: TRANSACTION_TYPE.SPONSORSHIP, data };
 }
@@ -200,7 +200,7 @@ function invokeScriptAdapter(
   const data: WavesKeeper.IScriptInvocationTx = {
     ...defaultsFactory(tx),
     dApp: addressFactory(dApp),
-    payment: (payment ?? []) as WavesKeeper.TMoney[],
+    payment: (payment || []) as WavesKeeper.TMoney[],
     ...(call ? { call: call as WavesKeeper.ICall } : {}),
     ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
   };
