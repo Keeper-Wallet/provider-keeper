@@ -68,7 +68,9 @@ declare global {
 type WithAssetId = { assetId: string };
 type Account = { address: string; publicKey: string };
 
-describe('Signer integration', function () {
+// tests are disabled because they will be moved and maintained
+// in the Keeper-Wallet/Keeper-Wallet-Extension repo
+describe.skip('Signer integration', function () {
   this.timeout(5 * m);
 
   let issuer: Account, user1: Account, user2: Account;
