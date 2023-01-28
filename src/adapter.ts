@@ -40,7 +40,7 @@ function moneyFactory(
 }
 
 function defaultsFactory(tx: SignerTx): WavesKeeper.ITransactionBase {
-  const { fee } = tx;
+  const { fee, senderPublicKey, timestamp } = tx;
   let feeAssetId;
 
   if (
@@ -52,6 +52,8 @@ function defaultsFactory(tx: SignerTx): WavesKeeper.ITransactionBase {
 
   return {
     ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
+    ...(senderPublicKey ? { senderPublicKey } : {}),
+    ...(timestamp ? { timestamp } : {}),
   };
 }
 
