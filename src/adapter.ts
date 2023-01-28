@@ -31,7 +31,7 @@ function addressFactory(address: string): string {
 
 function moneyFactory(
   amount: number | string,
-  assetId: string | null = 'WAVES'
+  assetId: string | null | undefined = 'WAVES'
 ): WavesKeeper.IMoneyCoins {
   return {
     coins: amount,
@@ -72,7 +72,7 @@ function issueAdapter(tx: SignerIssueTx): WavesKeeper.TIssueTxData {
 }
 
 function transferAdapter(tx: SignerTransferTx): WavesKeeper.TTransferTxData {
-  const { amount, assetId, fee, feeAssetId, recipient, attachment } = tx;
+  const { amount, assetId, recipient, attachment } = tx;
   const data: WavesKeeper.ITransferTx = {
     ...defaultsFactory(tx),
     amount: moneyFactory(amount, assetId),
@@ -80,7 +80,6 @@ function transferAdapter(tx: SignerTransferTx): WavesKeeper.TTransferTxData {
     ...(attachment
       ? { attachment: Array.from(base58.decode(attachment)) }
       : {}),
-    ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
   };
   return { type: TRANSACTION_TYPE.TRANSFER, data };
 }
@@ -198,13 +197,12 @@ function setAssetScriptAdapter(
 function invokeScriptAdapter(
   tx: SignerInvokeTx
 ): WavesKeeper.TScriptInvocationTxData {
-  const { dApp, fee, feeAssetId, payment, call } = tx;
+  const { dApp, payment, call } = tx;
   const data: WavesKeeper.IScriptInvocationTx = {
     ...defaultsFactory(tx),
     dApp: addressFactory(dApp),
     payment: (payment || []) as WavesKeeper.TMoney[],
     ...(call ? { call: call as WavesKeeper.ICall } : {}),
-    ...(fee ? { fee: moneyFactory(fee, feeAssetId) } : {}),
   };
   return { type: TRANSACTION_TYPE.INVOKE_SCRIPT, data };
 }
