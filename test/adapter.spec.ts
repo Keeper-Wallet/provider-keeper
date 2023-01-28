@@ -39,7 +39,7 @@ import {
 
 describe('Adapter', () => {
   describe('converting tx from Signer to Keeper', () => {
-    function feeShouldBeValid(tx: SignerTx) {
+    function testTransactionDefaultFields(tx: SignerTx) {
       const amount = 123456790;
       const assetId = '7sP5abE9nGRwZxkgaEXgkQDZ3ERBcm9PLHixaUE5SYoT';
 
@@ -66,6 +66,32 @@ describe('Adapter', () => {
             assetId: tx.feeAssetId,
           });
         }
+      });
+
+      it('senderPublicKey is empty', () => {
+        expect(
+          keeperTxFactory({ ...tx, senderPublicKey: undefined }).data
+            .senderPublicKey
+        ).to.be.undefined;
+      });
+
+      it('senderPublicKey is passed as is', () => {
+        const senderPublicKey = 'ZCFgn7rnzKNJSxFGqN6Gx6RWJxdPCjBUHuJjfq1FH1L';
+        expect(
+          keeperTxFactory({ ...tx, senderPublicKey }).data.senderPublicKey
+        ).to.be.equal(senderPublicKey);
+      });
+
+      it('timestamp is empty', () => {
+        expect(keeperTxFactory({ ...tx, timestamp: undefined }).data.timestamp)
+          .to.be.undefined;
+      });
+
+      it('timestamp is passed as is', () => {
+        const timestamp = 1674878241295;
+        expect(
+          keeperTxFactory({ ...tx, timestamp }).data.timestamp
+        ).to.be.equal(timestamp);
       });
     }
 
@@ -98,7 +124,7 @@ describe('Adapter', () => {
         expect(txIssueOptionals.data.script).to.be.undefined;
       });
 
-      feeShouldBeValid(txIssue);
+      testTransactionDefaultFields(txIssue);
     });
 
     describe('transfer', () => {
@@ -126,7 +152,7 @@ describe('Adapter', () => {
         expect(keeperTxFactory(txTransfer).data.attachment).to.be.undefined;
       });
 
-      feeShouldBeValid(txTransfer);
+      testTransactionDefaultFields(txTransfer);
     });
 
     describe('reissue', () => {
@@ -143,7 +169,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txReissue);
+      testTransactionDefaultFields(txReissue);
     });
 
     describe('burn', () => {
@@ -159,7 +185,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txBurn);
+      testTransactionDefaultFields(txBurn);
     });
 
     describe('lease', () => {
@@ -175,7 +201,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txLease);
+      testTransactionDefaultFields(txLease);
     });
 
     describe('lease cancel', () => {
@@ -190,7 +216,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txLeaseCancel);
+      testTransactionDefaultFields(txLeaseCancel);
     });
 
     describe('alias', () => {
@@ -205,7 +231,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txAlias);
+      testTransactionDefaultFields(txAlias);
     });
 
     describe('mass transfer', () => {
@@ -233,7 +259,7 @@ describe('Adapter', () => {
         ).to.be.equal('WAVES');
       });
 
-      feeShouldBeValid(txMassTransfer);
+      testTransactionDefaultFields(txMassTransfer);
     });
 
     describe('data', () => {
@@ -248,7 +274,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txData);
+      testTransactionDefaultFields(txData);
     });
 
     describe('set script', () => {
@@ -263,7 +289,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txSetScript);
+      testTransactionDefaultFields(txSetScript);
     });
 
     describe('sponsorship', () => {
@@ -281,7 +307,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txSponsorship);
+      testTransactionDefaultFields(txSponsorship);
     });
 
     describe('set asset script', () => {
@@ -297,7 +323,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txSetAssetScript);
+      testTransactionDefaultFields(txSetAssetScript);
     });
 
     describe('invoke script', () => {
@@ -317,7 +343,7 @@ describe('Adapter', () => {
         });
       });
 
-      feeShouldBeValid(txInvokeScript);
+      testTransactionDefaultFields(txInvokeScript);
     });
   });
 
