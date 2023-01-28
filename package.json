@@ -49,8 +49,7 @@
       "ts"
     ],
     "require": [
-      "esbuild-register",
-      "test/utils/hooks.ts"
+      "esbuild-register"
     ]
   },
   "dependencies": {
