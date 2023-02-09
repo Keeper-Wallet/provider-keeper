@@ -11,7 +11,7 @@
     "waveskeeper",
     "blockchain"
   ],
-  "author": "smelnikov@web3tech.ru",
+  "author": "smelnikov@uniqsoft.ae",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -40,18 +40,6 @@
     "prettier": "prettier . --check",
     "typecheck": "tsc -p tsconfig.test.json"
   },
-  "mocha": {
-    "watchFiles": [
-      "src",
-      "test"
-    ],
-    "extension": [
-      "ts"
-    ],
-    "require": [
-      "esbuild-register"
-    ]
-  },
   "dependencies": {
     "@scure/base": "^1.1.1",
     "@waves/parse-json-bignumber": "^1.0.3",
@@ -68,11 +56,8 @@
     "@faergeek/eslint-config": "^5.0.147",
     "@size-limit/file": "^8.1.0",
     "@types/node": "^18.7.13",
+    "@vitest/coverage-c8": "^0.28.4",
     "@waves/signer": "^1.1.0",
-    "c8": "^7.9.0",
-    "codecov": "^3.8.3",
-    "esbuild": "^0.17.0",
-    "esbuild-register": "^3.4.2",
     "eslint": "8.33.0",
     "prettier": "^2.7.1",
     "rimraf": "^4.0.0",

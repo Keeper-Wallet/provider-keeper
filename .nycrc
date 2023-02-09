@@ -1,9 +1,0 @@
-{
-  "cache": false,
-  "check-coverage": false,
-  "extension": [".ts"],
-  "include": ["src/**/*.ts"],
-  "reporter": ["text"],
-  "all": true,
-  "instrument": true
-}
