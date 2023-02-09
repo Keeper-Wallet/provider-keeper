@@ -1,4 +1,4 @@
-import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
+import { base58 } from '@scure/base';
 import {
   type SignedTx,
   type SignerAliasTx,
@@ -137,7 +137,7 @@ describe('Adapter', () => {
             recipient: txTransfer.recipient,
             amount: { coins: txTransfer.amount, assetId: txTransfer.assetId },
             attachment: Array.from(
-              BASE58_STRING(txTransfer.attachment as string)
+              base58.decode(txTransfer.attachment as string)
             ),
           },
         });
@@ -244,7 +244,7 @@ describe('Adapter', () => {
             totalAmount: { coins: 0, assetId: txMassTransfer.assetId },
             transfers: txMassTransfer.transfers,
             attachment: Array.from(
-              BASE58_STRING(txMassTransfer.attachment as string)
+              base58.decode(txMassTransfer.attachment as string)
             ),
           },
         });
