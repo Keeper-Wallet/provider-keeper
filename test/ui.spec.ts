@@ -1,37 +1,40 @@
 import {
-  AliasArgs,
-  BurnArgs,
-  CancelLeaseArgs,
-  DataArgs,
-  InvokeArgs,
-  LeaseArgs,
-  MassTransferArgs,
-  ReissueArgs,
-  SetAssetScriptArgs,
-  SetScriptArgs,
-  SignedTx,
-  Signer,
-  SignerAliasTx,
-  SignerBurnTx,
-  SignerCancelLeaseTx,
-  SignerDataTx,
-  SignerInvokeTx,
-  SignerIssueTx,
-  SignerLeaseTx,
-  SignerMassTransferTx,
-  SignerReissueTx,
-  SignerSetAssetScriptTx,
-  SignerSetScriptTx,
-  SignerSponsorshipTx,
-  SignerTransferTx,
-  SponsorshipArgs,
-  TransferArgs,
-  TypedData,
-  UserData,
+  type AliasArgs,
+  type BurnArgs,
+  type CancelLeaseArgs,
+  type DataArgs,
+  type InvokeArgs,
+  type LeaseArgs,
+  type MassTransferArgs,
+  type ReissueArgs,
+  type SetAssetScriptArgs,
+  type SetScriptArgs,
+  type SignedTx,
+  type Signer,
+  type SignerAliasTx,
+  type SignerBurnTx,
+  type SignerCancelLeaseTx,
+  type SignerDataTx,
+  type SignerInvokeTx,
+  type SignerIssueTx,
+  type SignerLeaseTx,
+  type SignerMassTransferTx,
+  type SignerReissueTx,
+  type SignerSetAssetScriptTx,
+  type SignerSetScriptTx,
+  type SignerSponsorshipTx,
+  type SignerTransferTx,
+  type SponsorshipArgs,
+  type TransferArgs,
+  type TypedData,
+  type UserData,
 } from '@waves/signer';
 import { ERRORS } from '@waves/signer/dist/cjs/SignerError';
-import { BroadcastedTx, IssueArgs } from '@waves/signer/dist/cjs/types';
-import { SignerError } from '@waves/signer/dist/es/SignerError';
+import {
+  type BroadcastedTx,
+  type IssueArgs,
+} from '@waves/signer/dist/cjs/types';
+import { type SignerError } from '@waves/signer/dist/es/SignerError';
 import {
   address,
   base58Encode,
@@ -41,9 +44,9 @@ import {
   verifySignature,
 } from '@waves/ts-lib-crypto';
 import { makeTxBytes, serializeCustomData } from '@waves/waves-transactions';
-import { ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
+import { type ICustomDataV2 } from '@waves/waves-transactions/src/requests/custom-data';
 import { expect } from 'chai';
-import * as mocha from 'mocha';
+import type * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 
 import type { isKeeperInstalled, ProviderKeeper } from '../src/index';

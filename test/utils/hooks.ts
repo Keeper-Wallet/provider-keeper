@@ -1,15 +1,15 @@
 import * as fs from 'fs';
-import * as mocha from 'mocha';
+import type * as mocha from 'mocha';
 import * as path from 'path';
-import { Builder, By, until, WebDriver } from 'selenium-webdriver';
+import { Builder, By, until, type WebDriver } from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import {
   GenericContainer,
   Network,
-  StartedTestContainer,
+  type StartedTestContainer,
   TestContainers,
 } from 'testcontainers';
-import { createServer, ViteDevServer } from 'vite';
+import { createServer, type ViteDevServer } from 'vite';
 
 declare module 'mocha' {
   interface Context {

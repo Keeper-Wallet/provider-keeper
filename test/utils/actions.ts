@@ -4,7 +4,7 @@
  * NOTE: Each of them needs to bind `this` from test.
  */
 import { expect } from 'chai';
-import * as mocha from 'mocha';
+import type * as mocha from 'mocha';
 import { By, until } from 'selenium-webdriver';
 
 import { DEFAULT_PASSWORD } from './constants';

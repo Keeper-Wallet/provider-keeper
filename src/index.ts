@@ -1,12 +1,12 @@
 import {
-  AuthEvents,
-  ConnectOptions,
-  Handler,
-  Provider,
-  SignedTx,
-  SignerTx,
-  TypedData,
-  UserData,
+  type AuthEvents,
+  type ConnectOptions,
+  type Handler,
+  type Provider,
+  type SignedTx,
+  type SignerTx,
+  type TypedData,
+  type UserData,
 } from '@waves/signer';
 import mitt from 'mitt';
 

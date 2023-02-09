@@ -1,4 +1,4 @@
-import { SetScriptArgs } from '@waves/signer';
+import { type SetScriptArgs } from '@waves/signer';
 
 // script source see `test/utils/setScript.ride`
 export const SET_SCRIPT_COMPILED: SetScriptArgs = {

@@ -1,23 +1,23 @@
 import { BASE58_STRING } from '@waves/marshall/dist/serializePrimitives';
 import {
-  SignedTx,
-  SignerAliasTx,
-  SignerBurnTx,
-  SignerCancelLeaseTx,
-  SignerDataTx,
-  SignerInvokeTx,
-  SignerIssueTx,
-  SignerLeaseTx,
-  SignerMassTransferTx,
-  SignerReissueTx,
-  SignerSetAssetScriptTx,
-  SignerSetScriptTx,
-  SignerSponsorshipTx,
-  SignerTransferTx,
-  SignerTx,
-  SignerTxToSignedTx,
+  type SignedTx,
+  type SignerAliasTx,
+  type SignerBurnTx,
+  type SignerCancelLeaseTx,
+  type SignerDataTx,
+  type SignerInvokeTx,
+  type SignerIssueTx,
+  type SignerLeaseTx,
+  type SignerMassTransferTx,
+  type SignerReissueTx,
+  type SignerSetAssetScriptTx,
+  type SignerSetScriptTx,
+  type SignerSponsorshipTx,
+  type SignerTransferTx,
+  type SignerTx,
+  type SignerTxToSignedTx,
 } from '@waves/signer';
-import { TRANSACTION_TYPE, TransactionMap } from '@waves/ts-types';
+import { TRANSACTION_TYPE, type TransactionMap } from '@waves/ts-types';
 import { expect } from 'chai';
 
 import { keeperTxFactory, signerTxFactory } from '../src/adapter';
