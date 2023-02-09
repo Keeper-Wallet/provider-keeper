@@ -18,7 +18,7 @@ import {
   type SignerTxToSignedTx,
 } from '@waves/signer';
 import { TRANSACTION_TYPE, type TransactionMap } from '@waves/ts-types';
-import { expect } from 'chai';
+import { describe, expect, it } from 'vitest';
 
 import { keeperTxFactory, signerTxFactory } from '../src/adapter';
 import {
@@ -44,13 +44,13 @@ describe('Adapter', () => {
       const assetId = '7sP5abE9nGRwZxkgaEXgkQDZ3ERBcm9PLHixaUE5SYoT';
 
       it('fee is empty', () => {
-        expect(keeperTxFactory(tx).data.fee).to.be.undefined;
+        expect(keeperTxFactory(tx).data.fee).toBeUndefined();
       });
 
       it('fee is money-like', () => {
         tx.fee = amount; // now tx with fee in WAVES
 
-        expect(keeperTxFactory(tx).data.fee).to.be.deep.equal({
+        expect(keeperTxFactory(tx).data.fee).toEqual({
           coins: tx.fee,
           assetId: 'WAVES',
         });
@@ -61,7 +61,7 @@ describe('Adapter', () => {
         ) {
           tx.feeAssetId = assetId; // tx with fee in asset
 
-          expect(keeperTxFactory(tx).data.fee).to.be.deep.equal({
+          expect(keeperTxFactory(tx).data.fee).toEqual({
             coins: tx.fee,
             assetId: tx.feeAssetId,
           });
@@ -72,26 +72,27 @@ describe('Adapter', () => {
         expect(
           keeperTxFactory({ ...tx, senderPublicKey: undefined }).data
             .senderPublicKey
-        ).to.be.undefined;
+        ).toBeUndefined();
       });
 
       it('senderPublicKey is passed as is', () => {
         const senderPublicKey = 'ZCFgn7rnzKNJSxFGqN6Gx6RWJxdPCjBUHuJjfq1FH1L';
         expect(
           keeperTxFactory({ ...tx, senderPublicKey }).data.senderPublicKey
-        ).to.be.equal(senderPublicKey);
+        ).toBe(senderPublicKey);
       });
 
       it('timestamp is empty', () => {
-        expect(keeperTxFactory({ ...tx, timestamp: undefined }).data.timestamp)
-          .to.be.undefined;
+        expect(
+          keeperTxFactory({ ...tx, timestamp: undefined }).data.timestamp
+        ).toBeUndefined();
       });
 
       it('timestamp is passed as is', () => {
         const timestamp = 1674878241295;
-        expect(
-          keeperTxFactory({ ...tx, timestamp }).data.timestamp
-        ).to.be.equal(timestamp);
+        expect(keeperTxFactory({ ...tx, timestamp }).data.timestamp).toBe(
+          timestamp
+        );
       });
     }
 
@@ -99,7 +100,7 @@ describe('Adapter', () => {
       const txIssue: SignerIssueTx = { ...ISSUE };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txIssue)).to.be.deep.equal({
+        expect(keeperTxFactory(txIssue)).toEqual({
           type: txIssue.type,
           data: {
             name: txIssue.name,
@@ -119,9 +120,9 @@ describe('Adapter', () => {
 
         const txIssueOptionals = keeperTxFactory(txIssue);
 
-        expect(txIssueOptionals.data.description).to.be.equal('');
-        expect(txIssueOptionals.data.reissuable).to.be.equal(false);
-        expect(txIssueOptionals.data.script).to.be.undefined;
+        expect(txIssueOptionals.data.description).toBe('');
+        expect(txIssueOptionals.data.reissuable).toBe(false);
+        expect(txIssueOptionals.data.script).toBeUndefined();
       });
 
       testTransactionDefaultFields(txIssue);
@@ -131,7 +132,7 @@ describe('Adapter', () => {
       const txTransfer: SignerTransferTx = { ...TRANSFER };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txTransfer)).to.be.deep.equal({
+        expect(keeperTxFactory(txTransfer)).toEqual({
           type: txTransfer.type,
           data: {
             recipient: txTransfer.recipient,
@@ -145,11 +146,9 @@ describe('Adapter', () => {
 
       it('optional fields are valid', () => {
         delete txTransfer.assetId;
-        expect(keeperTxFactory(txTransfer).data.amount.assetId).to.be.equal(
-          'WAVES'
-        );
+        expect(keeperTxFactory(txTransfer).data.amount.assetId).toBe('WAVES');
         delete txTransfer.attachment;
-        expect(keeperTxFactory(txTransfer).data.attachment).to.be.undefined;
+        expect(keeperTxFactory(txTransfer).data.attachment).toBeUndefined();
       });
 
       testTransactionDefaultFields(txTransfer);
@@ -159,7 +158,7 @@ describe('Adapter', () => {
       const txReissue: SignerReissueTx = { ...REISSUE };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txReissue)).to.be.deep.equal({
+        expect(keeperTxFactory(txReissue)).toEqual({
           type: txReissue.type,
           data: {
             assetId: txReissue.assetId,
@@ -176,7 +175,7 @@ describe('Adapter', () => {
       const txBurn: SignerBurnTx = { ...BURN };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txBurn)).to.be.deep.equal({
+        expect(keeperTxFactory(txBurn)).toEqual({
           type: txBurn.type,
           data: {
             assetId: txBurn.assetId,
@@ -192,7 +191,7 @@ describe('Adapter', () => {
       const txLease: SignerLeaseTx = { ...LEASE };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txLease)).to.be.deep.equal({
+        expect(keeperTxFactory(txLease)).toEqual({
           type: txLease.type,
           data: {
             recipient: txLease.recipient,
@@ -208,7 +207,7 @@ describe('Adapter', () => {
       const txLeaseCancel: SignerCancelLeaseTx = { ...CANCEL_LEASE };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txLeaseCancel)).to.be.deep.equal({
+        expect(keeperTxFactory(txLeaseCancel)).toEqual({
           type: txLeaseCancel.type,
           data: {
             leaseId: txLeaseCancel.leaseId,
@@ -223,7 +222,7 @@ describe('Adapter', () => {
       const txAlias: SignerAliasTx = { ...ALIAS };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txAlias)).to.be.deep.equal({
+        expect(keeperTxFactory(txAlias)).toEqual({
           type: txAlias.type,
           data: {
             alias: txAlias.alias,
@@ -238,7 +237,7 @@ describe('Adapter', () => {
       const txMassTransfer: SignerMassTransferTx = { ...MASS_TRANSFER };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txMassTransfer)).to.be.deep.equal({
+        expect(keeperTxFactory(txMassTransfer)).toEqual({
           type: txMassTransfer.type,
           data: {
             totalAmount: { coins: 0, assetId: txMassTransfer.assetId },
@@ -252,11 +251,11 @@ describe('Adapter', () => {
 
       it('optional fields are valid', () => {
         txMassTransfer.attachment = null;
-        expect(keeperTxFactory(txMassTransfer).data.attachment).to.be.undefined;
+        expect(keeperTxFactory(txMassTransfer).data.attachment).toBeUndefined();
         delete txMassTransfer.assetId;
-        expect(
-          keeperTxFactory(txMassTransfer).data.totalAmount.assetId
-        ).to.be.equal('WAVES');
+        expect(keeperTxFactory(txMassTransfer).data.totalAmount.assetId).toBe(
+          'WAVES'
+        );
       });
 
       testTransactionDefaultFields(txMassTransfer);
@@ -266,7 +265,7 @@ describe('Adapter', () => {
       const txData: SignerDataTx = { ...DATA };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txData)).to.be.deep.equal({
+        expect(keeperTxFactory(txData)).toEqual({
           type: txData.type,
           data: {
             data: txData.data,
@@ -281,7 +280,7 @@ describe('Adapter', () => {
       const txSetScript: SignerSetScriptTx = { ...SET_SCRIPT };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txSetScript)).to.be.deep.equal({
+        expect(keeperTxFactory(txSetScript)).toEqual({
           type: txSetScript.type,
           data: {
             script: txSetScript.script,
@@ -296,7 +295,7 @@ describe('Adapter', () => {
       const txSponsorship: SignerSponsorshipTx = { ...SPONSORSHIP };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txSponsorship)).to.be.deep.equal({
+        expect(keeperTxFactory(txSponsorship)).toEqual({
           type: txSponsorship.type,
           data: {
             minSponsoredAssetFee: {
@@ -314,7 +313,7 @@ describe('Adapter', () => {
       const txSetAssetScript: SignerSetAssetScriptTx = { ...SET_ASSET_SCRIPT };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txSetAssetScript)).to.be.deep.equal({
+        expect(keeperTxFactory(txSetAssetScript)).toEqual({
           type: txSetAssetScript.type,
           data: {
             assetId: txSetAssetScript.assetId,
@@ -330,7 +329,7 @@ describe('Adapter', () => {
       const txInvokeScript = { ...INVOKE };
 
       it('is valid', () => {
-        expect(keeperTxFactory(txInvokeScript)).to.be.deep.equal({
+        expect(keeperTxFactory(txInvokeScript)).toEqual({
           type: txInvokeScript.type,
           data: {
             dApp: txInvokeScript.dApp,
@@ -357,7 +356,7 @@ describe('Adapter', () => {
     ) {
       it('is valid', () => {
         expect(signedTx.id).exist;
-        expect(signedTx.type).to.be.equal(type);
+        expect(signedTx.type).toBe(type);
         expect(signedTx.version).exist;
         expect(signedTx.senderPublicKey).exist;
         expect(signedTx.proofs).exist;
@@ -378,7 +377,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.ISSUE);
 
       it('quantity is long', () => {
-        expect(jsonTx.quantity).to.be.equal(longMax);
+        expect(jsonTx.quantity).toBe(longMax);
       });
     });
 
@@ -395,7 +394,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.TRANSFER);
 
       it('amount is long', () => {
-        expect(jsonTx.amount).to.be.equal(longMax);
+        expect(jsonTx.amount).toBe(longMax);
       });
     });
 
@@ -410,7 +409,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.REISSUE);
 
       it('quantity is long', () => {
-        expect(jsonTx.quantity).to.be.equal(longMax);
+        expect(jsonTx.quantity).toBe(longMax);
       });
     });
 
@@ -425,7 +424,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.BURN);
 
       it('amount is long', () => {
-        expect(jsonTx.amount).to.be.equal(longMax);
+        expect(jsonTx.amount).toBe(longMax);
       });
     });
 
@@ -478,7 +477,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.MASS_TRANSFER);
 
       it('amount is long', () => {
-        expect(jsonTx.transfers[0].amount).to.be.equal(longMax);
+        expect(jsonTx.transfers[0].amount).toBe(longMax);
       });
     });
 
@@ -494,11 +493,11 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.DATA);
 
       it('longMaxValue is long', () => {
-        expect(jsonTx.data[0].value).to.be.equal(longMax);
+        expect(jsonTx.data[0].value).toBe(longMax);
       });
 
       it('longMinValue is long', () => {
-        expect(jsonTx.data[1].value).to.be.equal(longMin);
+        expect(jsonTx.data[1].value).toBe(longMin);
       });
     });
 
@@ -528,7 +527,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SPONSORSHIP);
 
       it('minSponsoredAssetFee is long', () => {
-        expect(jsonTx.minSponsoredAssetFee).to.be.equal(longMax);
+        expect(jsonTx.minSponsoredAssetFee).toBe(longMax);
       });
     });
 
@@ -559,7 +558,7 @@ describe('Adapter', () => {
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.INVOKE_SCRIPT);
 
       it('payment amount is long', () => {
-        expect(jsonTx.payment?.[0].amount).to.be.equal(longMax);
+        expect(jsonTx.payment?.[0].amount).toBe(longMax);
       });
     });
   });
