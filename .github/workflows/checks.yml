@@ -16,5 +16,4 @@ jobs:
       - run: yarn prettier
       - run: yarn eslint
       - run: yarn typecheck
-      - run: curl -L "https://clients2.google.com/service/update2/crx?response=redirect&os=mac&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromecrx&prodchannel=unknown&prodversion=93.0.4577.63&acceptformat=crx2,crx3&x=id%3Dlpilbniiabackdjcionkobglmddfbcjo%26uc"  --output keeper.crx; mkdir keeper-wallet; unzip keeper.crx -d keeper-wallet || rm -rf keeper.crx
       - run: yarn coverage
