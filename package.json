@@ -61,7 +61,7 @@
     "@types/node": "^18.7.13",
     "@vitest/coverage-c8": "^0.28.4",
     "@waves/signer": "^1.1.0",
-    "eslint": "8.33.0",
+    "eslint": "8.34.0",
     "prettier": "^2.7.1",
     "rimraf": "^4.0.0",
     "semantic-release": "^20.0.0",
