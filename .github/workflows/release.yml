@@ -28,7 +28,7 @@ jobs:
   report-merge:
     needs: release
     if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
       - uses: actions/checkout@v3
@@ -40,7 +40,7 @@ jobs:
   report-release:
     needs: [release, report-merge]
     if: needs.release.outputs.new-release-published == 'true'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
       - uses: actions/checkout@v3
