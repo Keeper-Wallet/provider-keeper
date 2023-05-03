@@ -59,7 +59,7 @@
     "@faergeek/eslint-config": "^5.0.147",
     "@size-limit/file": "^8.1.0",
     "@types/node": "^18.7.13",
-    "@vitest/coverage-c8": "^0.30.0",
+    "@vitest/coverage-c8": "^0.31.0",
     "@waves/signer": "^1.1.0",
     "eslint": "8.39.0",
     "prettier": "^2.7.1",
@@ -69,6 +69,6 @@
     "size-limit": "^8.1.0",
     "typescript": "^5.0.0",
     "vite": "^4.0.0",
-    "vitest": "^0.30.0"
+    "vitest": "^0.31.0"
   }
 }
