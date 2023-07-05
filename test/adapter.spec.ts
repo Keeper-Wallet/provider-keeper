@@ -71,27 +71,27 @@ describe('Adapter', () => {
       it('senderPublicKey is empty', () => {
         expect(
           keeperTxFactory({ ...tx, senderPublicKey: undefined }).data
-            .senderPublicKey
+            .senderPublicKey,
         ).toBeUndefined();
       });
 
       it('senderPublicKey is passed as is', () => {
         const senderPublicKey = 'ZCFgn7rnzKNJSxFGqN6Gx6RWJxdPCjBUHuJjfq1FH1L';
         expect(
-          keeperTxFactory({ ...tx, senderPublicKey }).data.senderPublicKey
+          keeperTxFactory({ ...tx, senderPublicKey }).data.senderPublicKey,
         ).toBe(senderPublicKey);
       });
 
       it('timestamp is empty', () => {
         expect(
-          keeperTxFactory({ ...tx, timestamp: undefined }).data.timestamp
+          keeperTxFactory({ ...tx, timestamp: undefined }).data.timestamp,
         ).toBeUndefined();
       });
 
       it('timestamp is passed as is', () => {
         const timestamp = 1674878241295;
         expect(keeperTxFactory({ ...tx, timestamp }).data.timestamp).toBe(
-          timestamp
+          timestamp,
         );
       });
     }
@@ -138,7 +138,7 @@ describe('Adapter', () => {
             recipient: txTransfer.recipient,
             amount: { coins: txTransfer.amount, assetId: txTransfer.assetId },
             attachment: Array.from(
-              base58.decode(txTransfer.attachment as string)
+              base58.decode(txTransfer.attachment as string),
             ),
           },
         });
@@ -243,7 +243,7 @@ describe('Adapter', () => {
             totalAmount: { coins: 0, assetId: txMassTransfer.assetId },
             transfers: txMassTransfer.transfers,
             attachment: Array.from(
-              base58.decode(txMassTransfer.attachment as string)
+              base58.decode(txMassTransfer.attachment as string),
             ),
           },
         });
@@ -254,7 +254,7 @@ describe('Adapter', () => {
         expect(keeperTxFactory(txMassTransfer).data.attachment).toBeUndefined();
         delete txMassTransfer.assetId;
         expect(keeperTxFactory(txMassTransfer).data.totalAmount.assetId).toBe(
-          'WAVES'
+          'WAVES',
         );
       });
 
@@ -352,7 +352,7 @@ describe('Adapter', () => {
 
     function signedTxShouldBeValid(
       signedTx: SignedTx<SignerTx>,
-      type: keyof TransactionMap
+      type: keyof TransactionMap,
     ) {
       it('is valid', () => {
         expect(signedTx.id).exist;
@@ -388,7 +388,7 @@ describe('Adapter', () => {
         '"timestamp":1631600073629,"proofs":["64aFuZfht5f2jQ3CjeKenE1EQfrkQBpizkUVrVuSjnjbQRyxq6Kn53ps1zYXxUmVU2jzRpUSWHea2C7rus6Bk2q5"],' +
         '"chainId":84,"id":"FxdVVSaxg39w4wjxhdg9eEEhHJhiMHZHdX7P2LxiNAU7"}';
       const jsonTx = signerTxFactory(
-        tx
+        tx,
       ) as SignerTxToSignedTx<SignerTransferTx>;
 
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.TRANSFER);
@@ -446,7 +446,7 @@ describe('Adapter', () => {
         '"chainId":84,"proofs":["5wWwdaKnKyshBwdLRZtmHLgcSEopqNGSn72xjEGEVb1QYho2GuEJFq4yz4pnP8TB2HALnyJGD2Mkt7VoKJ9Rght8"],' +
         '"id":"CRkSDzty2VfnWaYpSq35hs7oYSdpacXAfhjEzSr4dvhM"}';
       const jsonTx = signerTxFactory(
-        tx
+        tx,
       ) as SignerTxToSignedTx<SignerCancelLeaseTx>;
 
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.CANCEL_LEASE);
@@ -471,7 +471,7 @@ describe('Adapter', () => {
         '"proofs":["5m8FTY9bExL52fzCuaT1dVL65WtRMtdYHAFyHxQCZjrrHzsQVJ4knSvqA6pP3kGSPthmDto811612anNjut8kg7b"],' +
         '"chainId":84,"id":"6cHCKWyCW8g559CWWJDAL8iV57TJGoJFfpnRZ5HAkcZD"}';
       const jsonTx = signerTxFactory(
-        tx
+        tx,
       ) as SignerTxToSignedTx<SignerMassTransferTx>;
 
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.MASS_TRANSFER);
@@ -507,7 +507,7 @@ describe('Adapter', () => {
         '"fee":1800000,"timestamp":1631605992415,"proofs":["GsTxZsfVDyL2y8waKGvGQukFp6Ph2ko2448DG1AYrVmZZQaY4mfitXE6soV5aXKdQnTKL6iBk9ueMXqdNSMRiBf"],' +
         '"id":"BnAYgdjAywznY39Pj1Qtmpx1LjVpmt1vZtjEJACwNNhQ","script":"base64:BQbtKNoM"}';
       const jsonTx = signerTxFactory(
-        tx
+        tx,
       ) as SignerTxToSignedTx<SignerSetScriptTx>;
 
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SET_SCRIPT);
@@ -521,7 +521,7 @@ describe('Adapter', () => {
         '"proofs":["g3ArPaNBPL5EdDXsb7r6oooZuhGJn93JsxaSyYkTpUgsnq1Cfmqe8pVV6iP926CBbWgVP1G5Mmaiu6CMfDKAzeM"],' +
         '"id":"Age9ZkrntpB3HyE5cdHh8qyEC5dg7dgCDtrr2J1kUs89"}';
       const jsonTx = signerTxFactory(
-        tx
+        tx,
       ) as SignerTxToSignedTx<SignerSponsorshipTx>;
 
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SPONSORSHIP);
@@ -539,7 +539,7 @@ describe('Adapter', () => {
         '"proofs":["2vJrV2uk4VSssgEVpD6rhpDrC2ctyR7dAyy3757G831MYp6V2T35eYBehLpJ13JvhF4dFrmzBqHEPb8HC8xJcyP2"],' +
         '"id":"DfdAaKyEhGV5pmqsQ4LVSFHwp71Wg4m6wiwAdY1mVdS1","script":"base64:BQbtKNoM"}';
       const jsonTx = signerTxFactory(
-        tx
+        tx,
       ) as SignerTxToSignedTx<SignerSetAssetScriptTx>;
 
       signedTxShouldBeValid(jsonTx, TRANSACTION_TYPE.SET_ASSET_SCRIPT);
