@@ -41,7 +41,7 @@ export class ProviderKeeper implements Provider {
 
   public on<EVENT extends keyof AuthEvents>(
     event: EVENT,
-    handler: Handler<AuthEvents[EVENT]>
+    handler: Handler<AuthEvents[EVENT]>,
   ): Provider {
     this._emitter.on(event, handler);
 
@@ -50,7 +50,7 @@ export class ProviderKeeper implements Provider {
 
   public once<EVENT extends keyof AuthEvents>(
     event: EVENT,
-    handler: Handler<AuthEvents[EVENT]>
+    handler: Handler<AuthEvents[EVENT]>,
   ): Provider {
     const wrappedHandler: Handler<AuthEvents[EVENT]> = (...args) => {
       handler(...args);
@@ -64,7 +64,7 @@ export class ProviderKeeper implements Provider {
 
   public off<EVENT extends keyof AuthEvents>(
     event: EVENT,
-    handler: Handler<AuthEvents[EVENT]>
+    handler: Handler<AuthEvents[EVENT]>,
   ): Provider {
     this._emitter.off(event, handler);
 
@@ -106,7 +106,7 @@ export class ProviderKeeper implements Provider {
         api.signCustomData({
           version: 1,
           binary: `base64:${btoa(String(data))}`,
-        })
+        }),
       )
       .then(result => result.signature);
   }
@@ -117,7 +117,7 @@ export class ProviderKeeper implements Provider {
         api.signCustomData({
           version: 2,
           data: data as WavesKeeper.TTypedData[],
-        })
+        }),
       )
       .then(result => result.signature);
   }
@@ -137,9 +137,9 @@ export class ProviderKeeper implements Provider {
       .then(api =>
         api.signTransactionPackage(
           toSign.map(tx =>
-            keeperTxFactory(tx)
-          ) as WavesKeeper.TSignTransactionPackageData
-        )
+            keeperTxFactory(tx),
+          ) as WavesKeeper.TSignTransactionPackageData,
+        ),
       )
       .then(data => data.map(tx => signerTxFactory(tx))) as Promise<
       SignedTx<T>
@@ -164,7 +164,7 @@ export class ProviderKeeper implements Provider {
       throw new Error(
         `Invalid connect options. Signer connect ` +
           `(${signerNodeUrl} ${signerNetworkByte}) not equals ` +
-          `keeper connect (${keeperNodeUrl} ${keeperNetworkByte})`
+          `keeper connect (${keeperNodeUrl} ${keeperNetworkByte})`,
       );
     }
 
@@ -177,7 +177,7 @@ const poll = (
   reject: (...args: unknown[]) => void,
   attempt = 0,
   retries = 30,
-  interval = 100
+  interval = 100,
 ) => {
   if (attempt > retries) return resolve(false);
 

@@ -31,7 +31,7 @@ function addressFactory(address: string): string {
 
 function moneyFactory(
   amount: number | string,
-  assetId: string | null | undefined = 'WAVES'
+  assetId: string | null | undefined = 'WAVES',
 ): WavesKeeper.IMoneyCoins {
   return {
     coins: amount,
@@ -116,7 +116,7 @@ function leaseAdapter(tx: SignerLeaseTx): WavesKeeper.TLeaseTxData {
 }
 
 function leaseCancelAdapter(
-  tx: SignerCancelLeaseTx
+  tx: SignerCancelLeaseTx,
 ): WavesKeeper.TLeaseCancelTxData {
   const { leaseId } = tx;
   const data: WavesKeeper.ILeaseCancelTx = {
@@ -136,7 +136,7 @@ function aliasAdapter(tx: SignerAliasTx): WavesKeeper.TCreateAliasTxData {
 }
 
 function massTransferAdapter(
-  tx: SignerMassTransferTx
+  tx: SignerMassTransferTx,
 ): WavesKeeper.TMassTransferTxData {
   const { assetId, transfers, attachment } = tx;
   const data: WavesKeeper.IMassTransferTx = {
@@ -172,7 +172,7 @@ function setScriptAdapter(tx: SignerSetScriptTx): WavesKeeper.TSetScriptTxData {
 }
 
 function sponsorshipAdapter(
-  tx: SignerSponsorshipTx
+  tx: SignerSponsorshipTx,
 ): WavesKeeper.TSponsoredFeeTxData {
   const { assetId, minSponsoredAssetFee } = tx;
   const data: WavesKeeper.ISponsoredFeeTx = {
@@ -183,7 +183,7 @@ function sponsorshipAdapter(
 }
 
 function setAssetScriptAdapter(
-  tx: SignerSetAssetScriptTx
+  tx: SignerSetAssetScriptTx,
 ): WavesKeeper.TSetAssetScriptTxData {
   const { assetId, script } = tx;
   const data: WavesKeeper.ISetAssetScriptTx = {
@@ -195,7 +195,7 @@ function setAssetScriptAdapter(
 }
 
 function invokeScriptAdapter(
-  tx: SignerInvokeTx
+  tx: SignerInvokeTx,
 ): WavesKeeper.TScriptInvocationTxData {
   const { dApp, payment, call } = tx;
   const data: WavesKeeper.IScriptInvocationTx = {
@@ -209,34 +209,34 @@ function invokeScriptAdapter(
 
 export function keeperTxFactory(tx: SignerIssueTx): WavesKeeper.TIssueTxData;
 export function keeperTxFactory(
-  tx: SignerTransferTx
+  tx: SignerTransferTx,
 ): WavesKeeper.TTransferTxData;
 export function keeperTxFactory(
-  tx: SignerReissueTx
+  tx: SignerReissueTx,
 ): WavesKeeper.TReissueTxData;
 export function keeperTxFactory(tx: SignerBurnTx): WavesKeeper.TBurnTxData;
 export function keeperTxFactory(tx: SignerLeaseTx): WavesKeeper.TLeaseTxData;
 export function keeperTxFactory(
-  tx: SignerCancelLeaseTx
+  tx: SignerCancelLeaseTx,
 ): WavesKeeper.TLeaseCancelTxData;
 export function keeperTxFactory(
-  tx: SignerAliasTx
+  tx: SignerAliasTx,
 ): WavesKeeper.TCreateAliasTxData;
 export function keeperTxFactory(
-  tx: SignerMassTransferTx
+  tx: SignerMassTransferTx,
 ): WavesKeeper.TMassTransferTxData;
 export function keeperTxFactory(tx: SignerDataTx): WavesKeeper.TDataTxData;
 export function keeperTxFactory(
-  tx: SignerSetScriptTx
+  tx: SignerSetScriptTx,
 ): WavesKeeper.TSetScriptTxData;
 export function keeperTxFactory(
-  tx: SignerSponsorshipTx
+  tx: SignerSponsorshipTx,
 ): WavesKeeper.TSponsoredFeeTxData;
 export function keeperTxFactory(
-  tx: SignerSetAssetScriptTx
+  tx: SignerSetAssetScriptTx,
 ): WavesKeeper.TSetAssetScriptTxData;
 export function keeperTxFactory(
-  tx: SignerInvokeTx
+  tx: SignerInvokeTx,
 ): WavesKeeper.TScriptInvocationTxData;
 export function keeperTxFactory(tx: SignerTx): WavesKeeper.TSignTransactionData;
 export function keeperTxFactory(tx: SignerTx) {
