@@ -39,9 +39,9 @@
     "dev": "vite",
     "test": "vitest",
     "coverage": "c8 vitest",
-    "eslint": "eslint --ext .ts,.js --max-warnings 0 .",
-    "prettier": "prettier . --check",
-    "typecheck": "tsc -p tsconfig.test.json"
+    "lint:eslint": "eslint --ext .ts,.js --max-warnings 0 .",
+    "lint:prettier": "prettier . --check",
+    "lint:typescript": "tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@scure/base": "^1.1.1",
