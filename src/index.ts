@@ -14,7 +14,6 @@ import { keeperTxFactory, signerTxFactory } from './adapter';
 
 export class ProviderKeeper implements Provider {
   public user: UserData | null = null;
-  protected _apiPromise: Promise<WavesKeeper.TWavesKeeperApi>;
   protected _connectPromise: Promise<void>; // used in _ensureApi
   private _connectResolve!: () => void; // initialized in Promise constructor
   private _options: ConnectOptions = {
@@ -24,16 +23,6 @@ export class ProviderKeeper implements Provider {
   private readonly _emitter = mitt<AuthEvents>();
 
   constructor() {
-    this._apiPromise = isKeeperInstalled().then(isInstalled => {
-      return isInstalled
-        ? window.WavesKeeper.initialPromise.then(api => Promise.resolve(api))
-        : Promise.reject(new Error('WavesKeeper is not installed.'));
-    });
-
-    this._apiPromise.catch(() => {
-      // avoid unhandled rejection
-    });
-
     this._connectPromise = new Promise(resolve => {
       this._connectResolve = resolve;
     });
@@ -148,7 +137,7 @@ export class ProviderKeeper implements Provider {
 
   private async _ensureApi(): Promise<WavesKeeper.TWavesKeeperApi> {
     // api is ready
-    const [api] = await Promise.all([this._apiPromise, this._connectPromise]);
+    const [api] = await Promise.all([getKeeperWallet(), this._connectPromise]);
 
     // has accounts
     const state = await api.publicState();
@@ -172,22 +161,28 @@ export class ProviderKeeper implements Provider {
   }
 }
 
-const poll = (
-  resolve: (result: boolean) => void,
-  reject: (...args: unknown[]) => void,
-  attempt = 0,
-  retries = 30,
-  interval = 100,
-) => {
-  if (attempt > retries) return resolve(false);
+function getKeeperWallet() {
+  const poll = (
+    resolve: (result: WavesKeeper.TWavesKeeperApi) => void,
+    reject: (...args: unknown[]) => void,
+    attempt = 0,
+    retries = 30,
+    interval = 100,
+  ) => {
+    if (attempt > retries)
+      return reject(new Error('WavesKeeper is not installed.'));
 
-  if (typeof WavesKeeper !== 'undefined') {
-    return resolve(true);
-  } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
-};
+    if (typeof KeeperWallet !== 'undefined') {
+      return resolve(KeeperWallet);
+    } else setTimeout(() => poll(resolve, reject, ++attempt), interval);
+  };
 
-const _isKeeperInstalled = new Promise(poll);
+  return new Promise(poll);
+}
 
 export async function isKeeperInstalled() {
-  return _isKeeperInstalled;
+  return getKeeperWallet().then(
+    () => true,
+    () => false,
+  );
 }
