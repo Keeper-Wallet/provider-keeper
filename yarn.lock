@@ -372,9 +372,9 @@
   integrity sha512-a8TLtmPi8xzPkCbp/OGFUo5yhRkHM2Ko9kOWP4znJr0WAhWyThaw3PnwX4vOTWOAMsV2uRt32PPDcEz63esSaA==
 
 "@faergeek/eslint-config@^5.0.147":
-  version "5.1.32"
-  resolved "https://registry.yarnpkg.com/@faergeek/eslint-config/-/eslint-config-5.1.32.tgz#4f8f65a541dea01ab660d921a4a7c172e4806948"
-  integrity sha512-n8hMyZvtprWOOZD3HrxuTQgt/wbWGoZetKR6aqp5xzhipslKnx/YfNglWo1M7tM9rFnOu0JXSsE9UeGkfVz/Xw==
+  version "5.1.33"
+  resolved "https://registry.yarnpkg.com/@faergeek/eslint-config/-/eslint-config-5.1.33.tgz#7ba70ec8f53abb73a615a9ca652955adaa302c81"
+  integrity sha512-KgAxf3iyP1cad87DWJLIbGXk+FMZ2vmQ8TXWSljxHN1wK4d2fsrZYqNSshRLtSMvLXHDH0ueEoeC2WMMg+yLQw==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^6.0.0"
     "@typescript-eslint/parser" "^6.0.0"
