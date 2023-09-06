@@ -57,7 +57,7 @@
     "@commitlint/cli": "^17.3.0",
     "@commitlint/config-conventional": "^17.3.0",
     "@faergeek/eslint-config": "^5.0.147",
-    "@size-limit/file": "^8.1.0",
+    "@size-limit/file": "^9.0.0",
     "@types/node": "^18.7.13",
     "@vitest/coverage-c8": "^0.33.0",
     "@waves/signer": "^1.1.0",
