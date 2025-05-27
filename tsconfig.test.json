@@ -4,5 +4,6 @@
   "compilerOptions": {
     "noEmit": true,
     "emitDeclarationOnly": false
-  }
+  },
+  "exclude": ["node_modules", "cdk.out", "dist", "test/**", "vitest.config.*"]
 }
