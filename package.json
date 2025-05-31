@@ -54,8 +54,8 @@
     "@waves/signer": "1.x"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.3.0",
-    "@commitlint/config-conventional": "^17.3.0",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "@faergeek/eslint-config": "^5.0.147",
     "@size-limit/file": "^8.1.0",
     "@types/node": "^18.7.13",
